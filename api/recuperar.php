@@ -6,7 +6,7 @@ require __DIR__ . '/_boot.php';
 exige_post();
 $e = entrada();
 $doc = so_digitos($e['doc'] ?? '');
-if (!doc_valido($doc)) json_out(['erro' => 'Confira o CNPJ (ou CPF) digitado.'], 422);
+if (!doc_valido($doc)) json_out(['erro' => 'Confira o CPF ou CNPJ digitado.'], 422);
 if (!email_configurado()) json_out(['erro' => 'Recuperação por e-mail ainda não está ativa. Fale com a CallNet no WhatsApp.', 'wa' => true], 503);
 $chIp = 'rec-ip:' . ip_hash(); $chDoc = 'rec:' . $doc;
 if (travado($chIp, 8, 3600) > 0 || travado($chDoc, 3, 3600) > 0) json_out(['erro' => 'Muitos pedidos. Tente de novo mais tarde.'], 429);

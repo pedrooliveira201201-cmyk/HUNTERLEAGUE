@@ -200,12 +200,12 @@ body.offline .signal{transform:translate(-50%,0)}
 
    <div class="view" id="v-forgot">
     <h1 class="hello">Esqueci a senha</h1>
-    <p class="sub" id="fg-sub">Digite o CNPJ do cadastro. Mandamos um link para o seu e-mail criar uma senha nova.</p>
+    <p class="sub" id="fg-sub">Digite o CPF ou CNPJ do cadastro. Mandamos um link para o seu e-mail criar uma senha nova.</p>
     <div style="margin-top:20px">
      <div class="err" id="fg-err" role="alert"></div>
      <div class="okmsg" id="fg-ok" role="status"></div>
      <div class="field" id="fg-f">
-      <label for="fg-doc">CNPJ (ou CPF)</label>
+      <label for="fg-doc">CPF ou CNPJ</label>
       <div class="inp"><input id="fg-doc" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" autocomplete="username"></div>
      </div>
      <button class="go" type="button" id="fg-go"><span class="lbl">Enviar link no e-mail</span></button>
@@ -441,7 +441,7 @@ body.offline .signal{transform:translate(-50%,0)}
  $('#fg-go').addEventListener('click', async () => {
   const fe = $('#fg-err'), fo = $('#fg-ok'), d = $('#fg-doc').value.replace(/\D/g, '');
   fe.classList.remove('show'); fo.classList.remove('show');
-  if (!validDoc(d)) { fe.textContent = 'Confira o CNPJ digitado.'; fe.classList.add('show'); return; }
+  if (!validDoc(d)) { fe.textContent = 'Confira o CPF ou CNPJ digitado.'; fe.classList.add('show'); return; }
   const bt = $('#fg-go'); bt.disabled = true;
   let r;
   if (API) { try { r = await (await fetch('/api/recuperar.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, credentials:'same-origin', body:JSON.stringify({ doc:d }) })).json(); } catch { r = { erro:'Sem conexão. Tente de novo.' }; } }

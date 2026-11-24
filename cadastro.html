@@ -75,7 +75,7 @@ body.lojista .loja,body.vendedor .loja{display:block}
 
  <div class="intro">
   <h1>Entre para <span>a liga</span></h1>
-  <p class="lead">Indique o produto em destaque e ganhe bônus por cada venda instalada. Sem custo para entrar. Para participar é preciso ter CNPJ.</p>
+  <p class="lead">Indique o produto em destaque e ganhe bônus por cada venda instalada. Sem custo para entrar. Pode se cadastrar com CNPJ ou com CPF.</p>
  </div>
 
  <form id="f" novalidate>
@@ -87,15 +87,15 @@ body.lojista .loja,body.vendedor .loja{display:block}
    </button>
    <button type="button" class="tipo" role="radio" aria-checked="false" data-t="vendedor">
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="7.5" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    <b>Sou vendedor (MEI)</b><small>Indico para quem conheço</small>
+    <b>Sou vendedor</b><small>Indico para quem conheço</small>
    </button>
   </div>
   <p class="msg" data-m="tipo"></p>
 
   <p class="step">2 · Seus dados</p>
   <div class="field"><label for="nome">Seu nome completo (responsável)</label><div class="inp"><input id="nome" autocomplete="name" maxlength="120"></div><p class="msg" data-m="nome"></p></div>
-  <div class="field loja"><label for="loja">Nome da empresa <small>(nome fantasia)</small></label><div class="inp"><input id="loja" autocomplete="organization" maxlength="120"></div><p class="msg" data-m="loja"></p></div>
-  <div class="field"><label for="doc">CNPJ</label><div class="inp"><input id="doc" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" autocomplete="off"></div><p class="msg" data-m="doc"></p><p class="help">É com ele que você entra no app.</p></div>
+  <div class="field loja"><label for="loja">Nome do estabelecimento <small id="loja-opc">(nome fantasia)</small></label><div class="inp"><input id="loja" autocomplete="organization" maxlength="120"></div><p class="msg" data-m="loja"></p></div>
+  <div class="field"><label for="doc">CPF ou CNPJ</label><div class="inp"><input id="doc" inputmode="numeric" maxlength="18" placeholder="CPF ou CNPJ, só números" autocomplete="off"></div><p class="msg" data-m="doc"></p><p class="help">É com ele que você entra no app. Ainda sem CNPJ? Use o CPF do responsável.</p></div>
   <div class="field"><label for="whatsapp">WhatsApp com DDD</label><div class="inp"><input id="whatsapp" inputmode="tel" maxlength="16" placeholder="(34) 99999-9999" autocomplete="tel-national"></div><p class="msg" data-m="whatsapp"></p></div>
   <div class="field cidf"><label for="cidade-q">Sua cidade</label><div class="inp"><input id="cidade-q" autocomplete="off" placeholder="Digite o nome da cidade" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cid-l"><input type="hidden" id="cidade"></div>
    <ul class="cidl" id="cid-l" role="listbox" hidden></ul><p class="msg" data-m="cidade"></p><p class="help" id="cid-h">Mais de 300 cidades com fibra. Digite para buscar.</p></div>
@@ -130,6 +130,7 @@ body.lojista .loja,body.vendedor .loja{display:block}
   tipo = b.dataset.t;
   for (const o of document.querySelectorAll('.tipo')) o.setAttribute('aria-checked', o === b);
   document.body.classList.toggle('lojista', tipo === 'lojista'); document.body.classList.toggle('vendedor', tipo === 'vendedor'); marca('tipo', '');
+  $('#loja-opc').textContent = tipo === 'vendedor' ? '(opcional)' : '(nome fantasia)';
   if (navigator.vibrate) try { navigator.vibrate(8); } catch(e){}
  });
  const fmtDoc = d => d.length <= 11
@@ -179,8 +180,8 @@ body.lojista .loja,body.vendedor .loja{display:block}
   const erros = {};
   if (!tipo) erros.tipo = 'Escolha uma das opções acima.';
   if (v('nome').split(/\s+/).length < 2) erros.nome = 'Escreva nome e sobrenome.';
-  if (tipo && v('loja').length < 2) erros.loja = 'Escreva o nome da empresa.';
-  if (!okCNPJ(doc)) erros.doc = doc.length === 11 ? 'Precisa ser CNPJ. Se ainda não tem, o MEI é gratuito e sai na hora.' : 'CNPJ inválido. Confira os números.';
+  if (tipo === 'lojista' && v('loja').length < 2) erros.loja = 'Escreva o nome do estabelecimento.';
+  if (!okCPF(doc) && !okCNPJ(doc)) erros.doc = doc.length === 11 ? 'CPF inválido. Confira os números.' : doc.length === 14 ? 'CNPJ inválido. Confira os números.' : 'Digite um CPF (11 números) ou CNPJ (14 números).';
   if (wa.length < 10) erros.whatsapp = 'Coloque o DDD e o número.';
   if (!v('cidade')) erros.cidade = 'Digite e escolha sua cidade na lista.';
   if (!/^\S+@\S+\.\S+$/.test(v('email'))) erros.email = 'Informe seu e-mail. Ele serve para recuperar a senha.';
