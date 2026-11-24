@@ -9,7 +9,7 @@ Produção: https://www.hunterleague.com.br (Hostinger, PHP + MySQL).
 
 ## Secrets necessários (GitHub → Settings → Secrets and variables → Actions)
 - `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` (conta FTP da Hostinger)
-- `FTP_DIR` (opcional): pasta de destino, ex.: `./` ou `public_html/`, conforme a raiz da conta FTP.
+- A conta FTP já abre dentro de `public_html`; o deploy envia para a raiz dela (o secret `FTP_DIR` não é usado).
 
 ## Nunca versionar
 `config.php`, `recrutamento-config.php`, banco de dados, comprovantes em `arquivos/`.
