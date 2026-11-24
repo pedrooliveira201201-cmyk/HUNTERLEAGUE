@@ -12,28 +12,29 @@ function nivel_de(int $inst): array {
   return ['nivel' => $atual[0], 'feitas' => $inst, 'meta' => $prox ? $prox[1] : $inst, 'prox' => $prox[0] ?? null];
 }
 
-/* ---------- bônus: escadinha da semana ----------
-   Na semana (segunda a domingo, pela data da instalação) TODAS as instalações valem o mesmo degrau,
-   que sobe com a quantidade: 1 venda = base; 2 vendas = base + passo cada; 3 = base + 2 passos cada... até o teto.
-   Ex.: 7 vendas na semana = 7 × R$ 80 = R$ 560. bonus_valor(n) = valor de CADA venda quando a semana tem n vendas. */
-function bonus_conf(): array { return [(float)conf('bonus_base', '50'), (float)conf('bonus_passo', '5'), (float)conf('bonus_teto', '100')]; }
-function bonus_valor(int $n): float { [$b, $p, $t] = bonus_conf(); return $n < 1 ? 0.0 : min($t, $b + $p * ($n - 1)); }
-function semana_de(string $data): array { $t = strtotime(substr($data, 0, 10)); $seg = date('Y-m-d', strtotime('-' . ((int)date('N', $t) - 1) . ' days', $t)); return [$seg, date('Y-m-d', strtotime($seg . ' +6 days'))]; }
-/* recalcula o bônus de todas as instalações do parceiro naquela semana: todas valem o degrau da quantidade (as já sacadas não mudam) */
-function recalcular_semana(int $pid, ?string $data): void {
-  if (!$data) return;
-  [$de, $ate] = semana_de($data);
-  $rows = all("SELECT id, saque_id FROM indicacoes WHERE parceiro_id = ? AND status = 'Instalado' AND instalado_em BETWEEN ? AND ? ORDER BY instalado_em, id", [$pid, $de, $ate]);
-  $v = bonus_valor(count($rows));
-  foreach ($rows as $r) if (!$r['saque_id']) q('UPDATE indicacoes SET comissao = ? WHERE id = ?', [$v, $r['id']]);
+/* ---------- bônus: valor do plano (100% da mensalidade) ----------
+   Cada instalação vale o valor do plano vendido, liberado quando o cliente paga a 1ª fatura.
+   Os valores ficam na Central (config 'bonus_planos', na ordem de PLANOS) e podem ser mudados lá. */
+const BONUS_PLANOS_PADRAO = [55, 70, 85, 100];
+function bonus_planos(): array {
+  $v = array_map(fn($x) => (float)str_replace(',', '.', trim($x)), explode('|', (string)conf('bonus_planos', implode('|', BONUS_PLANOS_PADRAO))));
+  $out = [];
+  foreach (PLANOS as $k => $p) $out[$p] = ($v[$k] ?? 0) > 0 ? $v[$k] : (float)BONUS_PLANOS_PADRAO[$k];
+  return $out;
 }
+function bonus_plano(?string $plano): float { return $plano !== null ? (bonus_planos()[$plano] ?? 0.0) : 0.0; }
+/* grava o bônus de uma instalação pelo plano (as que já foram para saque não mudam) */
+function definir_bonus(int $id): void {
+  $r = one('SELECT status, plano, saque_id FROM indicacoes WHERE id = ?', [$id]);
+  if (!$r || $r['saque_id']) return;
+  q('UPDATE indicacoes SET comissao = ? WHERE id = ?', [$r['status'] === 'Instalado' ? bonus_plano($r['plano']) : null, $id]);
+}
+function semana_de(string $data): array { $t = strtotime(substr($data, 0, 10)); $seg = date('Y-m-d', strtotime('-' . ((int)date('N', $t) - 1) . ' days', $t)); return [$seg, date('Y-m-d', strtotime($seg . ' +6 days'))]; }
+/* vendas da semana: só contagem (para o contador e o ranking); não muda o valor do bônus */
 function semana_atual(int $pid): array {
   [$de, $ate] = semana_de(hoje());
-  $n = (int)(one("SELECT COUNT(*) AS n FROM indicacoes WHERE parceiro_id = ? AND status = 'Instalado' AND instalado_em BETWEEN ? AND ?", [$pid, $de, $ate])['n'] ?? 0);
-  [$b, $p, $t] = bonus_conf();
-  $total = $n * bonus_valor($n);
-  return ['n' => $n, 'valor' => $n ? bonus_valor($n) : $b, 'prox' => bonus_valor($n + 1), 'total' => $total, 'teto' => $t, 'base' => $b, 'passo' => $p,
-          'n_teto' => (int)ceil(($t - $b) / max(0.01, $p)) + 1, 'fim' => date('d/m', strtotime($ate)), 'dias' => 7 - (int)date('N')];
+  $r = one("SELECT COUNT(*) AS n, COALESCE(SUM(comissao), 0) AS t FROM indicacoes WHERE parceiro_id = ? AND status = 'Instalado' AND instalado_em BETWEEN ? AND ?", [$pid, $de, $ate]);
+  return ['n' => (int)($r['n'] ?? 0), 'total' => (float)($r['t'] ?? 0), 'fim' => date('d/m', strtotime($ate)), 'dias' => 7 - (int)date('N')];
 }
 function nome_mes(string $comp): string { [$a, $m] = explode('-', $comp); return MESES[(int)$m] . ' de ' . $a; }
 
@@ -107,7 +108,7 @@ function hl_dados(array $p): array {
     'codigo' => $p['codigo'],
     'link' => $link,
     'wa' => so_digitos(conf('whatsapp', '553420281071')),
-    'comissao' => bonus_conf()[0],
+    'comissao' => min(bonus_planos()), 'planos_bonus' => array_map(fn($p, $v) => ['plano' => $p, 'valor' => $v], array_keys(bonus_planos()), array_values(bonus_planos())),
     'tabela' => cidade_promo((string)$p['cidade']) ? 'promo' : 'cheia',
     'inds' => $inds,
     'bonus' => $bonus,
@@ -229,9 +230,12 @@ function ranking_liga(int $eu): array {
 /* ---------- metas com prêmio ----------
    "20|Air Fryer" por linha (configurável no admin). Contam só instalações com a 1ª fatura paga.
    O prêmio conquistado fica registrado para o admin entregar. */
+const METAS_PADRAO = "20|Air Fryer ou R$ 250\n60|Smart TV 50\" ou R$ 2.000\n200|iPhone 17 ou R$ 6.000";
 function metas_conf(): array {
   $m = [];
-  foreach (preg_split('/\R/', (string)conf('metas', '')) as $l) {
+  $txt = (string)conf('metas', METAS_PADRAO);
+  if (preg_replace('/\s+/', '', $txt) === preg_replace('/\s+/', '', "20|Air Fryer\n60|Smart TV 50\"\n200|iPhone 17")) $txt = METAS_PADRAO;   // metas antigas, sem a opção em dinheiro
+  foreach (preg_split('/\R/', $txt) as $l) {
     [$a, $b] = array_pad(array_map('trim', explode('|', $l, 2)), 2, '');
     if ((int)$a > 0 && $b !== '') $m[] = [(int)$a, mb_substr(strip_tags($b), 0, 80)];
   }

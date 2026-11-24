@@ -455,7 +455,7 @@ document.addEventListener('click', e => {
  if ((i = f('inst'))) {
   const j = jan(`<h2 class="bs">Instalou</h2><p class="sub">${h(i.nome)} · ${h(i.parceiro.codigo)} ${h(i.parceiro.nome)}</p>
    <label class="f">Data da instalação<input type="date" id="j-dt" max="${hojeISO()}" value="${hojeISO()}"></label>
-   <p class="sub" style="margin-top:10px">A casa acende no app do parceiro. O bônus segue a escada da semana e é liberado quando o cliente pagar a 1ª fatura.</p>
+   <p class="sub" style="margin-top:10px">A casa acende no app do parceiro. O bônus é o valor do plano vendido e é liberado quando o cliente pagar a 1ª fatura.</p>
    <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ok" type="button" id="j-ok">✓ Confirmar instalação</button></div>`);
   j.querySelector('#j-ok').addEventListener('click', () => { const d = j.querySelector('#j-dt').value; fechaJan(); etapa(i.id, { status:'Instalado', inst:d }); });
   return;
@@ -601,7 +601,7 @@ TELAS.pagar = async () => {
    <div class="tr ch" style="--a:#FFC857"><small>Esperando 1ª fatura</small><b class="bs">${reais(r.tot.faturas)}</b><span>${r.faturas.length} ${r.faturas.length === 1 ? 'cliente instalado' : 'clientes instalados'}</span></div>
    <div class="tr ch" style="--a:#19F7FF"><small>Liberado, sem pedido</small><b class="bs">${reais(r.tot.liberados)}</b><span>o parceiro já pode sacar</span></div>
   </div>
-  <p class="escada">Multiplicador da semana: 1 instalação ${reaisC(r.regra.base)} · cada instalação a mais sobe ${reaisC(r.regra.passo)} o valor de todas da semana · até ${reaisC(r.regra.teto)} cada</p>
+  <p class="escada">Bônus por instalação = valor do plano: ${PLANOS.map(p => `${p} ${reaisC((r.regra.planos || {})[p] || 0)}`).join(' · ')}</p>
   <div class="tabs" id="bon-tabs">${ab.map(([k, t, n]) => `<button type="button" data-bab="${k}" aria-selected="${bonAba === k}">${t}<i>${n}</i></button>`).join('')}</div>
   <div id="bon-c"></div>`;
  bonDraw();
@@ -616,7 +616,7 @@ const bonDraw = () => {
   : vazio('Nenhum saque pedido', 'Quando um parceiro tocar em "Solicitar saque" no app, aparece aqui.');
  if (bonAba === 'faturas') box.innerHTML = r.faturas.length ? `<div class="lista">${r.faturas.map(x => `<div class="fat ch${x.dias >= 25 ? ' pronta' : ''}"><div><div class="nm">${h(x.cliente)}</div><div class="sub"><span class="cod">${h(x.codigo)}</span> ${h(x.parceiro)}${x.plano ? ` · ${h(x.plano)}` : ''}</div></div>
    <div class="qd"><b>${h(x.inst)}</b><small>${x.dias === 0 ? 'instalou hoje' : `há ${x.dias} ${x.dias === 1 ? 'dia' : 'dias'}`}</small></div><span class="val bs">${reais(x.v)}</span><button class="btn sm${x.dias >= 25 ? ' ok' : ' g'}" type="button" data-lib="${x.id}">✓ 1ª fatura paga</button></div>`).join('')}</div>
-   <p class="sub" style="margin-top:12px">Confira no sistema da operadora se a 1ª fatura foi paga (em geral uns 30 dias depois da instalação) e libere. O valor de cada instalação segue o multiplicador da semana: base × multiplicador, igual para todas as instalações do parceiro naquela semana.</p>`
+   <p class="sub" style="margin-top:12px">Confira no sistema da operadora se a 1ª fatura foi paga (em geral uns 30 dias depois da instalação) e libere. O bônus de cada instalação é o valor do plano vendido.</p>`
   : vazio('Nenhum cliente esperando', 'Toda instalação nova aparece aqui até a 1ª fatura ser paga.');
  if (bonAba === 'liberados') {
   const por = {}; r.liberados.forEach(x => { (por[x.codigo] = por[x.codigo] || { nome:x.parceiro, itens:[] }).itens.push(x); });
@@ -701,8 +701,8 @@ TELAS.mais = async () => {
  if (maisAba === 'config') {
   const dis = r.master ? '' : ' disabled';
   box.innerHTML = `<form class="form ch" id="f-cfg">
-   <p class="sub" style="margin:0 0 4px">Multiplicador da semana: com 1 instalação ela vale a base; com 2, cada uma vale a base + o aumento; com 3, + 2 aumentos… até o teto. Todas as instalações da semana valem o mesmo. Zera toda segunda.</p>
-   <div class="g3"><label class="f">Base (R$)<input name="bonus_base" inputmode="decimal" value="${h(c.bonus_base)}"${dis}></label><label class="f">Sobe por venda (R$)<input name="bonus_passo" inputmode="decimal" value="${h(c.bonus_passo)}"${dis}></label><label class="f">Teto (R$)<input name="bonus_teto" inputmode="decimal" value="${h(c.bonus_teto)}"${dis}></label></div>
+   <p class="sub" style="margin:0 0 4px">Bônus por instalação: o valor do plano vendido (100% da mensalidade), liberado após a 1ª fatura paga.</p>
+   <div class="g3">${PLANOS.map((p, k) => `<label class="f">${h(p)} (R$)<input name="bonus_pl_${k}" inputmode="decimal" value="${h(String(c.bonus_planos || '55|70|85|100').split('|')[k] || '')}"${dis}></label>`).join('')}</div>
    <label class="f">Prazo para pagar o saque (aparece no app)<input name="prazo_saque" value="${h(c.prazo_saque)}"${dis}></label>
    <label class="f">WhatsApp que recebe as indicações<input name="whatsapp" value="${h(c.whatsapp)}"${dis}><small>55 + DDD + número</small></label>
    <label class="f">Mensagem que o cliente manda<input name="mensagem_wa" value="${h(c.mensagem_wa)}"${dis}><small>Precisa ter {codigo}</small></label>

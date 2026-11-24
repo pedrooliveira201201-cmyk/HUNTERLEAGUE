@@ -530,6 +530,7 @@ body.compact .sub{display:none}
 .eg .nx b{color:var(--cyan)}
 .eg span{display:block;color:var(--mute);font-size:12px;font-weight:600}
 .eg>div:only-child{grid-column:1/-1}
+.escw .pbon{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.escw .pbon div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:rgba(25,247,255,.06);border:1px solid rgba(25,247,255,.18)}.escw .pbon span{color:var(--silver);font-size:12.5px;font-weight:700}.escw .pbon b{font:900 30px/.95 "Big Shoulders Display",Impact,sans-serif;color:var(--cyan)}
 .escw .ep{margin:12px 0 0;font-size:14.5px;line-height:1.4;color:var(--ink)}
 .escw .ep b{color:var(--cyan)}
 .libl{display:grid;gap:6px}
@@ -912,7 +913,7 @@ body.offline:not(.sigback) .map{opacity:.18}
    <svg class="g-draw" viewBox="0 0 200 170" aria-hidden="true"><path d="M40 92l50-42 50 42"/><path d="M52 82v66h76V82"/><rect x="64" y="98" width="24" height="20" rx="2" class="fill"/><path d="M104 148v-30h14v30"/><path d="M10 148h180"/><g class="coin"><circle cx="160" cy="54" r="24" class="lite"/><path d="M152 46h12a5 5 0 0 1 0 10h-8a5 5 0 0 0 0 10h12M160 40v6M160 66v6"/></g></svg>
    <span class="gnum">3</span>
    <h2>Instalou, você ganha</h2>
-   <p id="g3-p">Cada casa que liga a Nio pelo seu QR vale bônus pra você. Na semana, cada venda sobe o multiplicador de todas.</p>
+   <p id="g3-p">Cada casa que liga a Nio pelo seu QR vale o valor do plano em bônus pra você.</p>
   </div>
  </div>
  <div class="gfoot">
@@ -1201,7 +1202,7 @@ body.offline:not(.sigback) .map{opacity:.18}
  };
  addEventListener('pointerdown', e => { if (!e.target.closest('#lvlbtn,#streak')) tip.classList.remove('aberto'); });
  lvlbtn.addEventListener('click', () => { buzz(8); showTip(`<small>Seu nível</small><p class="tt"><em>${nivel}</em>${prox ? `<i>→</i>${prox}` : ''}</p><div class="tb"><i style="width:${Math.min(100, prog.meta ? prog.feitas / prog.meta * 100 : 100)}%"></i></div><p>${prox ? `Faltam <b>${falta} ${falta === 1 ? 'instalação' : 'instalações'}</b> para ${prox}. Você tem ${prog.feitas}.` : 'Você chegou ao nível máximo da liga.'}</p>`, lvlbtn, COLORS[nivel] || '#BEC5CC'); });
- $('#streak').addEventListener('click', e => { buzz(8); const S = SEMANA, R = v => 'R$ ' + (Number.isInteger(v) ? v : v.toFixed(2).replace('.', ',')), M = n => n < 1 ? 1 : Math.min(S.teto, S.base + S.passo * (n - 1)) / S.base, X = m => 'x' + (Math.round(m * 100) / 100).toFixed(Math.round(m * 100) % 10 ? 2 : 1).replace('.', ','); showTip(`<small>Multiplicador da semana</small><p class="tt"><em>${X(M(S.n))}</em>${S.n} ${S.n === 1 ? 'venda' : 'vendas'} · ${R(S.total || 0)}</p><div class="td">${Array.from({ length: S.n_teto }, (_, k) => `<i class="${k < S.n ? 'on' : ''}"></i>`).join('')}</div><p>${S.n >= S.n_teto ? `No máximo: cada venda vale <b>${R(S.teto)}</b> até domingo.` : `Toda venda vale ${R(S.base)} × o multiplicador. Na próxima venda ele vai para <b>${X(M(S.n + 1))}</b> e todas passam a valer <b>${R(S.base * M(S.n + 1))}</b>.`} Zera na segunda.</p>`, e.currentTarget, '#19F7FF'); });
+ $('#streak').addEventListener('click', e => { buzz(8); const S = SEMANA, R = v => 'R$ ' + (Number.isInteger(v) ? v : v.toFixed(2).replace('.', ',')); showTip(`<small>Vendas da semana</small><p class="tt"><em>${S.n}</em>${S.n === 1 ? 'venda' : 'vendas'} · ${R(S.total || 0)}</p><p>Cada casa ligada vale o valor do plano: ${PBON.map(x => `${x.plano} <b>${R(x.valor)}</b>`).join(' · ')}. O contador zera na segunda.</p>`, e.currentTarget, '#19F7FF'); });
 
  /* bloco da Nio: afunda no toque, vibra e o mapa mostra a cobertura Nio */
  const tile = $('#nio');
@@ -1266,8 +1267,8 @@ body.offline:not(.sigback) .map{opacity:.18}
 
  /* ---------- tela da Nio ---------- */
  const QR_URL = HL ? HL.link : '__QRURL__', CODE = HL ? HL.codigo : 'HL-ARG-0001';
- const COM = HL ? HL.comissao : 50, REAIS = v => 'R$ ' + (Number.isInteger(v) ? v : v.toFixed(2).replace('.', ','));
- $('#qr-code').textContent = CODE; $('#quem').textContent = `${(HL ? (HL.perfil.loja || HL.perfil.nome) : 'Loja do Erick')} indica`; $('#g3-p').textContent = `Cada casa que liga a Nio pelo seu QR vale a partir de ${REAIS(COM)} de bônus. Na semana, cada venda sobe o multiplicador de todas.`;
+ const COM = HL ? HL.comissao : 55, PBON = HL && HL.planos_bonus ? HL.planos_bonus : [{ plano:'600 Mega', valor:55 }, { plano:'800 Mega', valor:70 }, { plano:'1 Giga', valor:85 }, { plano:'Ultra Mesh', valor:100 }], REAIS = v => 'R$ ' + (Number.isInteger(v) ? v : v.toFixed(2).replace('.', ','));
+ $('#qr-code').textContent = CODE; $('#quem').textContent = `${(HL ? (HL.perfil.loja || HL.perfil.nome) : 'Loja do Erick')} indica`; $('#g3-p').textContent = `Cada casa que liga a Nio pelo seu QR vale o valor do plano em bônus: de ${REAIS(COM)} a ${REAIS(Math.max(...PBON.map(x => x.valor)))} por casa.`;
  const WA = HL ? HL.wa : '553420281071'; // WhatsApp de atendimento que recebe as indicações
  $('#qr-name').textContent = nome;
  const toast = (t) => { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(()=>el.classList.remove('on'), 2400); };
@@ -1438,7 +1439,7 @@ body.offline:not(.sigback) .map{opacity:.18}
   $('#f-t').textContent = `A casa ${/a$/i.test(a.n) ? 'da' : 'do'} ${a.n} ligou!`;
   $('#f-s').textContent = list.length > 1 ? `Instalado em ${a.i || a.d} · e mais ${list.length-1} ${list.length === 2 ? 'casa' : 'casas'}` : `Instalado em ${a.i || a.d}`;
   { const kk = HL && HL.kit; let novoKit = false; try { novoKit = !!(kk && kk.ativo && kk.em && !kk.entregue && !localStorage.getItem('hl-kit-visto')); if (novoKit) localStorage.setItem('hl-kit-visto', '1'); } catch (e) {}
-   fx.querySelector('.plus').textContent = novoKit ? `${kk.nome} desbloqueado!` : `Multiplicador da semana subiu!`; }
+   fx.querySelector('.plus').textContent = novoKit ? `${kk.nome} desbloqueado!` : `Bônus garantido!`; }
   fx.classList.remove('go'); fx.hidden = false;
   requestAnimationFrame(() => { fx.classList.add('on'); requestAnimationFrame(() => fx.classList.add('go')); });
   setTimeout(() => buzz([20,50,20,50,70]), still ? 0 : 500);
@@ -1598,7 +1599,7 @@ body.offline:not(.sigback) .map{opacity:.18}
   if (lock || (KIT.em && !KIT.entregue)) { const v = $('#v-kit'); v.className = cls; v.innerHTML = html; v.hidden = false; }
  })();
  const TOTAL = HL ? HL.validadas : 34;
- const METAS = HL ? HL.metas : [{ alvo:20, premio:'Air Fryer', em:'10/11/2026', entregue:null }, { alvo:60, premio:'Smart TV 50"', em:null, entregue:null }, { alvo:200, premio:'iPhone 17', em:null, entregue:null }];
+ const METAS = HL ? HL.metas : [{ alvo:20, premio:'Air Fryer ou R$ 250', em:'10/11/2026', entregue:null }, { alvo:60, premio:'Smart TV 50" ou R$ 2.000', em:null, entregue:null }, { alvo:200, premio:'iPhone 17 ou R$ 6.000', em:null, entregue:null }];
  const proxMeta = METAS.find(m => TOTAL < m.alvo);
  $('#pf-metas').innerHTML = '<span class="fill" id="mt-fill"></span>' + METAS.map(m => {
   const ok = TOTAL >= m.alvo, px = m === proxMeta, ant = (METAS[METAS.indexOf(m) - 1] || { alvo:0 }).alvo;
@@ -1761,7 +1762,7 @@ body.offline:not(.sigback) .map{opacity:.18}
  };
  $('#r-share').addEventListener('click', rkCard); $('#r-share2').addEventListener('click', rkCard);
  if (HL) { $('#exit').href = '/api/sair.php'; $('#ex').remove(); }
- // vendas: bônus disponível para saque, escada da semana, a liberar e saques (as regras vêm da Central)
+ // vendas: bônus disponível para saque, valor por plano, a liberar e saques (as regras vêm da Central)
  const BONUS = HL ? HL.bonus : {
   semana:SEMANA,
   disponivel:110, disp_itens:[{ n:'Rafael', d:'14/10', v:55, f:'16/11' }, { n:'Sônia', d:'12/10', v:55, f:'15/11' }],
@@ -1789,23 +1790,10 @@ body.offline:not(.sigback) .map{opacity:.18}
   bt.textContent = B.disponivel ? `Solicitar saque de ${oculto ? 'R$ •••' : REAIS(B.disponivel)}` : 'Saque pedido';
   const ok0 = document.querySelector('.sacok'); if (ok0) ok0.remove();
   if (pend) bt.insertAdjacentHTML('afterend', `<div class="sacok">Saque de <b>${$$(pend.valor)}</b> pedido em ${pend.pedido}. A CallNet paga no seu PIX ${esc(B.prazo)}.</div>`);
-  // multiplicador da semana: toda venda vale a base × multiplicador; cada venda na semana sobe o multiplicador de todas
-  const MX = n => n < 1 ? 1 : Math.min(S.teto, S.base + S.passo * (n - 1)) / S.base;   // multiplicador com n vendas
-  const fx1 = m => 'x' + (Math.round(m * 100) / 100).toFixed(Math.round(m * 100) % 10 ? 2 : 1).replace('.', ',');
-  const passoX = S.passo / S.base, mxTeto = S.teto / S.base, nT = S.n_teto;
-  const mAgora = MX(S.n), vAgora = S.base * mAgora, total = S.n * (S.n ? vAgora : 0);
-  const mProx = MX(S.n + 1), vProx = S.base * mProx, totProx = (S.n + 1) * vProx, topo = S.n >= nT;
-  const pct = m => (m - 1) / (mxTeto - 1) * 100;
-  $('#v-esc').innerHTML = `<div class="et"><small>Multiplicador da semana</small><span>${S.dias ? `zera em ${plural(S.dias, 'dia', 'dias')} · dom ${S.fim}` : 'zera hoje à noite'}</span></div>
-   <div class="mxv"><div class="mxn"><b>${S.n}</b><em>${S.n === 1 ? 'venda' : 'vendas'}<br>na semana</em></div>
-    <div class="mxbig" aria-label="Multiplicador ${fx1(mAgora)}"><span id="mx-num">${fx1(S.n ? 1 : mAgora)}</span><small>${S.n ? `cada venda vale ${REAIS(vAgora)}` : `a 1ª venda vale ${REAIS(S.base)}`}</small></div></div>
-   <div class="mxconta"><span>${REAIS(S.base)}</span><i>×</i><span class="k">${fx1(mAgora)}</span><i>=</i><span>${REAIS(vAgora)}</span><em>por venda</em></div>
-   <div class="mxbar" aria-hidden="true"><div class="mxfill" style="--p:${pct(mAgora)}%"></div>${Array.from({ length: nT }, (_, k) => `<span class="mxt${k < S.n ? ' on' : ''}${k === S.n - 1 ? ' eu' : ''}${k === nT - 1 ? ' tp' : ''}" style="left:${k / (nT - 1) * 100}%"><i></i>${k === 0 || k === nT - 1 || k === S.n - 1 || k === S.n ? `<b>${fx1(MX(k + 1))}</b>` : ''}</span>`).join('')}</div>
-   <div class="mxleg"><span>1 venda = x1,0</span><span>${nT} ou mais = ${fx1(mxTeto)}</span></div>
-   <div class="eg">${S.n ? `<div><small>Já garantido nesta semana</small><b>${$$(total)}</b><span>${S.n} × ${REAIS(vAgora)}</span></div>` : ''}${topo ? `<div class="nx"><small>Multiplicador no máximo</small><b>${fx1(mxTeto)}</b><span>${REAIS(S.teto)} por venda até domingo</span></div>` : `<div class="nx"><small>Na próxima venda: ${fx1(mProx)}</small><b>${$$(totProx)}</b><span>${S.n + 1} × ${REAIS(vProx)}${S.n ? ` · + ${REAIS(totProx - total)}` : ''}</span></div>`}</div>
-   <p class="ep">${topo ? `Multiplicador no máximo: cada venda até domingo vale <b>${REAIS(S.teto)}</b>.` : `Toda venda vale <b>${REAIS(S.base)} × o seu multiplicador</b>. Cada venda na semana sobe o multiplicador em <b>${String(Math.round(passoX * 100) / 100).replace('.', ',')}</b>, e ele vale para <b>todas</b> as vendas da semana, até ${fx1(mxTeto)}. Zera toda segunda.`}</p>`;
-  // o número do multiplicador sobe na tela (x1,0 → atual)
-  { const el = $('#mx-num'); if (el && S.n > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) { let k = 1; const go = () => { k++; el.textContent = fx1(MX(k)); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); if (k < S.n) setTimeout(go, 160); }; setTimeout(go, 350); } else if (el) el.textContent = fx1(mAgora); }
+  // bônus por plano: cada instalação vale o valor do plano vendido (100% da mensalidade)
+  $('#v-esc').innerHTML = `<div class="et"><small>Quanto vale cada casa</small><span>${S.n ? `${plural(S.n, 'casa', 'casas')} ligadas nesta semana · ${$$(S.total || 0)}` : 'valor do plano vendido'}</span></div>
+   <div class="pbon">${PBON.map(x => `<div><span>${esc(x.plano)}</span><b>${REAIS(x.valor)}</b></div>`).join('')}</div>
+   <p class="ep">Você ganha <b>100% da mensalidade</b> do plano que o cliente assinar. Vendeu o plano de ${REAIS(PBON[0].valor)}, ganha ${REAIS(PBON[0].valor)}; vendeu o de ${REAIS(PBON[PBON.length - 1].valor)}, ganha ${REAIS(PBON[PBON.length - 1].valor)}.</p>`;
   $('#v-rule').textContent = 'O bônus é liberado quando o cliente paga a 1ª fatura (cerca de 30 dias depois da instalação). Aí é só pedir o saque.';
   // linha do tempo do bônus mais adiantado
   const etapa = pend ? 3 : B.disponivel ? 2 : B.a_liberar ? 1 : 0;
@@ -1813,7 +1801,7 @@ body.offline:not(.sigback) .map{opacity:.18}
   $('#v-tl').innerHTML = passos.map((x, k) => `<li class="${k < etapa ? 'ok' : k === etapa ? 'agora' : ''}"><i></i><b>${x}</b></li>`).join('');
   $('#v-tl').hidden = !etapa && !SAQUES.length;
   $('#v-cam').hidden = !CAMINHO;
-  $('#v-cam').innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 21h18M5 21V10l7-6 7 6v11" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 21v-5h4v5" stroke="currentColor" stroke-width="2"/></svg><span>${plural(CAMINHO, 'casa', 'casas')} com técnico para instalar. Cada uma sobe o seu multiplicador da semana.</span>`;
+  $('#v-cam').innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 21h18M5 21V10l7-6 7 6v11" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 21v-5h4v5" stroke="currentColor" stroke-width="2"/></svg><span>${plural(CAMINHO, 'casa', 'casas')} com técnico para instalar. Cada uma vale o valor do plano em bônus.</span>`;
   $('#v-tot').innerHTML = B.recebido ? `Desde que entrou na liga, você já recebeu <b>${$$(B.recebido)}</b>` : 'Seu primeiro saque vai aparecer aqui.';
   $('#v-pix').textContent = PF.pix_tipo ? `${PF.pix_tipo} · ${PF.pix}` : (PF.pix || '—');
   // a liberar

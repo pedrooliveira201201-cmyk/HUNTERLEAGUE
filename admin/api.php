@@ -96,11 +96,10 @@ case 'bonus': {
     'conquista' => $r['tipo'] === 'kit' ? '1ª instalação' : $r['alvo'] . ' instalações validadas', 'premio' => $r['premio'], 'em' => data_br($r['conquistado_em']), 'entregue' => data_br($r['entregue_em']), 'kit' => $r['tipo'] === 'kit',
     'pode' => $r['tipo'] === 'kit' || strtotime($r['conquistado_em'] . ' +30 days') <= time(), 'libera' => date('d/m/Y', strtotime($r['conquistado_em'] . ' +30 days'))],
     all("SELECT r.*, p.codigo, p.whatsapp, COALESCE(p.loja, p.nome) AS pnome FROM premios r JOIN parceiros p ON p.id = r.parceiro_id WHERE r.tipo IN ('meta', 'kit') AND (r.entregue_em IS NULL OR r.entregue_em >= ?) ORDER BY r.entregue_em IS NOT NULL, r.conquistado_em", [date('Y-m-d', strtotime('-60 days'))]));
-  [$b, $p, $t] = bonus_conf();
   json_out(['pedidos' => array_values($pedidos), 'faturas' => $faturas, 'liberados' => $liberados, 'pagos' => $pagos, 'premios' => $premios,
     'tot' => ['pedidos' => array_sum(array_column($pedidos, 'valor')), 'faturas' => array_sum(array_column($faturas, 'v')), 'liberados' => array_sum(array_column($liberados, 'v')),
               'pagos30' => array_sum(array_map(fn($x) => $x['valor'], array_filter($pagos, fn($x) => true)))],
-    'regra' => ['base' => $b, 'passo' => $p, 'teto' => $t, 'prazo' => conf('prazo_saque', 'até 3 dias úteis')]]);
+    'regra' => ['planos' => bonus_planos(), 'prazo' => conf('prazo_saque', 'até 3 dias úteis')]]);
 }
 
 case 'config': {
@@ -161,14 +160,15 @@ case 'etapa': {
     $inst = $dt;
   } else { $inst = null; $fat = null; }
   if ($st === 'Não instalado' && !in_array($mot, MOTIVOS, true)) json_out(['erro' => 'Escolha o motivo.'], 422);
+  if ($st === 'Instalado' && !$plano) json_out(['erro' => 'Escolha o plano vendido: o bônus é o valor do plano.'], 422);
   q('UPDATE indicacoes SET status = ?, motivo = ?, instalado_em = ?, competencia = ?, fatura_em = ?, comissao = ?, plano = ?, cliente_cpf = ?, cliente_nome = ?, cliente_tel = ?, cliente_email = ?, atualizado_em = ? WHERE id = ?',
     [$st, $st === 'Não instalado' ? $mot : null, $inst, $inst ? substr($inst, 0, 7) : null, $fat, $inst ? $i['comissao'] : null, $plano, $cpf ?: null, $nome, $tel ?: null, $email ?: null, agora(), $i['id']]);
-  recalcular_semana((int)$i['parceiro_id'], $i['instalado_em']); recalcular_semana((int)$i['parceiro_id'], $inst);
+  definir_bonus((int)$i['id']);
   $mud = $st !== $i['status'] ? "{$i['status']} → {$st}" . ($st === 'Não instalado' ? " ({$mot})" : '') . ($inst ? " em {$inst}" : '') : 'editou dados';
   auditar($quem, 'etapa', $i['codigo'] . ' #' . $i['id'], $mud);
   verificar_premios((int)$i['parceiro_id']);
   $v = $inst ? (float)(one('SELECT comissao FROM indicacoes WHERE id = ?', [$i['id']])['comissao'] ?? 0) : 0;
-  json_out(['ok' => true, 'msg' => primeiro_nome($nome) . ($st !== $i['status'] ? ": {$st}." : ': dados salvos.') . ($st === 'Instalado' && $st !== $i['status'] ? ' Bônus de R$ ' . number_format($v, 2, ',', '.') . ' (multiplicador da semana), liberado após a 1ª fatura paga.' : '')]);
+  json_out(['ok' => true, 'msg' => primeiro_nome($nome) . ($st !== $i['status'] ? ": {$st}." : ': dados salvos.') . ($st === 'Instalado' && $st !== $i['status'] ? ' Bônus de R$ ' . number_format($v, 2, ',', '.') . " (plano {$plano}), liberado após a 1ª fatura paga." : '')]);
 }
 
 case 'liberar': {
@@ -253,9 +253,7 @@ case 'salvar_config': {
   $metas = [];
   foreach (preg_split('/\R/', $s('metas', 2000)) as $l) { [$x, $y] = array_pad(array_map('trim', explode('|', $l, 2)), 2, ''); if ((int)$x > 0 && $y !== '') $metas[] = (int)$x . '|' . mb_substr(strip_tags($y), 0, 80); }
   $v = [
-    'bonus_base' => (string)max(0, (float)str_replace(',', '.', $s('bonus_base', 10))),
-    'bonus_passo' => (string)max(0, (float)str_replace(',', '.', $s('bonus_passo', 10))),
-    'bonus_teto' => (string)max(0, (float)str_replace(',', '.', $s('bonus_teto', 10))),
+    'bonus_planos' => implode('|', array_map(fn($k) => (string)max(0, (float)str_replace(',', '.', $s('bonus_pl_' . $k, 10))), array_keys(PLANOS))),
     'prazo_saque' => mb_substr(strip_tags($s('prazo_saque', 60)), 0, 60) ?: 'até 3 dias úteis',
     'whatsapp' => so_digitos($s('whatsapp', 20)), 'mensagem_wa' => $s('mensagem_wa', 300),
     'cidades' => implode(', ', array_filter(array_map('trim', explode(',', $s('cidades', 1000))))),
@@ -267,7 +265,7 @@ case 'salvar_config': {
     'kit_itens' => mb_substr(strip_tags($s('kit_itens', 300)), 0, 300),
   ];
   if (!array_key_exists('kit_nome', $e)) unset($v['kit_ativo'], $v['kit_nome'], $v['kit_itens']);   // formulário sem a parte do kit não mexe nele
-  if ((float)$v['bonus_teto'] < (float)$v['bonus_base']) json_out(['erro' => 'O teto do bônus não pode ser menor que a base.'], 422);
+  foreach (explode('|', $v['bonus_planos']) as $x) if ((float)$x <= 0) json_out(['erro' => 'Informe o bônus de todos os planos.'], 422);
   if (strlen($v['whatsapp']) < 12 || !str_contains($v['mensagem_wa'], '{codigo}')) json_out(['erro' => 'WhatsApp com 55 + DDD, e a mensagem precisa ter {codigo}.'], 422);
   foreach ($v as $k => $x) { if (one('SELECT chave FROM config WHERE chave = ?', [$k])) q('UPDATE config SET valor = ? WHERE chave = ?', [$x, $k]); else q('INSERT INTO config (chave, valor) VALUES (?, ?)', [$k, $x]); }
   auditar($quem, 'configurações');

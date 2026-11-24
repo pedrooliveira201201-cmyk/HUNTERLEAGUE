@@ -3,7 +3,7 @@
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 /* Versão do contrato aceita no cadastro. Mude junto com o texto do termo.html. */
-const TERMO_VERSAO = '2.1-preliminar';
+const TERMO_VERSAO = '2.2-preliminar';
 exige_post();
 $e = entrada();
 $t = fn($k, $max = 120) => mb_substr(trim(preg_replace('/\s+/', ' ', (string)($e[$k] ?? ''))), 0, $max);
