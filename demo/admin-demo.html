@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050607">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<title>Central | Hunter League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/*
+Central da CallNet (admin da Hunter League). Mesma estética do app: preto, ciano, chanfros do brasão.
+Feita para o dia a dia: o que fazer hoje, registrar indicação colando o WhatsApp, avançar etapas com um toque, liberar o bônus após a 1ª fatura e pagar os saques.
+*/
+:root{color-scheme:dark;--bg:#050607;--p1:#0B1013;--p2:#10171B;--ln:#1B252B;--ln2:#26333A;--ink:#EEF2F4;--sil:#BEC5CC;--mut:#7E8A92;--c:#19F7FF;--c2:#AEFCFF;--b:#0079FD;--ok:#4DF0A0;--warn:#FFC857;--bad:#FF6B81;--cut:12px;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:radial-gradient(60% 40% at 0 0,rgba(25,247,255,.07),transparent 60%),radial-gradient(50% 40% at 100% 100%,rgba(0,121,253,.07),transparent 60%),var(--bg);background-attachment:fixed;color:var(--ink);font:500 15px/1.45 Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+a{color:var(--c)}
+.ch{clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.bs{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:.01em}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+
+/* estrutura: barra lateral no computador, barra de baixo no celular */
+.side{position:fixed;left:0;top:0;bottom:0;width:248px;display:flex;flex-direction:column;gap:6px;padding:20px 14px;background:linear-gradient(180deg,#081014,#050708);border-right:1px solid var(--ln);z-index:20}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px 14px}
+.brand img{width:44px;height:auto}
+.brand b{display:block;font-size:22px;line-height:.95}
+.brand small{display:block;color:var(--mut);font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.novo{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;margin:4px 0 12px;border:0;background:var(--c);color:#050607;font:900 19px "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;box-shadow:0 0 24px rgba(25,247,255,.25)}
+.novo:active{transform:scale(.97)}
+.nv{display:flex;align-items:center;gap:12px;width:100%;height:48px;padding:0 12px;border:0;background:none;color:var(--sil);font-weight:700;font-size:15px;text-align:left;border-left:3px solid transparent}
+.nv svg{flex:none;color:var(--mut)}
+.nv .ct{margin-left:auto;min-width:22px;height:22px;padding:0 6px;display:grid;place-items:center;background:var(--bad);color:#fff;font-size:12px;font-weight:800;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+.nv.on{color:#fff;background:linear-gradient(90deg,rgba(25,247,255,.12),transparent);border-left-color:var(--c)}
+.nv.on svg{color:var(--c)}
+.side .foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 8px 0;border-top:1px solid var(--ln)}
+.av{display:grid;place-items:center;flex:none;width:38px;height:38px;background:#12232A;color:var(--c2);font-weight:800;font-size:13px;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.side .foot b{display:block;font-size:14px}.side .foot small{color:var(--mut);font-size:12px}
+.side .foot button{margin-left:auto;border:0;background:none;color:var(--mut);padding:8px}
+main{margin-left:248px;padding:28px 32px 60px;max-width:1240px}
+.top{display:none}
+.bot{display:none}
+@media (max-width:900px){
+ .side{display:none}
+ main{margin:0;padding:calc(72px + var(--st)) 16px calc(96px + var(--sb))}
+ .top{position:fixed;left:0;right:0;top:0;z-index:20;display:flex;align-items:center;gap:10px;height:calc(60px + var(--st));padding:var(--st) 14px 0;background:rgba(5,6,7,.96);border-bottom:1px solid var(--ln)}
+ .top img{width:34px}
+ .top b{font-size:22px}
+ .top .av{margin-left:auto;border:0}
+ .bot{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;height:calc(68px + var(--sb));padding-bottom:var(--sb);background:#060809;border-top:1px solid var(--ln)}
+ .bot button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:68px;border:0;background:none;color:var(--mut);font-size:11.5px;font-weight:700}
+ .bot button.on{color:var(--c)}
+ .bot button .ct{position:absolute;top:8px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 4px;display:grid;place-items:center;background:var(--bad);color:#fff;font-size:10.5px;font-weight:800;border-radius:9px}
+ .bot .mais{align-self:center;justify-self:center;width:58px;height:58px;margin-bottom:22px;background:var(--c);color:#050607;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);box-shadow:0 0 20px rgba(25,247,255,.4)}
+ .bot .mais span{display:none}
+}
+
+/* cabeçalho das telas */
+.hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.hd h1{margin:0;font-size:clamp(40px,6vw,56px);line-height:.9}
+.hd p{margin:6px 0 0;color:var(--mut);font-weight:600}
+.hd .act{display:flex;gap:8px;flex-wrap:wrap}
+
+/* botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border:0;background:var(--c);color:#050607;font-weight:800;font-size:14.5px;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);transition:transform .1s,filter .2s;white-space:nowrap;text-decoration:none}
+.btn:active{transform:scale(.96)}
+.btn:hover{filter:brightness(1.08)}
+.btn.g{background:#15222A;color:var(--ink)}
+.btn.ok{background:var(--ok);color:#03140B}
+.btn.bad{background:#3A1520;color:#FFB3C0}
+.btn.sm{height:36px;padding:0 12px;font-size:13.5px}
+.btn:disabled{opacity:.5;pointer-events:none}
+.ico{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--ln2);background:var(--p1);color:var(--sil);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+
+/* hoje */
+.ola{margin-bottom:26px}
+.ola h1{margin:0;font-size:clamp(44px,7vw,64px);line-height:.9}
+.ola h1 span{color:var(--c)}
+.ola p{margin:8px 0 0;color:var(--mut);font-weight:600}.ola p::first-letter{text-transform:uppercase}
+.tarefas{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.tf{position:relative;display:flex;flex-direction:column;gap:6px;padding:20px 20px 18px;background:linear-gradient(150deg,var(--p2),var(--p1));border:1px solid var(--ln);overflow:hidden;--a:var(--c)}
+.tf::before{content:"";position:absolute;left:0;top:0;width:64px;height:3px;background:var(--a);box-shadow:0 0 14px var(--a)}
+.tf::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;background:radial-gradient(closest-side,color-mix(in srgb,var(--a) 18%,transparent),transparent);pointer-events:none}
+.tf .n{font-size:58px;line-height:.85;color:var(--a)}
+.tf b{font-size:17px}
+.tf small{color:var(--mut);font-weight:600;font-size:13.5px;line-height:1.35}
+.tf .btn{align-self:flex-start;margin-top:10px;background:var(--a)}
+.emdia{display:flex;align-items:center;gap:18px;padding:26px;background:linear-gradient(120deg,rgba(77,240,160,.12),var(--p1));border:1px solid rgba(77,240,160,.3)}
+.emdia .ok2{display:grid;place-items:center;flex:none;width:64px;height:64px;background:var(--ok);color:#03140B;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.emdia b{font-size:26px}.emdia p{margin:4px 0 0;color:var(--sil)}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}@media (max-width:600px){.g3{grid-template-columns:1fr 1fr}}
+.tri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:10px}
+.tr{padding:18px;background:linear-gradient(150deg,#0E2328,#091317 70%);border:1px solid var(--ln);border-top:3px solid var(--a)}
+.tr small{display:block;color:var(--a);font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
+.tr b{display:block;font-size:clamp(30px,4.4vw,42px);line-height:1;margin:6px 0 4px}
+.tr span{color:var(--sil);font-size:13px;font-weight:600}
+.escada{margin:2px 0 18px;color:var(--mut);font-size:13px;font-weight:600}
+.exp .mes{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:1px solid var(--ln2);background:#0A1013;color:var(--mut);font-size:12.5px;font-weight:700}
+.exp .mes input{background:transparent;border:0;color:var(--ink);font:inherit;outline:none;color-scheme:dark}
+.cls{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.cl{padding:3px 8px;background:#0F1A1E;border:1px solid var(--ln);font-size:12px;color:var(--sil);font-weight:700}.cl i{font-style:normal;color:var(--mut)}
+.fat{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:16px;align-items:center;padding:14px 16px;background:var(--p1);border:1px solid var(--ln)}
+.fat.pronta{border-left:3px solid #FFC857}.fat .nm{font-weight:800}.fat .sub{color:var(--mut);font-size:12.5px;font-weight:600}.fat .val{font-size:24px}
+.fat .qd{text-align:right}.fat .qd b{display:block;font-size:14px}.fat .qd small{color:var(--mut);font-size:12px;font-weight:700}
+.lib{background:var(--p1);border:1px solid var(--ln)}.lib summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;list-style:none}
+.lib summary::-webkit-details-marker{display:none}.lib .nm{display:block;font-weight:800}.lib .sub{display:block;color:var(--mut);font-size:12.5px;font-weight:600}.lib .val{font-size:24px;color:var(--c)}
+.lib .li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;padding:10px 16px;border-top:1px solid var(--ln)}
+.lib .li small{grid-column:1;color:var(--mut);font-size:12px}.lib .li b{grid-row:1/3;grid-column:2}.lib .li .lk{grid-row:1/3;grid-column:3}
+.lk{background:none;border:0;color:var(--mut);font-weight:700;font-size:12.5px;text-decoration:underline;cursor:pointer}.lk:hover{color:var(--bad)}
+@media (max-width:900px){.tri{grid-template-columns:1fr;gap:8px}.tr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 12px;padding:12px 14px}.tr small{grid-column:1}.tr b{grid-column:2;grid-row:1/3;font-size:26px;margin:0}.tr span{grid-column:1;font-size:12px}.fat{grid-template-columns:minmax(0,1fr) auto}.fat .qd{text-align:left}.fat .btn{grid-column:1/-1}.exp{flex-wrap:wrap}.exp .mes{flex:1 1 100%}.exp .btn{flex:1 1 0}.pg .pag input{flex:1 1 100%}.pg .pag .anx,.pg .pag .btn{flex:1 1 0}}
+.sec{margin:34px 0 12px;color:var(--mut);font-size:12.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.st{padding:14px 16px;background:var(--p1);border:1px solid var(--ln)}
+.st b{display:block;font-size:34px;line-height:1}
+.st span{display:block;margin-top:4px;color:var(--mut);font-size:12.5px;font-weight:600}
+.tl{list-style:none;margin:0;padding:0;border-left:2px solid var(--ln2);margin-left:6px}
+.tl li{position:relative;padding:8px 0 12px 20px;font-size:14px}
+.tl li::before{content:"";position:absolute;left:-7px;top:13px;width:10px;height:10px;background:var(--bg);border:2px solid var(--c);transform:rotate(45deg)}
+.tl li small{display:block;color:var(--mut);font-size:12.5px}
+
+/* indicações */
+.busca{position:relative;flex:1;min-width:220px;max-width:420px}
+.busca input{width:100%;height:46px;padding:0 14px 0 42px;border:1px solid var(--ln2);background:var(--p1);outline:none}
+.busca input:focus{border-color:var(--c)}
+.busca svg{position:absolute;left:14px;top:13px;color:var(--mut)}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px;padding-bottom:2px}
+.tabs button{flex:none;display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;border:1px solid var(--ln2);background:var(--p1);color:var(--sil);font-weight:700;font-size:14px}
+.tabs button i{font-style:normal;min-width:22px;padding:1px 6px;background:#1A262C;color:var(--sil);font-size:12px;text-align:center}
+.tabs button[aria-selected=true]{border-color:var(--c);color:#fff;background:rgba(25,247,255,.08)}
+.tabs button[aria-selected=true] i{background:var(--c);color:#050607}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.ci{display:flex;flex-direction:column;gap:10px;padding:16px;background:linear-gradient(160deg,var(--p2),var(--p1));border:1px solid var(--ln);animation:entra .3s ease both}
+@keyframes entra{from{opacity:0;transform:translateY(6px)}}
+.ci .l1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ci .nm{font-size:17px;font-weight:800;line-height:1.2}
+.idade{flex:none;padding:3px 8px;background:#15222A;color:var(--sil);font-size:12px;font-weight:700}
+.idade.velha{background:rgba(255,200,87,.15);color:var(--warn)}
+.ci .tel{display:inline-flex;align-items:center;gap:6px;color:var(--ink);text-decoration:none;font-weight:700}
+.ci .tel svg{color:var(--ok)}
+.ci .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:var(--mut);font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;background:#14232A;color:var(--c2);font-size:12.5px;font-weight:700}
+.chip.app{background:rgba(50,224,0,.14);color:#7CFF5A}
+.chip.pl{background:#1A2026;color:var(--sil)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;font-size:12.5px;font-weight:800}
+.pill::before{content:"";width:7px;height:7px;background:currentColor;transform:rotate(45deg)}
+.p-Nova{color:var(--c2);background:rgba(174,252,255,.1)}.p-Em{color:#7FD8FF;background:rgba(127,216,255,.1)}.p-Aguardando{color:var(--warn);background:rgba(255,200,87,.12)}
+.p-Instalado,.p-ativo{color:var(--ok);background:rgba(77,240,160,.12)}.p-Não,.p-Cancelado,.p-bloqueado,.p-desfiliado,.p-recusado{color:var(--bad);background:rgba(255,107,129,.12)}.p-pendente{color:var(--warn);background:rgba(255,200,87,.12)}
+.ci .acoes{display:flex;gap:8px;margin-top:auto;padding-top:4px}
+.ci .acoes .btn{flex:1}
+.vazio{padding:40px 20px;text-align:center;color:var(--mut);background:var(--p1);border:1px dashed var(--ln2)}
+.vazio b{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
+
+/* parceiros */
+.pend{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px}
+.pc{display:flex;flex-direction:column;gap:8px;padding:16px;background:linear-gradient(150deg,rgba(255,200,87,.1),var(--p1) 60%);border:1px solid rgba(255,200,87,.35)}
+.pc .nm{font-weight:800;font-size:17px}
+.pc .meta{color:var(--mut);font-size:13px;line-height:1.5}
+.pc .acoes{display:flex;gap:8px;margin-top:6px}
+.lista{display:grid;gap:8px}
+.pr{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;padding:12px 14px;background:var(--p1);border:1px solid var(--ln);text-align:left}
+.pr:hover{border-color:var(--ln2);background:var(--p2)}
+.pr .av{width:44px;height:44px}
+.pr .nm{font-weight:800;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr .sub{color:var(--mut);font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr .dir{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.pr .nums{color:var(--mut);font-size:12px;font-weight:700;white-space:nowrap}
+.pr .nums b{color:var(--ink)}
+.cod{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;color:var(--c2);font-size:13px}
+.flt{display:flex;gap:6px;flex-wrap:wrap}
+
+/* pagar */
+.pagtop{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.pagtop b{font-size:20px;min-width:0;flex:1;text-align:center}
+.hero{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:22px;background:linear-gradient(125deg,#0E2328,#091317 60%);border:1px solid rgba(25,247,255,.25);margin-bottom:16px}
+.hero small{display:block;color:var(--c2);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.hero .v{display:block;font-size:clamp(42px,8vw,60px);line-height:.9;color:var(--c);text-shadow:0 0 24px rgba(25,247,255,.3)}
+.hero p{margin:6px 0 0;color:var(--sil);font-weight:600}
+.hero .dt{text-align:center;padding-left:18px;border-left:2px dashed rgba(174,252,255,.3)}
+.hero .dt b{display:block;font-size:50px;line-height:.85}
+.hero .dt span{color:var(--sil);font-weight:800;letter-spacing:.06em}
+.bar{height:6px;margin-top:12px;background:#152227}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--b),var(--c))}
+.pg{display:grid;grid-template-columns:minmax(0,1.2fr) auto minmax(0,1.4fr) auto;align-items:center;gap:14px;padding:14px 16px;background:var(--p1);border:1px solid var(--ln);margin-bottom:8px}
+.pg .nm{font-weight:800}
+.pg .sub{color:var(--mut);font-size:12.5px;font-weight:600}
+.pg .val{font-size:28px;line-height:1}
+.pix{display:flex;align-items:center;gap:8px;min-width:0;padding:8px 10px;background:#0E161A;border:1px solid var(--ln2)}
+.pix span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;font-weight:600}
+.pix button{flex:none;border:0;background:#15262D;color:var(--c);font-size:12.5px;font-weight:800;padding:5px 9px}
+.pg .pag{display:flex;gap:8px}
+.pg .pag input{width:150px;height:40px;padding:0 10px;border:1px solid var(--ln2);background:#0A1013;outline:none}
+.pg.pago{border-color:rgba(77,240,160,.3);background:linear-gradient(90deg,rgba(77,240,160,.07),var(--p1))}
+.pg .feito{color:var(--ok);font-weight:800;font-size:13.5px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.anx{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border:1px dashed var(--ln2);background:#0A1013;color:var(--sil);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.anx:hover{border-color:var(--c);color:var(--ink)}.anx.tem{border-style:solid;border-color:var(--ok);color:var(--ok)}.anx input{display:none}
+.anx.sm{height:30px;font-size:12.5px}.vcp{display:inline-flex;align-items:center;gap:6px;color:var(--c);font-weight:800;font-size:13px;text-decoration:none}.vcp:hover{text-decoration:underline}
+.exp{display:flex;gap:8px;flex-wrap:wrap}.exp .btn svg{flex:none}
+@media (max-width:900px){.pg .pag{flex-wrap:wrap}.pg .pag .anx{flex:1;max-width:none;justify-content:center}.pg .feito{align-items:flex-start;text-align:left}.exp{width:100%}.exp .btn{flex:1}}
+@media (max-width:900px){.pg{grid-template-columns:1fr auto}.pg .pix,.pg .pag,.pg .feito{grid-column:1/-1}.pg .pag input{flex:1;width:auto}.hero{grid-template-columns:1fr}.hero .dt{display:none}}
+.prems{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.pm{display:flex;gap:14px;align-items:center;padding:16px;background:linear-gradient(150deg,var(--p2),var(--p1));border:1px solid var(--ln)}
+.pm .gi{display:grid;place-items:center;flex:none;width:54px;height:54px;background:#12262C;color:var(--c2);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.pm b{display:block;font-size:17px}
+.pm small{display:block;color:var(--mut);font-size:12.5px;font-weight:600}
+.pm .btn{margin-left:auto}
+.pm.ent{opacity:.6}
+
+/* mais */
+.form{display:grid;gap:14px;max-width:680px;padding:22px;background:var(--p1);border:1px solid var(--ln)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:600px){.g2{grid-template-columns:1fr}}
+label.f{display:block;font-size:13.5px;font-weight:700;color:var(--sil)}
+label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:6px;height:48px;padding:0 14px;border:1px solid var(--ln2);background:#080C0E;color:var(--ink);font-size:16px;outline:none}
+label.f textarea{height:auto;min-height:96px;padding:12px 14px;resize:vertical}
+label.f input:focus,label.f textarea:focus,label.f select:focus{border-color:var(--c)}
+label.f small{display:block;margin-top:5px;color:var(--mut);font-weight:600}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.hist li{display:grid;grid-template-columns:110px 130px 1fr;gap:12px;padding:10px 14px;background:var(--p1);border:1px solid var(--ln);font-size:13.5px}
+.hist li span{color:var(--mut)}
+@media (max-width:700px){.hist li{grid-template-columns:1fr}}
+
+/* janelas */
+.scrim{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,4,5,.78);opacity:0;transition:opacity .18s}
+.scrim.on{opacity:1}
+.jan{position:relative;width:min(560px,100%);max-height:calc(100vh - 40px);overflow-y:auto;padding:24px;background:linear-gradient(170deg,#0F181C,#080C0E);border:1px solid var(--ln2);transform:translateY(12px) scale(.98);transition:transform .22s cubic-bezier(.2,.9,.3,1.2)}
+.scrim.on .jan{transform:none}
+.jan::before{content:"";position:absolute;left:0;top:0;width:80px;height:3px;background:var(--c);box-shadow:0 0 14px var(--c)}
+.jan h2{margin:0 40px 4px 0;font-size:34px;line-height:.95}
+.jan .sub{margin:0 0 16px;color:var(--mut);font-weight:600}
+.jan .x{position:absolute;right:14px;top:14px}
+.jan .rod{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+@media (max-width:700px){.scrim{align-items:flex-end;padding:0}.jan{width:100%;max-height:92vh;padding:22px 18px calc(22px + var(--sb));clip-path:none;border-left:0;border-right:0;border-bottom:0}.jan .rod .btn{flex:1 1 auto}}
+.opcs{display:flex;flex-wrap:wrap;gap:8px}
+.opcs button{min-height:44px;padding:0 14px;border:1px solid var(--ln2);background:#0C1316;color:var(--sil);font-weight:700}
+.opcs button[aria-pressed=true]{border-color:var(--c);background:rgba(25,247,255,.1);color:#fff}
+.colar{display:block;width:100%;min-height:86px;padding:12px 14px;border:1px dashed rgba(25,247,255,.45);background:rgba(25,247,255,.04);color:var(--ink);outline:none;resize:vertical}
+.achou{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;font-weight:700}
+.achou.sim{color:var(--ok)}.achou.nao{color:var(--bad)}
+.erro{padding:12px 14px;background:rgba(255,107,129,.12);border-left:3px solid var(--bad);color:#FFC2CD;font-weight:700;margin-top:12px}
+.det{display:grid;grid-template-columns:auto 1fr;gap:0;margin:6px 0 0;border-top:1px solid var(--ln)}
+.det dt,.det dd{margin:0;padding:10px 0;border-bottom:1px solid var(--ln);font-size:14px}
+.det dt{color:var(--mut);padding-right:16px}
+.det dd{text-align:right;font-weight:700;overflow-wrap:anywhere}
+.senha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px;margin-top:12px;background:rgba(25,247,255,.08);border:1px solid rgba(25,247,255,.4)}
+.senha b{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:22px;letter-spacing:.06em;color:var(--c)}
+
+/* avisos */
+.toasts{position:fixed;left:50%;bottom:calc(24px + var(--sb));z-index:70;display:grid;gap:8px;transform:translateX(-50%);width:min(520px,calc(100vw - 24px));pointer-events:none}
+@media (max-width:900px){.toasts{bottom:calc(84px + var(--sb))}}
+.toast{display:flex;gap:10px;align-items:flex-start;padding:14px 16px;background:#0E1A1E;border:1px solid rgba(77,240,160,.4);border-left:4px solid var(--ok);box-shadow:0 14px 30px rgba(0,0,0,.6);font-weight:700;font-size:14.5px;animation:tin .3s cubic-bezier(.2,.9,.3,1.2)}
+.toast.bad{border-color:rgba(255,107,129,.4);border-left-color:var(--bad)}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}}
+.demo{display:flex;align-items:center;justify-content:center;gap:12px;white-space:nowrap;overflow:hidden;padding:8px 14px;background:linear-gradient(90deg,#0A2A30,#081B20);color:var(--c2);font-size:13px;font-weight:700;border-bottom:1px solid #12434C}
+.demo a{color:var(--c)}
+body.ehdemo .side{top:34px}
+body.ehdemo main{padding-top:24px}
+@media (max-width:900px){.demo .dl{display:none}body.ehdemo .top{top:0}body.ehdemo .demo{position:fixed;left:0;right:0;top:calc(60px + var(--st));z-index:19}body.ehdemo main{padding-top:calc(112px + var(--st))}}
+.carregando{padding:60px 0;text-align:center;color:var(--mut)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.kitf{display:grid;gap:10px;margin:0;padding:12px;border:1px solid var(--line,#22343B)}
+.kitf legend{padding:0 6px;font-weight:800}
+.kitf .ck{display:flex;align-items:center;gap:8px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="demo" id="demo-bar" hidden><span>DEMONSTRAÇÃO<span class="dl"> · dados de exemplo, nada é salvo</span></span><a href="index.html">Abrir o app</a><a href="#" id="demo-reset">Recomeçar</a></div>
+
+<aside class="side" aria-label="Menu">
+ <div class="brand"><img src="img/crest-160.webp" alt=""><div><b class="bs">Hunter League</b><small>Central CallNet</small></div></div>
+ <button class="novo ch" data-novo type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>Indicação</button>
+ <nav id="nav-side"></nav>
+ <div class="foot"><span class="av" id="me-av">E</span><div><b id="me-n">Erick</b><small id="me-p">master</small></div><button type="button" data-sair title="Sair"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+</aside>
+<header class="top"><img src="img/crest-160.webp" alt=""><b class="bs" id="top-t">Hoje</b><button class="av" type="button" data-ir="mais" aria-label="Mais opções" id="me-av2">E</button></header>
+
+<main id="main"><p class="carregando">Carregando…</p></main>
+
+<nav class="bot" id="nav-bot" aria-label="Menu"></nav>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="jan-root"></div>
+
+<script>
+// Dados de exemplo da Central (demonstração). Mesmas respostas da API de verdade, tudo em memória.
+window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
+(() => {
+ const hoje = new Date(), pad = n => String(n).padStart(2, '0');
+ const br = d => d ? `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}` : '';
+ const dh = d => `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+ const atras = (dias, h = 10) => { const d = new Date(hoje); d.setDate(d.getDate() - dias); d.setHours(Math.min(h, hoje.getHours() || h), 12, 0, 0); if (d > hoje) d.setTime(hoje.getTime() - 60000); return d; };
+ const deISO = s => { const [a, m, d] = s.split('-').map(Number); return new Date(a, m - 1, d, 12); };
+ const reais = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+ const telBr = t => t.length === 11 ? `(${t.slice(0,2)}) ${t.slice(2,7)}-${t.slice(7)}` : t;
+ const dias = d => Math.max(0, Math.floor((hoje - d) / 864e5));
+ const seg = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.getTime(); };
+ let D;
+ const novo = () => ({
+  cfg: { bonus_base:'50', bonus_passo:'5', bonus_teto:'100', prazo_saque:'até 3 dias úteis', whatsapp:'553420281071', mensagem_wa:'Olá! Quero saber da internet Nio Fibra. Código do parceiro: {codigo}', cidades:'todas', cidades_promo:'', metas:'20|Air Fryer\n60|Smart TV 50"\n200|iPhone 17', kit_ativo:'1', kit_nome:'Kit do Estabelecimento', kit_itens:'Adesivos, QR Code para o balcão e panfletos', validade_dias:'60', pixel_meta:'', smtp_host:'smtp.zoho.com', smtp_porta:'465', smtp_usuario:'', smtp_nome:'Hunter League · CallNet', smtp_tem_senha:false },
+  pars: [
+   { id:1, tipo:'lojista', nome:'Erick Silva', loja:'Loja do Erick', doc:'11.222.333/0001-81', wa_d:'34999994444', email:'erick@loja.com', cidade:'Araguari - MG', pix:'(34) 99999-4444', codigo:'HL-ARG-0001', status:'ativo', nivel:'Hunter Elite', desde:'21/11/2026', termo:'v2.0-preliminar em 21/11/2026', obs:'', leit:46 },
+   { id:2, tipo:'lojista', nome:'Maria das Dores', loja:'Mercearia Bom Preço', doc:'12.345.678/0001-95', wa_d:'34998123311', email:'maria@bompreco.com', cidade:'Araguari - MG', pix:'12.345.678/0001-95', codigo:'HL-ARG-0002', status:'ativo', nivel:'Hunter', desde:'21/11/2026', termo:'v2.0-preliminar em 21/11/2026', obs:'Loja de esquina, muito movimento de manhã.', leit:71 },
+   { id:3, tipo:'vendedor', nome:'Ana Ribeiro', loja:'Ana Ribeiro MEI', doc:'45.987.654/0001-20', wa_d:'34997210090', email:'ana@gmail.com', cidade:'Araguari - MG', pix:'ana@gmail.com', codigo:'HL-ARG-0003', status:'ativo', nivel:'Hunter', desde:'21/11/2026', termo:'v2.0-preliminar em 21/11/2026', obs:'', leit:12 },
+   { id:4, tipo:'lojista', nome:'José Carlos Moura', loja:'Farmácia Central', doc:'98.765.432/0001-10', wa_d:'34996542210', email:'jose@farmacia.com', cidade:'Araguari - MG', pix:'98.765.432/0001-10', codigo:null, status:'pendente', nivel:'Recruta', desde:br(hoje), termo:'v2.0-preliminar em ' + br(hoje), obs:'', leit:0 },
+   { id:5, tipo:'vendedor', nome:'Bruno Santos', loja:'Bruno Fretes MEI', doc:'33.444.555/0001-66', wa_d:'34991338080', email:'bruno@fretes.com', cidade:'Araguari - MG', pix:'(34) 99133-8080', codigo:null, status:'pendente', nivel:'Recruta', desde:br(hoje), termo:'v2.0-preliminar em ' + br(hoje), obs:'', leit:0 },
+   { id:6, tipo:'lojista', nome:'Lúcia Ferreira', loja:'Ótica Visão', doc:'45.678.912/0001-34', wa_d:'34993215566', email:'lucia@otica.com', cidade:'Araguari - MG', pix:'(34) 99321-5566', codigo:'HL-ARG-0004', status:'bloqueado', nivel:'Recruta', desde:'10/11/2026', termo:'v1.0 em 10/11/2026', obs:'Bloqueado a pedido da loja (reforma).', leit:3 }
+  ],
+  inds: [
+   { id:1, p:1, nome:'Luiza Alves Costa', tel_d:'34992101111', cpf:'', email:'', cep:'', num:'', plano:'', status:'Nova', motivo:'', origem:'qr', criado:atras(0, 9), at:atras(0, 9) },
+   { id:2, p:2, nome:'Roberto Lima', tel_d:'34992107777', cpf:'', email:'roberto@gmail.com', cep:'38440-012', num:'88', plano:'800 Mega', status:'Nova', motivo:'', origem:'app', criado:atras(0, 8), at:atras(0, 8) },
+   { id:3, p:2, nome:'Júlia Mendes', tel_d:'34992104444', cpf:'', email:'', cep:'', num:'', plano:'', status:'Em atendimento', motivo:'', origem:'qr', criado:atras(3), at:atras(3) },
+   { id:4, p:1, nome:'Marcos Vieira', tel_d:'34992103333', cpf:'123.456.789-09', email:'', cep:'', num:'', plano:'1 Giga', status:'Aguardando instalação', motivo:'', origem:'qr', criado:atras(4), at:atras(1) },
+   { id:5, p:3, nome:'Sandra Rocha', tel_d:'34992108888', cpf:'', email:'', cep:'', num:'', plano:'600 Mega', status:'Aguardando instalação', motivo:'', origem:'qr', criado:atras(5), at:atras(2) },
+   { id:6, p:1, nome:'Ana Paula Souza', tel_d:'34992102222', cpf:'', email:'', cep:'', num:'', plano:'1 Giga', status:'Instalado', motivo:'', origem:'qr', criado:atras(6), at:atras(2), inst:atras(2) },
+   { id:7, p:2, nome:'Pedro Lima', tel_d:'34992105555', cpf:'', email:'', cep:'', num:'', plano:'', status:'Não instalado', motivo:'Restrição de CPF', origem:'qr', criado:atras(7), at:atras(5) },
+   // instalados há ~1 mês: esperando a 1ª fatura (prontos para conferir)
+   { id:8, p:2, nome:'Carla Nunes', tel_d:'34992200001', cpf:'', email:'', cep:'', num:'', plano:'1 Giga', status:'Instalado', motivo:'', origem:'qr', criado:atras(36), at:atras(29), inst:atras(29) },
+   { id:9, p:2, nome:'Diego Prado', tel_d:'34992200002', cpf:'', email:'', cep:'', num:'', plano:'800 Mega', status:'Instalado', motivo:'', origem:'qr', criado:atras(35), at:atras(28), inst:atras(28) },
+   { id:10, p:3, nome:'Helena Dias', tel_d:'34992200003', cpf:'', email:'', cep:'', num:'', plano:'1 Giga', status:'Instalado', motivo:'', origem:'qr', criado:atras(33), at:atras(27), inst:atras(27) },
+   // liberados (1ª fatura paga), o parceiro ainda não pediu
+   { id:11, p:1, nome:'Rafael Gomes', tel_d:'34992200004', cpf:'', email:'', cep:'', num:'', plano:'1 Giga', status:'Instalado', motivo:'', origem:'qr', criado:atras(44), at:atras(38), inst:atras(38), fatura:atras(6) },
+   // saque pedido pela Mercearia (3 clientes)
+   { id:12, p:2, nome:'Sônia Martins', tel_d:'34992200005', cpf:'', email:'', cep:'', num:'', plano:'1 Giga', status:'Instalado', motivo:'', origem:'qr', criado:atras(50), at:atras(43), inst:atras(43), fatura:atras(10), saque:1 },
+   { id:13, p:2, nome:'Paulo Reis', tel_d:'34992200006', cpf:'', email:'', cep:'', num:'', plano:'800 Mega', status:'Instalado', motivo:'', origem:'qr', criado:atras(49), at:atras(42), inst:atras(42), fatura:atras(9), saque:1 },
+   { id:14, p:2, nome:'Vera Lúcia', tel_d:'34992200007', cpf:'', email:'', cep:'', num:'', plano:'600 Mega', status:'Instalado', motivo:'', origem:'qr', criado:atras(48), at:atras(41), inst:atras(41), fatura:atras(9), saque:1 },
+   // saque já pago (Ana)
+   { id:15, p:3, nome:'Igor Campos', tel_d:'34992200008', cpf:'', email:'', cep:'', num:'', plano:'1 Giga', status:'Instalado', motivo:'', origem:'qr', criado:atras(60), at:atras(52), inst:atras(52), fatura:atras(20), saque:2 }
+  ],
+  saques: [
+   { id:1, p:2, pedido:atras(1, 18), pago:null, pix_id:'', arq:'', por:'' },
+   { id:2, p:3, pedido:atras(15, 11), pago:atras(14), pix_id:'E18236120202611101412s0a1B2c3', arq:'', por:'erick' }
+  ],
+  premios: [{ id:1, p:2, alvo:20, premio:'Air Fryer', em:atras(34), entregue:null }],
+  equipe: [{ id:1, nome:'Erick', usuario:'erick', papel:'master', ativo:true, eu:true }, { id:2, nome:'Sabrina', usuario:'sabrina', papel:'atendimento', ativo:true, eu:false }],
+  hist: [{ em:atras(0, 9), quem:'sabrina', acao:'registrou indicação', alvo:'HL-ARG-0001 Luiza', detalhe:'' }, { em:atras(1, 18), quem:'parceiro', acao:'pediu saque', alvo:'HL-ARG-0002', detalhe:'R$ 165,00 · 3 clientes' }, { em:atras(2, 11), quem:'sabrina', acao:'etapa', alvo:'HL-ARG-0001 #6', detalhe:'Aguardando instalação → Instalado' }]
+ });
+ const P = id => D.pars.find(p => p.id === id);
+ const log = (acao, alvo, detalhe = '') => D.hist.unshift({ em:new Date(), quem:'erick', acao, alvo, detalhe });
+ const conf = () => [+D.cfg.bonus_base, +D.cfg.bonus_passo, +D.cfg.bonus_teto];
+ const valor = n => { const [b, p, t] = conf(); return Math.min(t, b + p * (n - 1)); };
+ const recalc = () => { const g = {}; D.inds.filter(i => i.status === 'Instalado').forEach(i => { const k = i.p + ':' + seg(i.inst); (g[k] = g[k] || []).push(i); }); Object.values(g).forEach(l => { const v = valor(l.length); l.forEach(i => { if (!i.saque || i.v == null) i.v = v; }); }); };
+ const premios = () => { // metas por instalações validadas (1ª fatura paga)
+  const metas = D.cfg.metas.split('\n').map(l => l.split('|')).filter(x => +x[0] > 0 && x[1]).map(x => [+x[0], x[1].trim()]);
+  D.pars.forEach(p => { const v = D.inds.filter(i => i.p === p.id && i.status === 'Instalado' && i.fatura).sort((a, b) => a.fatura - b.fatura);
+   metas.forEach(([alvo, pr]) => { if (v.length >= alvo && !D.premios.find(r => r.p === p.id && !r.kit && r.alvo === alvo)) D.premios.push({ id:D.premios.length + 1, p:p.id, alvo, premio:pr, em:v[alvo - 1].fatura, entregue:null }); });
+   const ins = D.inds.filter(i => i.p === p.id && i.status === 'Instalado' && i.inst).sort((a, b) => a.inst - b.inst);   // kit na 1ª instalação
+   if (D.cfg.kit_ativo !== '0' && ins.length && !D.premios.find(r => r.p === p.id && r.kit)) D.premios.push({ id:D.premios.length + 1, p:p.id, alvo:1, kit:true, premio:D.cfg.kit_nome || 'Kit do Estabelecimento', em:ins[0].inst, entregue:null }); });
+ };
+ window.DEMO_RESET = () => { D = novo(); D.saques.forEach(s => {}); recalc(); D.saques.forEach(s => { const it = D.inds.filter(i => i.saque === s.id); s.valor = it.reduce((t, i) => t + i.v, 0); s.n = it.length; });  premios(); D.premios.filter(r => r.kit).forEach((r, k) => { if (k % 2 === 0) r.entregue = new Date(new Date(r.em).getTime() + 3 * 864e5); }); };
+ DEMO_RESET();
+ const cpfOk = c => { c = c.replace(/\D/g, ''); if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false; for (let t = 9; t < 11; t++) { let s = 0; for (let k = 0; k < t; k++) s += c[k] * (t + 1 - k); if (((10 * s) % 11) % 10 != c[t]) return false; } return true; };
+ const sq = s => ({ id:s.id, parceiro:P(s.p).loja || P(s.p).nome, codigo:P(s.p).codigo, pix:P(s.p).pix, valor:s.valor, n:s.n, pedido:dh(s.pedido), dias:dias(s.pedido), pago_em:br(s.pago), pix_id:s.pix_id, arq:s.arq, por:s.por,
+  itens:D.inds.filter(i => i.saque === s.id).map(i => ({ n:i.nome.split(' ')[0], d:br(i.inst), v:i.v })) });
+ const it = i => ({ id:i.id, cliente:i.nome, parceiro:P(i.p).loja || P(i.p).nome, codigo:P(i.p).codigo, inst:br(i.inst), dias:dias(i.inst), v:i.v, plano:i.plano, fatura:br(i.fatura) });
+ window.DEMO_API = (a, e, q) => {
+  const ab = ['Nova','Em atendimento','Aguardando instalação'];
+  if (a === 'resumo') {
+   const ped = D.saques.filter(s => !s.pago);
+   return { me:{ nome:'Erick', papel:'master' }, tarefas:{ pendentes:D.pars.filter(p => p.status === 'pendente').length, novas:D.inds.filter(i => i.status === 'Nova').length,
+    paradas:D.inds.filter(i => ab.includes(i.status) && dias(i.at) >= 2).length, saques:{ n:ped.length, total:ped.reduce((t, s) => t + s.valor, 0) },
+    faturas:D.inds.filter(i => i.status === 'Instalado' && !i.fatura && dias(i.inst) >= 25).length, premios:D.premios.filter(p => !p.entregue).length },
+    stats:{ ind_hoje:D.inds.filter(i => dias(i.criado) === 0).length, ind_mes:D.inds.filter(i => dias(i.criado) < 30).length + 9, inst_mes:D.inds.filter(i => i.status === 'Instalado' && dias(i.inst) < 30).length + 3, leit_hoje:23, ativos:D.pars.filter(p => p.status === 'ativo').length },
+    atividade:D.hist.slice(0, 8).map(x => ({ em:dh(x.em), quem:x.quem, acao:x.acao, alvo:x.alvo })) };
+  }
+  if (a === 'indicacoes') return { itens:D.inds.slice().sort((x, y) => y.criado - x.criado).map(i => ({ id:i.id, nome:i.nome, tel:telBr(i.tel_d), tel_d:i.tel_d, cpf:i.cpf, email:i.email, cep:i.cep, num:i.num, plano:i.plano, status:i.status, motivo:i.motivo,
+   inst:br(i.inst), origem:i.origem, criado:dh(i.criado), dias:dias(i.at), bonus:i.status === 'Instalado' ? i.v : null, fatura:br(i.fatura), saque:i.saque ? (D.saques.find(s => s.id === i.saque).pago ? 'pago' : 'pedido') : '', pago:!!(i.saque || i.fatura),
+   parceiro:{ codigo:P(i.p).codigo, nome:P(i.p).loja || P(i.p).nome } })) };
+  if (a === 'parceiros') return { itens:D.pars.map(p => { const n = D.inds.filter(i => i.p === p.id); return Object.assign({}, p, { wa:telBr(p.wa_d), ind:n.length, inst:n.filter(i => i.status === 'Instalado').length, link:p.codigo ? 'https://www.hunterleague.com.br/i/' + p.codigo : '' }); }) };
+  if (a === 'bonus') {
+   const fat = D.inds.filter(i => i.status === 'Instalado' && !i.fatura).sort((x, y) => x.inst - y.inst).map(it);
+   const lib = D.inds.filter(i => i.status === 'Instalado' && i.fatura && !i.saque).map(it);
+   const ped = D.saques.filter(s => !s.pago).map(sq), pag = D.saques.filter(s => s.pago).sort((x, y) => y.pago - x.pago).map(sq);
+   const [b, p, t] = conf();
+   return { pedidos:ped, faturas:fat, liberados:lib, pagos:pag,
+    premios:D.premios.map(r => { const lib30 = new Date(r.em); lib30.setDate(lib30.getDate() + 30); return { id:r.id, parceiro:P(r.p).loja || P(r.p).nome, codigo:P(r.p).codigo, wa:telBr(P(r.p).wa_d), wa_d:P(r.p).wa_d, conquista:r.kit ? '1ª instalação' : r.alvo + ' instalações validadas', premio:r.premio, em:br(r.em), entregue:br(r.entregue), kit:!!r.kit, pode:r.kit || lib30 <= hoje, libera:br(lib30) }; }),
+    tot:{ pedidos:ped.reduce((s, x) => s + x.valor, 0), faturas:fat.reduce((s, x) => s + x.v, 0), liberados:lib.reduce((s, x) => s + x.v, 0) }, regra:{ base:b, passo:p, teto:t, prazo:D.cfg.prazo_saque } };
+  }
+  if (a === 'config') return { config:D.cfg, master:true, equipe:D.equipe, historico:D.hist.map(x => ({ em:dh(x.em), quem:(x.quem === 'parceiro' ? '' : 'admin:') + x.quem, acao:x.acao, alvo:x.alvo, detalhe:x.detalhe })) };
+  if (a === 'indicar') {
+   const cod = String(e.codigo || '').trim().toUpperCase(), p = D.pars.find(x => x.codigo === cod), tel = String(e.tel || '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, ''), cpf = String(e.cpf || '').replace(/\D/g, '');
+   if (!p) return { erro:`Código ${cod || '(vazio)'} não encontrado. Confira na mensagem do cliente.` };
+   if (p.status !== 'ativo') return { erro:`O parceiro ${cod} não está ativo. Indicação NÃO registrada.` };
+   if (String(e.nome || '').trim().length < 2) return { erro:'Escreva o nome do cliente.' };
+   if (tel.length < 10) return { erro:'Telefone do cliente com DDD.' };
+   if (cpf && !cpfOk(cpf)) return { erro:'CPF do cliente inválido.' };
+   const val = +D.cfg.validade_dias || 60;
+   const dup = D.inds.find(i => i.status !== 'Cancelado' && (i.status === 'Instalado' || dias(i.criado) <= val) && (i.tel_d === tel || (cpf && i.cpf.replace(/\D/g, '') === cpf)));
+   if (dup) { log('duplicidade barrada', cod); return { erro:`NÃO REGISTRADA. Este cliente já foi indicado por ${P(dup.p).codigo} (${P(dup.p).loja || P(dup.p).nome}) em ${br(dup.criado)}. Vale a primeira indicação.`, duplicado:true }; }
+   D.inds.push({ id:Math.max(...D.inds.map(i => i.id)) + 1, p:p.id, nome:e.nome.trim(), tel_d:tel, cpf:e.cpf || '', email:'', cep:'', num:'', plano:e.plano || '', status:'Nova', motivo:'', origem:'qr', criado:new Date(), at:new Date() });
+   log('registrou indicação', cod + ' ' + e.nome.trim().split(' ')[0]);
+   return { ok:true, msg:`Indicação registrada para ${cod} (${p.loja || p.nome}). Já aparece no app do parceiro.` };
+  }
+  if (a === 'etapa') {
+   const i = D.inds.find(x => x.id === e.id); if (!i) return { erro:'Indicação não encontrada.' };
+   const st = e.status || i.status;
+   if (st === 'Não instalado' && !e.motivo) return { erro:'Escolha o motivo.' };
+   if (i.saque && st !== i.status) return { erro:'O bônus desta instalação já foi pedido no saque. Não dá para mudar a etapa nem a data.' };
+   const antes = i.status; i.status = st; i.motivo = st === 'Não instalado' ? e.motivo : ''; i.at = new Date();
+   if ('plano' in e) i.plano = e.plano || ''; if (e.cpf !== undefined) i.cpf = e.cpf; if (e.nome) i.nome = e.nome.trim(); if (e.tel) i.tel_d = String(e.tel).replace(/\D/g, ''); if (e.email !== undefined) i.email = e.email;
+   if (st === 'Instalado') { i.inst = e.inst ? deISO(e.inst) : (i.inst || new Date()); } else { i.inst = null; i.fatura = null; i.v = null; }
+   recalc(); premios();
+   log('etapa', `${P(i.p).codigo} #${i.id}`, antes !== st ? `${antes} → ${st}` : 'editou dados');
+   return { ok:true, msg:`${i.nome.split(' ')[0]}: ${antes !== st ? st + '.' : 'dados salvos.'}` + (st === 'Instalado' && antes !== st ? ` Bônus de ${reais(i.v)} (multiplicador da semana), liberado após a 1ª fatura paga.` : '') };
+  }
+  if (a === 'liberar') {
+   const i = D.inds.find(x => x.id === +e.id); if (!i || i.status !== 'Instalado') return { erro:'Só instalação concluída pode ter o bônus liberado.' };
+   if (i.saque) return { erro:'Este bônus já está num saque.' };
+   i.fatura = e.desfazer ? null : (e.data ? deISO(e.data) : new Date());
+   if (e.desfazer) D.premios = D.premios.filter(r => r.entregue || r.kit || D.inds.filter(x => x.p === r.p && x.fatura).length >= r.alvo); else premios();
+   log(e.desfazer ? 'desfez liberação' : '1ª fatura paga · bônus liberado', `${P(i.p).codigo} #${i.id}`, `${i.nome.split(' ')[0]} ${reais(i.v)}`);
+   return { ok:true, msg:e.desfazer ? 'Liberação desfeita.' : `${i.nome.split(' ')[0]}: bônus de ${reais(i.v)} liberado. O parceiro já pode pedir o saque.` };
+  }
+  if (a === 'pagar_saque') {
+   const s = D.saques.find(x => x.id === +e.id); if (!s || s.pago) return { erro:'Saque não encontrado.' };
+   s.pago = new Date(); s.pix_id = e.pix || ''; s.por = 'erick'; s.arq = e.arquivo && e.arquivo.size ? URL.createObjectURL(e.arquivo) : '';
+   log('pagou saque', P(s.p).codigo, reais(s.valor)); return { ok:true, msg:'Saque pago. O parceiro já vê o comprovante no app.' };
+  }
+  if (a === 'anexar') { const s = D.saques.find(x => x.id === +e.id); if (!s || !s.pago) return { erro:'Saque pago não encontrado.' }; s.arq = URL.createObjectURL(e.arquivo); log('comprovante anexado', P(s.p).codigo, 'saque #' + s.id); return { ok:true, msg:'Comprovante anexado. O parceiro já pode abrir no app.' }; }
+  if (a === 'parceiro') {
+   const p = P(e.id); if (!p) return { erro:'Parceiro não encontrado.' };
+   if (e.o === 'aprovar') { p.status = 'ativo'; p.codigo = p.codigo || 'HL-ARG-' + String(D.pars.filter(x => x.codigo).length + 1).padStart(4, '0'); log('aprovou parceiro', p.codigo); return { ok:true, msg:`Aprovado. Código ${p.codigo}. Avise ${p.nome.split(' ')[0]} no WhatsApp: o QR já funciona.` }; }
+   if (['recusar','bloquear','desfiliar','reativar'].includes(e.o)) { p.status = { recusar:'recusado', bloquear:'bloqueado', desfiliar:'desfiliado', reativar:'ativo' }[e.o]; log(e.o + ' parceiro', p.codigo || p.doc); return { ok:true, msg:'Parceiro ' + p.status + '.' }; }
+   if (e.o === 'senha') { log('nova senha parceiro', p.codigo); return { ok:true, senha:Math.random().toString(36).slice(2, 12) }; }
+   if (e.o === 'editar') { p.wa_d = String(e.wa).replace(/\D/g, ''); p.pix = e.pix; p.obs = e.obs; log('editou parceiro', p.codigo); return { ok:true, msg:'Dados salvos.' }; }
+  }
+  if (a === 'entregar') { const r = D.premios.find(x => x.id === e.id); r.entregue = new Date(); log('prêmio entregue', P(r.p).codigo, r.premio); return { ok:true, msg:'Entrega registrada: ' + r.premio + '.' }; }
+  if (a === 'salvar_config') { if (+e.bonus_teto < +e.bonus_base) return { erro:'O teto do bônus não pode ser menor que a base.' }; Object.assign(D.cfg, e, { kit_ativo: e.kit_ativo ? '1' : '0' }); recalc(); premios(); log('configurações', ''); return { ok:true, msg:'Configurações salvas.' }; }
+  if (a === 'email') { if (e.o === 'teste') return D.cfg.smtp_tem_senha ? { ok:true, msg:`E-mail de teste enviado para ${D.cfg.smtp_usuario} (demonstração).` } : { erro:'Salve o usuário e a senha do e-mail antes de testar.' };
+   D.cfg.smtp_host = e.smtp_host; D.cfg.smtp_porta = e.smtp_porta; D.cfg.smtp_usuario = e.smtp_usuario; D.cfg.smtp_nome = e.smtp_nome; if (e.smtp_senha) D.cfg.smtp_tem_senha = true; return { ok:true, msg:'E-mail salvo. Use "Enviar teste" para conferir.' }; }
+  if (a === 'equipe') { if (e.o === 'criar') { D.equipe.push({ id:D.equipe.length + 1, nome:e.nome, usuario:e.usuario, papel:e.papel, ativo:true, eu:false }); return { ok:true, msg:'Usuário criado.' }; } const u = D.equipe.find(x => x.id === e.id); u.ativo = !u.ativo; return { ok:true, msg:'Feito.' }; }
+  if (a === 'minha_senha') return { ok:true, msg:'Senha trocada (na demonstração nada é salvo).' };
+  return { erro:'Ação desconhecida.' };
+ };
+})();
+
+</script>
+<script>
+{
+const BOOT = window.HL_ADMIN || { modo:'demo', nome:'Erick', papel:'master' };
+const DEMO = BOOT.modo === 'demo';
+const $ = s => document.querySelector(s);
+const h = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
+const reais = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const reaisC = v => 'R$ ' + (Number.isInteger(+v) ? (+v).toLocaleString('pt-BR') : Number(v).toFixed(2).replace('.', ','));
+const iniciais = n => String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const hojeISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const ETAPAS = ['Nova', 'Em atendimento', 'Aguardando instalação', 'Instalado', 'Não instalado', 'Cancelado'];
+const ABERTAS = ['Nova', 'Em atendimento', 'Aguardando instalação'];
+const MOTIVOS = ['Restrição de CPF', 'Sem cabeamento', 'Desistiu', 'Sem contato', 'Endereço fora da cobertura', 'Outro'];
+const PLANOS = ['600 Mega', '800 Mega', '1 Giga', 'Ultra Mesh'];
+const pclass = s => 'p-' + String(s).split(' ')[0];
+const I = {
+ hoje: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M7 2h10l4 4v7l-9 9-9-9V6z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M8.5 11.5l2.4 2.4 4.6-4.8" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ ind: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 5h16M4 12h10M4 19h7" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><path d="M17 15l2 2 3-4" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ par: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9.5 4.5 4h15L21 9.5M3 9.5h18M5 12v8h14v-8M10 20v-5h4v5" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>',
+ pag: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2l8.7 5v10L12 22l-8.7-5V7z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14.5 9.2c-.5-.9-1.5-1.4-2.6-1.4-1.5 0-2.6.8-2.6 2 0 2.8 5.4 1.5 5.4 4.3 0 1.2-1.2 2-2.7 2-1.2 0-2.3-.6-2.8-1.6M12 6.5v1.3M12 16.2v1.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+ mais: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+ mais2: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>',
+ wa: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20l1.6-4.4A8 8 0 1 1 8.5 18.6z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>',
+ busca: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2.2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+ x: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+ gift: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 11h16v10H4zM3 7h18v4H3zM12 7v14M12 7c-1.5-3.5-6-3.5-5.5-.8C7 8 12 7 12 7Zm0 0c1.5-3.5 6-3.5 5.5-.8C17 8 12 7 12 7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ baixar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ clipe: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 11.5 12.3 19.2a5 5 0 0 1-7.1-7.1l8-8a3.4 3.4 0 0 1 4.8 4.8l-8 8a1.7 1.7 0 0 1-2.4-2.4l7.3-7.3" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ ok: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+const MASTER = BOOT.papel === 'master';
+const MENU = MASTER ? [['hoje', 'Hoje', I.hoje], ['indicacoes', 'Indicações', I.ind], ['parceiros', 'Parceiros', I.par], ['pagar', 'Bônus e prêmios', I.pag], ['mais', 'Mais', I.mais]]
+ : [['hoje', 'Hoje', I.hoje], ['indicacoes', 'Indicações', I.ind], ['mais', 'Mais', I.mais]];
+
+/* ---------- dados: servidor de verdade ou demonstração ---------- */
+const api = async (acao, dados, q = '') => {
+ if (DEMO && !(dados instanceof FormData)) { await new Promise(r => setTimeout(r, 120)); return DEMO_API(acao, dados ? JSON.parse(JSON.stringify(dados)) : null, q); }
+ const fd = dados instanceof FormData;
+ if (DEMO && fd) return DEMO_API(acao, Object.fromEntries(dados), q);
+ const r = await fetch(`api.php?a=${acao}${q}`, dados ? { method:'POST', headers:fd ? { 'X-CSRF':BOOT.token } : { 'Content-Type':'application/json', 'X-CSRF':BOOT.token }, body:fd ? dados : JSON.stringify(dados), credentials:'same-origin' } : { credentials:'same-origin' });
+ const j = await r.json().catch(() => ({ erro:'Erro no servidor.' }));
+ if (j.sair) { location.reload(); }
+ return j;
+};
+
+/* ---------- avisos e janelas ---------- */
+const toast = (t, ruim) => { const box = $('#toasts'); while (box.children.length >= 2) box.firstChild.remove(); const el = document.createElement('div'); el.className = 'toast ch' + (ruim ? ' bad' : ''); el.textContent = t; $('#toasts').appendChild(el); setTimeout(() => el.remove(), ruim ? 6000 : 4200); };
+let janAberta = null;
+const jan = (html, aoAbrir) => {
+ fechaJan();
+ const s = document.createElement('div'); s.className = 'scrim';
+ s.innerHTML = `<div class="jan ch" role="dialog" aria-modal="true"><button class="ico x" type="button" data-fecha aria-label="Fechar">${I.x}</button>${html}</div>`;
+ $('#jan-root').appendChild(s); janAberta = s;
+ requestAnimationFrame(() => s.classList.add('on'));
+ s.addEventListener('click', e => { if (e.target === s || e.target.closest('[data-fecha]')) fechaJan(); });
+ aoAbrir && aoAbrir(s.querySelector('.jan'));
+ const f = s.querySelector('input,textarea,button.btn'); if (f && matchMedia('(min-width:901px)').matches) setTimeout(() => f.focus(), 60);
+ return s.querySelector('.jan');
+};
+const fechaJan = () => { if (!janAberta) return; const s = janAberta; janAberta = null; s.classList.remove('on'); setTimeout(() => s.remove(), 180); };
+addEventListener('keydown', e => { if (e.key === 'Escape') fechaJan(); });
+const confirma = (titulo, texto, botao, ruim) => new Promise(ok => {
+ const j = jan(`<h2 class="bs">${h(titulo)}</h2><p class="sub">${h(texto)}</p><div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ${ruim ? 'bad' : ''}" type="button" data-sim>${h(botao)}</button></div>`);
+ j.querySelector('[data-sim]').addEventListener('click', () => { fechaJan(); ok(true); });
+});
+const copiar = (t, msg) => { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast(msg || 'Copiado')).catch(() => { prompt('Copie:', t); }); };
+
+/* ---------- navegação ---------- */
+let pagina = 'hoje', cache = {};
+const navDraw = () => {
+ const t = cache.resumo ? cache.resumo.tarefas : {};
+ const ct = { indicacoes: t.novas || 0, parceiros: t.pendentes || 0, pagar: (t.saques ? t.saques.n : 0) + (t.faturas || 0) + (t.premios || 0) };
+ $('#nav-side').innerHTML = MENU.map(([k, t, ic]) => `<button class="nv${pagina === k ? ' on' : ''}" type="button" data-ir="${k}">${ic}<span>${t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
+ const bot = MASTER ? [MENU[0], MENU[1], ['novo', 'Indicação', I.mais2], MENU[2], MENU[3]] : [MENU[0], MENU[1], ['novo', 'Indicação', I.mais2], MENU[2]];
+ $('#nav-bot').innerHTML = bot.map(([k, t, ic]) => k === 'novo' ? `<button class="mais" type="button" data-novo aria-label="Nova indicação">${ic}<span>${t}</span></button>` : `<button type="button" data-ir="${k}" class="${pagina === k ? 'on' : ''}">${ic}<span>${k === 'pagar' ? 'Bônus' : t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
+ $('#top-t').textContent = (MENU.find(m => m[0] === pagina) || ['', 'Central'])[1];
+};
+const ir = async (k, extra) => {
+ pagina = k; navDraw(); scrollTo(0, 0);
+ if (location.hash !== '#' + k) history.replaceState(null, '', '#' + k);
+ await TELAS[k](extra);
+ navDraw();
+};
+document.addEventListener('click', e => {
+ const n = e.target.closest('[data-ir]'); if (n) { e.preventDefault(); ir(n.dataset.ir, n.dataset.extra); return; }
+ if (e.target.closest('[data-novo]')) { novaIndicacao(); return; }
+ if (e.target.closest('[data-sair]')) sair();
+});
+const sair = async () => { if (DEMO) { toast('Na demonstração não tem login. No sistema de verdade, isto encerra a sessão.'); return; } await api('sair', {}); location.reload(); };
+
+/* ---------- tela: hoje ---------- */
+const TELAS = {};
+TELAS.hoje = async () => {
+ const r = cache.resumo = await api('resumo');
+ const t = r.tarefas, hr = new Date().getHours();
+ const sauda = hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
+ const dt = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
+ const cards = [];
+ if (t.pendentes) cards.push(['#FFC857', t.pendentes, t.pendentes === 1 ? 'cadastro para aprovar' : 'cadastros para aprovar', 'Lojas e vendedores esperando o código para começar.', 'Aprovar', 'parceiros']);
+ if (t.novas) cards.push(['#AEFCFF', t.novas, t.novas === 1 ? 'indicação nova' : 'indicações novas', 'Chegaram pelo QR ou pelo app e ainda não foram atendidas.', 'Atender', 'indicacoes']);
+ if (t.paradas) cards.push(['#FF6B81', t.paradas, t.paradas === 1 ? 'indicação parada' : 'indicações paradas', 'Há mais de 2 dias sem mudar de etapa. Vale cobrar.', 'Ver', 'indicacoes']);
+ if (t.saques && t.saques.n) cards.push(['#4DF0A0', reaisC(t.saques.total), t.saques.n === 1 ? 'saque para pagar' : 'saques para pagar', `${t.saques.n} ${t.saques.n === 1 ? 'parceiro pediu' : 'parceiros pediram'} o bônus no app. Pague pelo PIX e anexe o comprovante.`, 'Pagar', 'pagar']);
+ if (t.faturas) cards.push(['#FFC857', t.faturas, t.faturas === 1 ? 'cliente para conferir a fatura' : 'clientes para conferir a fatura', 'Instalados há 25 dias ou mais. Se a 1ª fatura foi paga, libere o bônus.', 'Conferir', 'pagar']);
+ if (t.premios) cards.push(['#19F7FF', t.premios, t.premios === 1 ? 'kit ou prêmio para entregar' : 'kits e prêmios para entregar', 'Kit do Estabelecimento sai na 1ª instalação. Prêmio de meta, a partir de 30 dias da validação.', 'Entregar', 'pagar']);
+ const s = r.stats;
+ $('#main').innerHTML = `<div class="ola"><h1 class="bs">${sauda}, <span>${h(r.me.nome)}</span></h1><p>${h(dt)}</p></div>
+  ${cards.length ? `<div class="tarefas">${cards.map(c => `<div class="tf ch" style="--a:${c[0]}"><span class="n bs">${h(c[1])}</span><b>${h(c[2])}</b><small>${h(c[3])}</small><button class="btn sm" type="button" data-ir="${c[5]}">${h(c[4])} ▸</button></div>`).join('')}</div>`
+   : `<div class="emdia ch"><span class="ok2">${I.ok}</span><div><b class="bs">Tudo em dia</b><p>Nenhuma tarefa pendente agora. Quando chegar indicação ou cadastro, aparece aqui.</p></div></div>`}
+  <p class="sec">Números</p>
+  <div class="stats"><div class="st ch"><b class="bs">${s.ind_hoje}</b><span>indicações hoje</span></div><div class="st ch"><b class="bs">${s.ind_mes}</b><span>indicações no mês</span></div><div class="st ch"><b class="bs" style="color:var(--ok)">${s.inst_mes}</b><span>instalações no mês</span></div><div class="st ch"><b class="bs">${s.leit_hoje}</b><span>leituras de QR hoje</span></div><div class="st ch"><b class="bs">${s.ativos}</b><span>parceiros ativos</span></div></div>
+  ${r.atividade.length ? `<p class="sec">Últimas ações</p><ul class="tl">${r.atividade.map(a => `<li>${h(a.acao)} <b>${h(a.alvo)}</b><small>${h(a.em)} · ${h(a.quem)}</small></li>`).join('')}</ul>` : ''}`;
+};
+
+/* ---------- tela: indicações ---------- */
+let indAba = 'Nova', indBusca = '';
+const PROX = { 'Nova':'Em atendimento', 'Em atendimento':'Aguardando instalação' };
+TELAS.indicacoes = async () => {
+ const r = await api('indicacoes'); cache.inds = r.itens;
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Indicações</h1><p>Toque em avançar conforme o atendimento anda.</p></div><div class="busca">${I.busca}<input id="ind-q" type="search" placeholder="Buscar nome, telefone ou código" value="${h(indBusca)}" autocomplete="off"></div><div class="exp"><button class="btn g sm" type="button" data-exp="indicacoes">${I.baixar}Planilha</button></div></div>
+  <div class="tabs" role="tablist" id="ind-tabs"></div><div id="ind-lista"></div>`;
+ $('#ind-q').addEventListener('input', e => { indBusca = e.target.value; indDraw(); });
+ indDraw();
+};
+const indDraw = () => {
+ const q = indBusca.trim().toLowerCase(), qd = q.replace(/\D/g, '');
+ const bate = i => !q || i.nome.toLowerCase().includes(q) || i.parceiro.codigo.toLowerCase().includes(q) || (i.parceiro.nome || '').toLowerCase().includes(q) || (qd.length >= 3 && (i.tel_d || '').includes(qd));
+ const todas = cache.inds.filter(bate);
+ const grupo = k => k === 'fim' ? todas.filter(i => !ABERTAS.includes(i.status)) : todas.filter(i => i.status === k);
+ const abas = [['Nova', 'Novas'], ['Em atendimento', 'Em atendimento'], ['Aguardando instalação', 'Aguardando instalação'], ['fim', 'Finalizadas']];
+ $('#ind-tabs').innerHTML = abas.map(([k, t]) => `<button type="button" role="tab" data-aba="${k}" aria-selected="${indAba === k}">${t}<i>${grupo(k).length}</i></button>`).join('');
+ const lista = grupo(indAba);
+ $('#ind-lista').innerHTML = lista.length ? `<div class="cards">${lista.map(cardInd).join('')}</div>`
+  : `<div class="vazio ch"><b>${q ? 'Nada encontrado' : indAba === 'fim' ? 'Nenhuma finalizada ainda' : 'Nenhuma aqui'}</b>${q ? 'Tente outro nome, telefone ou código.' : indAba === 'Nova' ? 'Quando um cliente chamar com o código, registre em + Indicação.' : 'Tudo andando.'}</div>`;
+};
+const cardInd = i => {
+ const aberta = ABERTAS.includes(i.status), velha = aberta && i.dias >= 2;
+ const idade = i.dias === 0 ? 'hoje' : i.dias === 1 ? 'há 1 dia' : `há ${i.dias} dias`;
+ let acoes = '';
+ if (i.status === 'Nova' || i.status === 'Em atendimento') acoes = `<button class="btn sm" type="button" data-av="${i.id}">Avançar ▸</button><button class="btn sm g" type="button" data-nd="${i.id}">Não deu</button>`;
+ else if (i.status === 'Aguardando instalação') acoes = `<button class="btn sm ok" type="button" data-inst="${i.id}">✓ Instalou</button><button class="btn sm g" type="button" data-nd="${i.id}">Não deu</button>`;
+ else if (!i.pago) acoes = `<button class="btn sm g" type="button" data-reabrir="${i.id}">Reabrir</button>`;
+ return `<article class="ci ch" id="ind-${i.id}">
+  <div class="l1"><span class="nm">${h(i.nome)}</span>${aberta ? `<span class="idade${velha ? ' velha' : ''}">${idade}</span>` : `<span class="pill ${pclass(i.status)}">${h(i.status)}</span>`}</div>
+  <div class="meta"><a class="tel" href="https://wa.me/55${h(i.tel_d)}" target="_blank" rel="noopener">${I.wa}${h(i.tel)}</a>${i.cpf ? ` · CPF ${h(i.cpf)}` : ''}</div>
+  <div class="meta"><span class="chip"><span class="cod">${h(i.parceiro.codigo)}</span>${h(i.parceiro.nome)}</span>${i.origem === 'app' ? '<span class="chip app">pelo app</span>' : ''}${i.plano ? `<span class="chip pl">${h(i.plano)}</span>` : ''}</div>
+  ${i.email || i.cep ? `<div class="meta">${i.email ? h(i.email) : ''}${i.cep ? ` · CEP ${h(i.cep)}, nº ${h(i.num)}` : ''}</div>` : ''}
+  ${i.status === 'Instalado' ? `<div class="meta" style="color:var(--ok)">Instalado em ${h(i.inst)}${i.bonus != null ? ` · bônus ${reais(i.bonus)}` : ''} · ${i.saque === 'pago' ? 'bônus pago' : i.saque === 'pedido' ? 'saque pedido' : i.fatura ? `liberado em ${h(i.fatura)}` : 'aguardando 1ª fatura'}</div>` : i.motivo ? `<div class="meta" style="color:var(--bad)">${h(i.motivo)}</div>` : ''}
+  <div class="acoes">${acoes}<button class="ico" type="button" data-ed="${i.id}" aria-label="Editar" title="Editar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg></button></div></article>`;
+};
+const etapa = async (id, dados) => {
+ const r = await api('etapa', Object.assign({ id }, dados));
+ if (r.erro) return toast(r.erro, true);
+ toast(r.msg); const el = $('#ind-' + id); if (el) el.style.opacity = '.35';
+ const rr = await api('indicacoes'); cache.inds = rr.itens; indDraw(); atualizaResumo();
+};
+const naoDeu = i => {
+ const j = jan(`<h2 class="bs">Não deu certo</h2><p class="sub">${h(i.nome)}: escolha o motivo. O parceiro vê o motivo no app.</p><div class="opcs">${MOTIVOS.map(m => `<button type="button" data-m="${h(m)}">${h(m)}</button>`).join('')}</div>`);
+ j.addEventListener('click', ev => { const b = ev.target.closest('[data-m]'); if (b) { fechaJan(); etapa(i.id, { status:'Não instalado', motivo:b.dataset.m }); } });
+};
+document.addEventListener('click', e => {
+ const aba = e.target.closest('[data-aba]'); if (aba) { indAba = aba.dataset.aba; indDraw(); return; }
+ const f = (k) => { const b = e.target.closest(`[data-${k}]`); return b ? cache.inds.find(i => i.id === +b.dataset[k]) : null; };
+ let i;
+ if ((i = f('av'))) return etapa(i.id, { status: PROX[i.status] });
+ if ((i = f('inst'))) {
+  const j = jan(`<h2 class="bs">Instalou</h2><p class="sub">${h(i.nome)} · ${h(i.parceiro.codigo)} ${h(i.parceiro.nome)}</p>
+   <label class="f">Data da instalação<input type="date" id="j-dt" max="${hojeISO()}" value="${hojeISO()}"></label>
+   <p class="sub" style="margin-top:10px">A casa acende no app do parceiro. O bônus segue a escada da semana e é liberado quando o cliente pagar a 1ª fatura.</p>
+   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ok" type="button" id="j-ok">✓ Confirmar instalação</button></div>`);
+  j.querySelector('#j-ok').addEventListener('click', () => { const d = j.querySelector('#j-dt').value; fechaJan(); etapa(i.id, { status:'Instalado', inst:d }); });
+  return;
+ }
+ if ((i = f('nd'))) {
+  return naoDeu(i);
+ }
+ if ((i = f('reabrir'))) return etapa(i.id, { status:'Aguardando instalação' });
+ if ((i = f('ed'))) {
+  let plano = i.plano;
+  const j = jan(`<h2 class="bs">Editar</h2><p class="sub">${h(i.parceiro.codigo)} · ${h(i.parceiro.nome)}</p>
+   <label class="f">Nome do cliente<input id="j-nome" value="${h(i.nome)}"></label>
+   <div class="g2"><label class="f">WhatsApp<input id="j-tel" inputmode="tel" value="${h(i.tel)}"></label><label class="f">E-mail<input id="j-mail" type="email" value="${h(i.email)}"></label></div>
+   <label class="f">Etapa<select id="j-st">${ETAPAS.map(s => `<option${s === i.status ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
+   <p class="sub" style="margin:14px 0 8px">Plano de interesse</p><div class="opcs" id="j-pl">${PLANOS.map(p => `<button type="button" aria-pressed="${p === plano}" data-p="${p}">${p}</button>`).join('')}</div>
+   <label class="f" style="margin-top:14px">CPF do cliente<input id="j-cpf" inputmode="numeric" value="${h(i.cpf)}" placeholder="000.000.000-00"></label>
+   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="j-ok">Salvar</button></div>`);
+  j.querySelector('#j-pl').addEventListener('click', ev => { const b = ev.target.closest('[data-p]'); if (!b) return; plano = plano === b.dataset.p ? '' : b.dataset.p; j.querySelectorAll('#j-pl button').forEach(x => x.setAttribute('aria-pressed', x.dataset.p === plano)); });
+  j.querySelector('#j-ok').addEventListener('click', () => {
+   const st = j.querySelector('#j-st').value;
+   if (st === 'Não instalado' && i.status !== 'Não instalado') { fechaJan(); return naoDeu(i); }
+   fechaJan(); etapa(i.id, { status:st, plano, cpf:j.querySelector('#j-cpf').value, nome:j.querySelector('#j-nome').value, tel:j.querySelector('#j-tel').value, email:j.querySelector('#j-mail').value, motivo:i.motivo, inst: st === 'Instalado' ? (i.inst ? i.inst.split('/').reverse().join('-') : hojeISO()) : '' });
+  });
+ }
+});
+
+/* ---------- nova indicação: cola a mensagem do WhatsApp e o sistema preenche ---------- */
+const lerMensagem = txt => {
+ const out = {};
+ const cod = txt.match(/HL[\s-]?([A-Z]{3})[\s-]?(\d{4})/i); if (cod) out.codigo = `HL-${cod[1].toUpperCase()}-${cod[2]}`;
+ const semCod = txt.replace(/HL[\s-]?[A-Z]{3}[\s-]?\d{4}/ig, ' ');
+ const tel = semCod.match(/(?:\+?55[\s.-]?)?\(?([1-9]\d)\)?[\s.-]?(9?\d{4})[\s.-]?(\d{4})/); if (tel) out.tel = `(${tel[1]}) ${tel[2]}-${tel[3]}`;
+ let nome = (txt.match(/\]\s*([^:\n\]]{2,60}):/) || txt.match(/^([A-ZÀ-Ú][\wÀ-ú]+(?:\s[A-ZÀ-Ú][\wÀ-ú]+){0,4}):/m) || txt.match(/(?:meu nome é|me chamo|sou o|sou a)\s+([A-ZÀ-Úa-zà-ú]+(?:\s[A-ZÀ-Úa-zà-ú]+){0,3})/i) || [])[1];
+ if (nome && !/\d{4}/.test(nome) && !/^\+?\d/.test(nome.trim())) out.nome = nome.trim();
+ const cpf = semCod.match(/\b(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\b/); if (cpf && cpf[1].replace(/\D/g, '').length === 11 && (!tel || !cpf[1].includes(tel[3]))) out.cpf = cpf[1];
+ const pl = PLANOS.find(p => txt.toLowerCase().includes(p.toLowerCase()) || (p === '1 Giga' && /1\s?giga/i.test(txt))); if (pl) out.plano = pl;
+ return out;
+};
+const novaIndicacao = async () => {
+ if (!cache.pars) cache.pars = (await api('parceiros')).itens;
+ let plano = '';
+ const j = jan(`<h2 class="bs">Nova indicação</h2><p class="sub">Cole a mensagem que o cliente mandou no WhatsApp. O sistema acha o código, o telefone e o nome.</p>
+  <textarea class="colar ch" id="n-msg" placeholder="Ex.: [22/11 09:12] Maria Souza: Olá! Quero saber da internet Nio Fibra. Código do parceiro: HL-ARG-0002"></textarea>
+  <div class="g2" style="margin-top:14px"><label class="f">Código do parceiro<input id="n-cod" autocomplete="off" placeholder="HL-ARG-0001" list="n-cods"><span class="achou" id="n-achou"></span></label>
+  <label class="f">Telefone do cliente<input id="n-tel" inputmode="tel" placeholder="(34) 99999-9999"></label></div>
+  <datalist id="n-cods">${cache.pars.filter(p => p.status === 'ativo').map(p => `<option value="${h(p.codigo)}">${h(p.loja || p.nome)}</option>`).join('')}</datalist>
+  <label class="f" style="margin-top:14px">Nome do cliente<input id="n-nome" autocomplete="off"></label>
+  <label class="f" style="margin-top:14px">CPF <small style="display:inline;margin:0">(se já tiver)</small><input id="n-cpf" inputmode="numeric" placeholder="000.000.000-00"></label>
+  <p class="sub" style="margin:14px 0 8px">Plano de interesse</p><div class="opcs" id="n-pl">${PLANOS.map(p => `<button type="button" aria-pressed="false" data-p="${p}">${p}</button>`).join('')}</div>
+  <div id="n-erro"></div>
+  <div class="rod"><button class="btn g" type="button" data-fecha>Cancelar</button><button class="btn" type="button" id="n-ok">Registrar indicação</button></div>`);
+ const cod = j.querySelector('#n-cod'), achou = j.querySelector('#n-achou');
+ const confere = () => { const c = cod.value.trim().toUpperCase(); const p = cache.pars.find(x => x.codigo === c); achou.className = 'achou ' + (c ? (p && p.status === 'ativo' ? 'sim' : 'nao') : ''); achou.textContent = !c ? '' : p ? (p.status === 'ativo' ? `✓ ${p.loja || p.nome}` : `✗ ${p.loja || p.nome} não está ativo`) : '✗ código não encontrado'; };
+ const marcaPlano = () => j.querySelectorAll('#n-pl button').forEach(x => x.setAttribute('aria-pressed', x.dataset.p === plano));
+ cod.addEventListener('input', confere);
+ j.querySelector('#n-msg').addEventListener('input', e => {
+  const d = lerMensagem(e.target.value);
+  if (d.codigo) cod.value = d.codigo; if (d.tel) j.querySelector('#n-tel').value = d.tel; if (d.nome) j.querySelector('#n-nome').value = d.nome; if (d.cpf) j.querySelector('#n-cpf').value = d.cpf;
+  if (d.plano) { plano = d.plano; marcaPlano(); }
+  confere();
+ });
+ j.querySelector('#n-pl').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; plano = plano === b.dataset.p ? '' : b.dataset.p; marcaPlano(); });
+ j.querySelector('#n-ok').addEventListener('click', async ev => {
+  const b = ev.currentTarget; b.disabled = true;
+  const r = await api('indicar', { codigo:cod.value, nome:j.querySelector('#n-nome').value, tel:j.querySelector('#n-tel').value, cpf:j.querySelector('#n-cpf').value, plano });
+  b.disabled = false;
+  if (r.erro) { j.querySelector('#n-erro').innerHTML = `<div class="erro">${h(r.erro)}</div>`; return; }
+  fechaJan(); toast(r.msg); atualizaResumo(); if (pagina === 'indicacoes') { indAba = 'Nova'; TELAS.indicacoes(); } else if (pagina === 'hoje') TELAS.hoje();
+ });
+};
+const atualizaResumo = async () => { cache.resumo = await api('resumo'); navDraw(); };
+
+/* ---------- tela: parceiros ---------- */
+let parFiltro = 'todos', parBusca = '';
+TELAS.parceiros = async () => {
+ cache.pars = (await api('parceiros')).itens;
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Parceiros</h1><p>Lojas e vendedores da liga.</p></div><div class="busca">${I.busca}<input id="par-q" type="search" placeholder="Buscar nome, loja, código ou CPF" value="${h(parBusca)}" autocomplete="off"></div></div><div id="par-corpo"></div>`;
+ $('#par-q').addEventListener('input', e => { parBusca = e.target.value; parDraw(); });
+ parDraw();
+};
+const parDraw = () => {
+ const q = parBusca.trim().toLowerCase();
+ const bate = p => !q || [p.nome, p.loja, p.codigo, p.doc, p.wa].some(v => String(v || '').toLowerCase().includes(q));
+ const pend = cache.pars.filter(p => p.status === 'pendente' && bate(p));
+ const outros = cache.pars.filter(p => p.status !== 'pendente' && bate(p) && (parFiltro === 'todos' || p.status === parFiltro));
+ const cont = s => cache.pars.filter(p => p.status === s).length;
+ $('#par-corpo').innerHTML = (pend.length ? `<p class="sec" style="margin-top:0;color:var(--warn)">Para aprovar (${pend.length})</p><div class="pend">${pend.map(p => `<div class="pc ch"><span class="nm">${h(p.loja || p.nome)}</span><span class="meta">${h(p.tipo === 'lojista' ? 'Lojista' : 'Vendedor')} · ${h(p.nome)}<br>${h(p.doc)} · ${h(p.cidade)}<br><a class="tel" href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a> · cadastro em ${h(p.desde)}</span><div class="acoes"><button class="btn sm ok" type="button" data-apr="${p.id}">✓ Aprovar</button><button class="btn sm g" type="button" data-ver="${p.id}">Ver</button><button class="btn sm bad" type="button" data-rec="${p.id}">Recusar</button></div></div>`).join('')}</div>` : '')
+  + `<div class="tabs" style="margin-bottom:12px">${[['todos', 'Todos'], ['ativo', 'Ativos'], ['bloqueado', 'Bloqueados'], ['desfiliado', 'Desfiliados'], ['recusado', 'Recusados']].map(([k, t]) => `<button type="button" data-pf="${k}" aria-selected="${parFiltro === k}">${t}<i>${k === 'todos' ? cache.pars.filter(p => p.status !== 'pendente').length : cont(k)}</i></button>`).join('')}</div>`
+  + (outros.length ? `<div class="lista">${outros.map(p => `<button class="pr ch" type="button" data-ver="${p.id}"><span class="av">${h(iniciais(p.loja || p.nome))}</span><span><span class="nm" style="display:block">${h(p.loja || p.nome)}</span><span class="sub" style="display:block">${p.codigo ? `<span class="cod">${h(p.codigo)}</span> · ` : ''}${h(p.tipo === 'lojista' ? 'Lojista' : 'Vendedor')} · ${h(p.cidade)}</span></span><span class="dir"><span class="pill ${pclass(p.status)}">${h(p.status)}</span><span class="nums"><b>${p.leit}</b> QR · <b>${p.ind}</b> ind · <b>${p.inst}</b> inst</span></span></button>`).join('')}</div>`
+   : `<div class="vazio ch"><b>Ninguém aqui</b>${q ? 'Tente outra busca.' : 'Os parceiros aprovados aparecem nesta lista.'}</div>`);
+};
+const acaoParceiro = async (id, o, extra) => {
+ const r = await api('parceiro', Object.assign({ id, o }, extra || {}));
+ if (r.erro) { toast(r.erro, true); return r; }
+ if (r.senha) jan(`<h2 class="bs">Senha nova</h2><p class="sub">Mande para o parceiro pelo WhatsApp. Ela aparece só agora.</p><div class="senha ch"><b>${h(r.senha)}</b><button class="btn sm" type="button" id="cp-s">Copiar</button></div><div class="rod"><button class="btn g" type="button" data-fecha>Fechar</button></div>`, jj => jj.querySelector('#cp-s').addEventListener('click', () => copiar(r.senha, 'Senha copiada')));
+ else { fechaJan(); toast(r.msg); }
+ cache.pars = (await api('parceiros')).itens; if (pagina === 'parceiros') parDraw(); atualizaResumo();
+ return r;
+};
+document.addEventListener('click', async e => {
+ const g = k => { const b = e.target.closest(`[data-${k}]`); return b ? +b.dataset[k] : null; };
+ let id;
+ if (e.target.closest('[data-pf]')) { parFiltro = e.target.closest('[data-pf]').dataset.pf; parDraw(); return; }
+ if ((id = g('apr'))) return acaoParceiro(id, 'aprovar');
+ if ((id = g('rec'))) { if (await confirma('Recusar cadastro', 'A pessoa não entra na liga. Dá para aprovar depois, se mudar de ideia.', 'Recusar', true)) acaoParceiro(id, 'recusar'); return; }
+ if ((id = g('ver'))) {
+  const p = cache.pars.find(x => x.id === id);
+  const st = p.status;
+  const j = jan(`<h2 class="bs">${h(p.loja || p.nome)}</h2><p class="sub"><span class="pill ${pclass(st)}">${h(st)}</span> ${p.codigo ? `<span class="cod" style="margin-left:6px">${h(p.codigo)}</span>` : ''}</p>
+   <dl class="det"><dt>Nome</dt><dd>${h(p.nome)}</dd><dt>Tipo</dt><dd>${p.tipo === 'lojista' ? 'Lojista' : 'Vendedor'}</dd><dt>CPF/CNPJ</dt><dd>${h(p.doc)}</dd><dt>WhatsApp</dt><dd><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a></dd>${p.email ? `<dt>E-mail</dt><dd>${h(p.email)}</dd>` : ''}<dt>Cidade</dt><dd>${h(p.cidade)}</dd>
+   <dt>Chave PIX</dt><dd>${h(p.pix)} <button class="btn sm g" type="button" data-cp="${h(p.pix)}" style="height:28px;margin-left:6px">Copiar</button></dd>${p.link ? `<dt>Link do QR</dt><dd>${h(p.link)}</dd>` : ''}<dt>Nível</dt><dd>${h(p.nivel)}</dd><dt>Números</dt><dd>${p.leit} leituras · ${p.ind} indicações · ${p.inst} instalações</dd><dt>Cadastro</dt><dd>${h(p.desde)} · termo ${h(p.termo)}</dd>${p.obs ? `<dt>Observações</dt><dd>${h(p.obs)}</dd>` : ''}</dl>
+   <div class="rod" style="justify-content:flex-start">
+    ${st === 'pendente' || st === 'recusado' ? `<button class="btn ok" type="button" data-o="aprovar">✓ Aprovar</button>` : ''}
+    ${st === 'ativo' ? `<button class="btn g" type="button" data-o="senha">Senha nova</button><button class="btn g" type="button" data-o="editar">Editar WhatsApp/PIX</button>${p.codigo && !DEMO ? `<a class="btn g" href="qr.php?id=${p.id}" target="_blank">Baixar QR</a>` : ''}<button class="btn bad" type="button" data-o="bloquear">Bloquear</button><button class="btn bad" type="button" data-o="desfiliar">Desfiliar</button>` : ''}
+    ${(st === 'bloqueado' || st === 'desfiliado') && p.codigo ? `<button class="btn" type="button" data-o="reativar">Reativar</button>` : ''}
+   </div>`);
+  j.addEventListener('click', async ev => {
+   const c = ev.target.closest('[data-cp]'); if (c) return copiar(c.dataset.cp, 'Chave PIX copiada');
+   const b = ev.target.closest('[data-o]'); if (!b) return;
+   const o = b.dataset.o;
+   if (o === 'editar') {
+    const jj = jan(`<h2 class="bs">Editar</h2><p class="sub">${h(p.loja || p.nome)}</p><label class="f">WhatsApp<input id="e-wa" value="${h(p.wa)}"></label><label class="f" style="margin-top:12px">Chave PIX<input id="e-pix" value="${h(p.pix)}"></label><label class="f" style="margin-top:12px">Observações internas<textarea id="e-obs">${h(p.obs)}</textarea></label><div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="e-ok">Salvar</button></div>`);
+    jj.querySelector('#e-ok').addEventListener('click', () => acaoParceiro(p.id, 'editar', { wa:jj.querySelector('#e-wa').value, pix:jj.querySelector('#e-pix').value, obs:jj.querySelector('#e-obs').value }));
+    return;
+   }
+   if ((o === 'bloquear' || o === 'desfiliar') && !(await confirma(o === 'bloquear' ? 'Bloquear parceiro' : 'Desfiliar parceiro', 'O QR dele para de levar ao WhatsApp e ele não entra mais no app. O histórico fica guardado e instalações antigas continuam sendo pagas.', o === 'bloquear' ? 'Bloquear' : 'Desfiliar', true))) return;
+   acaoParceiro(p.id, o);
+  });
+ }
+});
+
+/* ---------- tela: bônus e prêmios ----------
+   Fluxo: instalou → (cliente paga a 1ª fatura) master libera → parceiro pede saque no app → master paga com comprovante. */
+const hojeMes = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+let expMes = hojeMes(), bonAba = 'pedidos';
+TELAS.pagar = async () => {
+ const r = cache.bon = await api('bonus');
+ const ab = [['pedidos', 'Saques pedidos', r.pedidos.length], ['faturas', 'Esperando 1ª fatura', r.faturas.length], ['liberados', 'Liberados', r.liberados.length], ['pagos', 'Pagos', r.pagos.length], ['premios', 'Prêmios', r.premios.filter(p => !p.entregue).length]];
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Bônus e prêmios</h1><p>Libere quando o cliente pagar a 1ª fatura. Pague os saques que os parceiros pedirem.</p></div>
+  <div class="exp"><label class="mes"><span>Planilhas de</span><input type="month" id="exp-mes" value="${h(expMes)}"></label><button class="btn g sm" type="button" data-exp="pagamentos">${I.baixar}Bônus pagos</button><button class="btn g sm" type="button" data-exp="instalacoes">${I.baixar}Instalações</button></div></div>
+  <div class="tri">
+   <div class="tr ch" style="--a:#4DF0A0"><small>Saques para pagar</small><b class="bs">${reais(r.tot.pedidos)}</b><span>${r.pedidos.length} ${r.pedidos.length === 1 ? 'pedido' : 'pedidos'} · prazo ${h(r.regra.prazo)}</span></div>
+   <div class="tr ch" style="--a:#FFC857"><small>Esperando 1ª fatura</small><b class="bs">${reais(r.tot.faturas)}</b><span>${r.faturas.length} ${r.faturas.length === 1 ? 'cliente instalado' : 'clientes instalados'}</span></div>
+   <div class="tr ch" style="--a:#19F7FF"><small>Liberado, sem pedido</small><b class="bs">${reais(r.tot.liberados)}</b><span>o parceiro já pode sacar</span></div>
+  </div>
+  <p class="escada">Multiplicador da semana: 1 instalação ${reaisC(r.regra.base)} · cada instalação a mais sobe ${reaisC(r.regra.passo)} o valor de todas da semana · até ${reaisC(r.regra.teto)} cada</p>
+  <div class="tabs" id="bon-tabs">${ab.map(([k, t, n]) => `<button type="button" data-bab="${k}" aria-selected="${bonAba === k}">${t}<i>${n}</i></button>`).join('')}</div>
+  <div id="bon-c"></div>`;
+ bonDraw();
+};
+const bonDraw = () => {
+ const r = cache.bon, box = $('#bon-c');
+ const vazio = (t, s2) => `<div class="vazio ch"><b>${t}</b>${s2}</div>`;
+ const clientes = it => it.map(x => `<span class="cl">${h(x.n)} <i>${h(x.d)}</i> ${reais(x.v)}</span>`).join('');
+ if (bonAba === 'pedidos') box.innerHTML = r.pedidos.length ? r.pedidos.map(g => `<div class="pg ch"><div><div class="nm">${h(g.parceiro)}</div><div class="sub"><span class="cod">${h(g.codigo)}</span> · pediu ${h(g.pedido)}${g.dias >= 2 ? ` · <b style="color:var(--bad)">há ${g.dias} dias</b>` : ''}</div><div class="cls">${clientes(g.itens)}</div></div><span class="val bs">${reais(g.valor)}</span>
+   <div class="pix"><span>${h(g.pix)}</span><button type="button" data-cp="${h(g.pix)}">Copiar PIX</button></div>
+   <div class="pag"><input placeholder="ID do PIX" data-idpix="${g.id}"><label class="anx" title="PDF, JPG ou PNG até 5 MB">${I.clipe}<span>Comprovante</span><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" data-arq="${g.id}"></label><button class="btn sm ok" type="button" data-pagar="${g.id}">Marcar pago</button></div></div>`).join('')
+  : vazio('Nenhum saque pedido', 'Quando um parceiro tocar em "Solicitar saque" no app, aparece aqui.');
+ if (bonAba === 'faturas') box.innerHTML = r.faturas.length ? `<div class="lista">${r.faturas.map(x => `<div class="fat ch${x.dias >= 25 ? ' pronta' : ''}"><div><div class="nm">${h(x.cliente)}</div><div class="sub"><span class="cod">${h(x.codigo)}</span> ${h(x.parceiro)}${x.plano ? ` · ${h(x.plano)}` : ''}</div></div>
+   <div class="qd"><b>${h(x.inst)}</b><small>${x.dias === 0 ? 'instalou hoje' : `há ${x.dias} ${x.dias === 1 ? 'dia' : 'dias'}`}</small></div><span class="val bs">${reais(x.v)}</span><button class="btn sm${x.dias >= 25 ? ' ok' : ' g'}" type="button" data-lib="${x.id}">✓ 1ª fatura paga</button></div>`).join('')}</div>
+   <p class="sub" style="margin-top:12px">Confira no sistema da operadora se a 1ª fatura foi paga (em geral uns 30 dias depois da instalação) e libere. O valor de cada instalação segue o multiplicador da semana: base × multiplicador, igual para todas as instalações do parceiro naquela semana.</p>`
+  : vazio('Nenhum cliente esperando', 'Toda instalação nova aparece aqui até a 1ª fatura ser paga.');
+ if (bonAba === 'liberados') {
+  const por = {}; r.liberados.forEach(x => { (por[x.codigo] = por[x.codigo] || { nome:x.parceiro, itens:[] }).itens.push(x); });
+  box.innerHTML = r.liberados.length ? `<div class="lista">${Object.entries(por).map(([cod, g]) => `<details class="lib ch"><summary><span><span class="nm">${h(g.nome)}</span><span class="sub"><span class="cod">${h(cod)}</span> · ${g.itens.length} ${g.itens.length === 1 ? 'cliente' : 'clientes'}</span></span><span class="val bs">${reais(g.itens.reduce((t, x) => t + x.v, 0))}</span></summary>
+    ${g.itens.map(x => `<div class="li"><span>${h(x.cliente)}</span><small>instalou ${h(x.inst)} · liberado ${h(x.fatura)}</small><b>${reais(x.v)}</b><button class="lk" type="button" data-deslib="${x.id}">desfazer</button></div>`).join('')}</details>`).join('')}</div>
+   <p class="sub" style="margin-top:12px">O parceiro vê esse valor como "Disponível para saque" e pede quando quiser.</p>`
+   : vazio('Nada liberado esperando pedido', 'Depois de liberar, o valor fica aqui até o parceiro pedir o saque.');
+ }
+ if (bonAba === 'pagos') box.innerHTML = r.pagos.length ? r.pagos.map(g => `<div class="pg ch pago"><div><div class="nm">${h(g.parceiro)}</div><div class="sub"><span class="cod">${h(g.codigo)}</span> · ${g.n} ${g.n === 1 ? 'cliente' : 'clientes'} · pedido ${h(g.pedido)}</div></div><span class="val bs">${reais(g.valor)}</span>
+   <div class="pix"><span>${h(g.pix)}</span></div>
+   <div class="feito"><span>✓ Pago em ${h(g.pago_em)}${g.por ? ` · ${h(g.por)}` : ''}</span>${g.pix_id ? `<span class="cod">${h(g.pix_id)}</span>` : ''}${g.arq ? `<a class="vcp" href="${h(g.arq)}" target="_blank" rel="noopener">${I.clipe}Ver comprovante</a>` : `<label class="anx sm">${I.clipe}Anexar comprovante<input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" data-anexar="${g.id}"></label>`}</div></div>`).join('')
+  : vazio('Nenhum pagamento nos últimos 60 dias', 'Os saques pagos ficam aqui com o comprovante.');
+ if (bonAba === 'premios') {
+  const pend = r.premios.filter(p => !p.entregue), ent = r.premios.filter(p => p.entregue);
+  box.innerHTML = (pend.length ? `<div class="prems">${pend.map(p => `<div class="pm ch"><span class="gi">${I.gift}</span><div><b>${h(p.premio)}</b><small>${h(p.parceiro)} · <span class="cod">${h(p.codigo)}</span></small><small>${h(p.conquista)} · ${h(p.em)}</small><small>${p.kit ? '<span style="color:var(--ok)">Kit liberado: combine o envio</span>' : p.pode ? '<span style="color:var(--ok)">Já pode entregar</span>' : `Entrega a partir de ${h(p.libera)}`}</small><small><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">Combinar no WhatsApp</a></small></div><button class="btn sm${p.pode ? '' : ' g'}" type="button" data-ent="${p.id}">Entregue</button></div>`).join('')}</div>`
+   : vazio('Nenhum prêmio ou kit pendente', 'O kit aparece aqui na 1ª instalação do parceiro, e os prêmios quando ele bate uma meta. Tire foto na entrega (com autorização de imagem).'))
+   + (ent.length ? `<p class="sec">Já entregues</p><div class="prems">${ent.map(p => `<div class="pm ch ent"><span class="gi">${I.gift}</span><div><b>${h(p.premio)}</b><small>${h(p.parceiro)} · entregue em ${h(p.entregue)}</small></div></div>`).join('')}</div>` : '');
+ }
+};
+document.addEventListener('click', async e => {
+ const ab = e.target.closest('[data-bab]'); if (ab) { bonAba = ab.dataset.bab; document.querySelectorAll('#bon-tabs button').forEach(b => b.setAttribute('aria-selected', b === ab)); return bonDraw(); }
+ const c = e.target.closest('[data-cp]'); if (c && !c.closest('.jan')) return copiar(c.dataset.cp, 'Chave PIX copiada');
+ const lb = e.target.closest('[data-lib]');
+ if (lb) {
+  const x = cache.bon.faturas.find(f => f.id === +lb.dataset.lib);
+  const j = jan(`<h2 class="bs">1ª fatura paga</h2><p class="sub">${h(x.cliente)} · ${h(x.codigo)} ${h(x.parceiro)} · instalou ${h(x.inst)}</p>
+   <label class="f">Data do pagamento da fatura<input type="date" id="j-fd" max="${hojeISO()}" value="${hojeISO()}"></label>
+   <p class="sub" style="margin-top:10px">Libera ${reais(x.v)} para o parceiro pedir o saque no app. Também conta para as metas de prêmio.</p>
+   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ok" type="button" id="j-ok">✓ Liberar bônus</button></div>`);
+  j.querySelector('#j-ok').addEventListener('click', async () => { const d = j.querySelector('#j-fd').value; fechaJan(); const r = await api('liberar', { id:x.id, data:d }); if (r.erro) return toast(r.erro, true); toast(r.msg); TELAS.pagar(); atualizaResumo(); });
+  return;
+ }
+ const dl = e.target.closest('[data-deslib]');
+ if (dl) { if (!(await confirma('Desfazer liberação', 'O valor volta para "Esperando 1ª fatura" e sai do saldo do parceiro.', 'Desfazer', true))) return; const r = await api('liberar', { id:+dl.dataset.deslib, desfazer:1 }); if (r.erro) return toast(r.erro, true); toast(r.msg); TELAS.pagar(); atualizaResumo(); return; }
+ const p = e.target.closest('[data-pagar]');
+ if (p) {
+  const g = cache.bon.pedidos.find(x => x.id === +p.dataset.pagar), idpix = (document.querySelector(`[data-idpix="${g.id}"]`) || {}).value || '';
+  const arq = (document.querySelector(`[data-arq="${g.id}"]`) || {}).files?.[0];
+  if (!(await confirma('Confirmar pagamento', `${g.parceiro}: ${reais(g.valor)} no PIX ${g.pix}. ${arq ? 'O comprovante anexado vai junto e' : 'Sem comprovante anexado (dá para anexar depois).'} O parceiro vê tudo no app.`, 'Confirmar'))) return;
+  const fd = new FormData(); fd.append('id', g.id); fd.append('pix', idpix); if (arq) fd.append('arquivo', arq);
+  const r = await api('pagar_saque', fd); if (r.erro) return toast(r.erro, true); toast(r.msg); TELAS.pagar(); atualizaResumo(); return;
+ }
+ const en = e.target.closest('[data-ent]');
+ if (en) { const r = await api('entregar', { id:+en.dataset.ent }); if (r.erro) return toast(r.erro, true); toast(r.msg); TELAS.pagar(); atualizaResumo(); }
+});
+document.addEventListener('change', async e => {
+ if (e.target.id === 'exp-mes') { expMes = e.target.value || hojeMes(); return; }
+ const f = e.target.closest('[data-arq]');
+ if (f) { const lb = f.closest('.anx'), arq = f.files[0]; if (arq && arq.size > 5 * 1024 * 1024) { f.value = ''; return toast('Arquivo maior que 5 MB.', true); } lb.classList.toggle('tem', !!arq); lb.querySelector('span').textContent = arq ? arq.name : 'Comprovante'; return; }
+ const ax = e.target.closest('[data-anexar]');
+ if (ax && ax.files[0]) {
+  if (ax.files[0].size > 5 * 1024 * 1024) { ax.value = ''; return toast('Arquivo maior que 5 MB.', true); }
+  const fd = new FormData(); fd.append('id', ax.dataset.anexar); fd.append('arquivo', ax.files[0]);
+  const r = await api('anexar', fd); if (r.erro) return toast(r.erro, true); toast(r.msg); TELAS.pagar();
+ }
+});
+/* planilhas para a contabilidade (abrem no Excel) */
+const csvDemo = (nome, cab, linhas) => {
+ const q = v => { v = String(v ?? ''); if (/^[=+\-@]/.test(v)) v = "'" + v; return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+ const txt = '﻿' + [cab, ...linhas].map(l => l.map(q).join(';')).join('\r\n');
+ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type:'text/csv;charset=utf-8' })); a.download = `hunter-league-${nome}.csv`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+};
+document.addEventListener('click', async e => {
+ const b = e.target.closest('[data-exp]'); if (!b) return;
+ const t = b.dataset.exp, comp = t === 'indicacoes' ? '' : expMes;
+ if (!DEMO) { location.href = `exportar.php?t=${t}${comp ? '&c=' + comp : ''}`; toast('Baixando a planilha…'); return; }
+ if (t === 'indicacoes') { const r = await api('indicacoes'); csvDemo('indicacoes', ['Criada em', 'Cliente', 'Telefone', 'CPF do cliente', 'Plano', 'Etapa', 'Motivo', 'Instalada em', 'Bônus (R$)', 'Código do parceiro', 'Parceiro'], r.itens.map(i => [i.criado, i.nome, i.tel, i.cpf, i.plano, i.status, i.motivo, i.inst, i.bonus != null ? i.bonus.toFixed(2).replace('.', ',') : '', i.parceiro.codigo, i.parceiro.nome])); }
+ else if (t === 'pagamentos') { const r = cache.bon || await api('bonus'); csvDemo(`bonus-pagos-${comp}`, ['Pago em', 'Código', 'Parceiro', 'Chave PIX', 'Clientes', 'Bônus (R$)', 'ID do PIX'], r.pagos.map(g => [g.pago_em, g.codigo, g.parceiro, g.pix, g.n, g.valor.toFixed(2).replace('.', ','), g.pix_id])); }
+ else { const r = cache.bon || await api('bonus'); csvDemo(`instalacoes-${comp}`, ['Cliente', 'Código', 'Parceiro', 'Instalada em', 'Bônus (R$)', 'Situação'], [...r.faturas.map(x => [x.cliente, x.codigo, x.parceiro, x.inst, x.v.toFixed(2).replace('.', ','), 'Aguardando 1ª fatura']), ...r.liberados.map(x => [x.cliente, x.codigo, x.parceiro, x.inst, x.v.toFixed(2).replace('.', ','), 'Liberado'])]); }
+ toast('Planilha baixada (dados de exemplo)');
+});
+
+/* ---------- tela: mais (configurações, equipe, histórico, minha senha) ---------- */
+let maisAba = 'config';
+TELAS.mais = async () => {
+ const r = cache.cfg = await api('config'); const c = r.config;
+ const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
+ if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
+  <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
+ const box = $('#mais-c');
+ if (maisAba === 'config') {
+  const dis = r.master ? '' : ' disabled';
+  box.innerHTML = `<form class="form ch" id="f-cfg">
+   <p class="sub" style="margin:0 0 4px">Multiplicador da semana: com 1 instalação ela vale a base; com 2, cada uma vale a base + o aumento; com 3, + 2 aumentos… até o teto. Todas as instalações da semana valem o mesmo. Zera toda segunda.</p>
+   <div class="g3"><label class="f">Base (R$)<input name="bonus_base" inputmode="decimal" value="${h(c.bonus_base)}"${dis}></label><label class="f">Sobe por venda (R$)<input name="bonus_passo" inputmode="decimal" value="${h(c.bonus_passo)}"${dis}></label><label class="f">Teto (R$)<input name="bonus_teto" inputmode="decimal" value="${h(c.bonus_teto)}"${dis}></label></div>
+   <label class="f">Prazo para pagar o saque (aparece no app)<input name="prazo_saque" value="${h(c.prazo_saque)}"${dis}></label>
+   <label class="f">WhatsApp que recebe as indicações<input name="whatsapp" value="${h(c.whatsapp)}"${dis}><small>55 + DDD + número</small></label>
+   <label class="f">Mensagem que o cliente manda<input name="mensagem_wa" value="${h(c.mensagem_wa)}"${dis}><small>Precisa ter {codigo}</small></label>
+   <div class="g2"><label class="f">Cidades do cadastro<input name="cidades" value="${h(c.cidades)}"${dis}><small>"todas" = as 323 cidades com fibra. Ou uma lista: Araguari, Uberlândia</small></label><label class="f">Preço promocional extra<input name="cidades_promo" value="${h(c.cidades_promo)}"${dis}><small>A tabela promocional já vem da base de cidades. Use só para incluir outras.</small></label></div>
+   <label class="f">Metas: instalações validadas | prêmio (uma por linha)<textarea name="metas"${dis}>${h(c.metas)}</textarea><small>Conta instalação com a 1ª fatura paga. Ex.: 20|Air Fryer</small></label>
+   <fieldset class="f kitf"><legend>Kit do Estabelecimento</legend><label class="ck"><input type="checkbox" name="kit_ativo" value="1"${c.kit_ativo === '0' ? '' : ' checked'}${dis}> Liberar o kit na 1ª instalação do parceiro</label><label class="f">Nome do kit<input name="kit_nome" value="${h(c.kit_nome || 'Kit do Estabelecimento')}"${dis}></label><label class="f">O que vem no kit (aparece no app)<input name="kit_itens" value="${h(c.kit_itens ?? 'Adesivos, QR Code para o balcão e panfletos')}"${dis}><small>Ex.: Adesivos, QR Code para o balcão e panfletos. Libera na 1ª instalação, sem esperar a 1ª fatura.</small></label></fieldset>
+   <label class="f">Validade da indicação (dias)<input name="validade_dias" type="number" min="15" max="365" value="${h(c.validade_dias || 60)}"${dis}><small>Sem instalação nesse prazo, o cliente pode ser indicado de novo. Cliente instalado nunca é indicado de novo.</small></label>
+   <label class="f">Pixel da Meta (opcional)<input name="pixel_meta" value="${h(c.pixel_meta)}"${dis}></label>
+   ${r.master ? '<button class="btn" type="submit" style="justify-self:start">Salvar configurações</button>' : '<p class="sub">Só o master muda as configurações.</p>'}</form>`;
+  if (r.master) $('#f-cfg').addEventListener('submit', async e => { e.preventDefault(); const v = Object.fromEntries(new FormData(e.target)); const rr = await api('salvar_config', v); rr.erro ? toast(rr.erro, true) : toast(rr.msg); });
+ }
+ if (maisAba === 'equipe') {
+  box.innerHTML = `<div class="lista">${r.equipe.map(u => `<div class="pr ch" style="cursor:default"><span class="av">${h(iniciais(u.nome))}</span><span><span class="nm" style="display:block">${h(u.nome)}${u.eu ? ' (você)' : ''}</span><span class="sub" style="display:block">${h(u.usuario)} · ${u.papel === 'master' ? 'Master' : 'Atendimento'}</span></span><span class="dir">${u.eu ? '' : `<button class="btn sm ${u.ativo ? 'g' : ''}" type="button" data-ut="${u.id}">${u.ativo ? 'Desativar' : 'Ativar'}</button>`}${u.ativo ? '' : '<span class="pill p-bloqueado">inativo</span>'}</span></div>`).join('')}</div>
+   <p class="sec">Novo usuário</p><form class="form ch" id="f-eq"><div class="g2"><label class="f">Nome<input name="nome" required></label><label class="f">Usuário<input name="usuario" required pattern="[a-z0-9._\\-]{3,40}"></label><label class="f">Senha (10 ou mais)<input name="senha" type="password" minlength="10" required></label><label class="f">Papel<select name="papel"><option value="atendimento">Atendimento (registra e avança)</option><option value="master">Master (tudo)</option></select></label></div><button class="btn" type="submit" style="justify-self:start">Criar usuário</button></form>`;
+  $('#f-eq').addEventListener('submit', async e => { e.preventDefault(); const v = Object.assign({ o:'criar' }, Object.fromEntries(new FormData(e.target))); const rr = await api('equipe', v); if (rr.erro) return toast(rr.erro, true); toast(rr.msg); TELAS.mais(); });
+ }
+ if (maisAba === 'email') {
+  box.innerHTML = `<form class="form ch" id="f-mail" style="max-width:620px">
+   <p class="sub" style="margin:0">Usado no "Esqueci a senha" do app: o parceiro recebe um link no e-mail do cadastro. Use uma conta Zoho do domínio (ex.: nao-responda@callnetbrasil.com.br). No Zoho, gere uma <b>senha de aplicativo</b> e cole abaixo.</p>
+   <div class="g2"><label class="f">Servidor<input name="smtp_host" value="${h(c.smtp_host || 'smtp.zoho.com')}"></label><label class="f">Porta<input name="smtp_porta" inputmode="numeric" value="${h(c.smtp_porta || '465')}"></label></div>
+   <label class="f">E-mail (usuário)<input name="smtp_usuario" type="email" value="${h(c.smtp_usuario || '')}" placeholder="nao-responda@callnetbrasil.com.br"></label>
+   <label class="f">Senha de aplicativo<input name="smtp_senha" type="password" autocomplete="new-password" placeholder="${c.smtp_tem_senha ? '•••••••• salva (deixe vazio para manter)' : 'cole a senha aqui'}"></label>
+   <label class="f">Nome que aparece no e-mail<input name="smtp_nome" value="${h(c.smtp_nome || 'Hunter League · CallNet')}"></label>
+   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Salvar</button><button class="btn g" type="button" id="m-teste">Enviar teste</button></div>
+   <p class="sub" style="margin:0">${c.smtp_tem_senha && c.smtp_usuario ? '✓ Recuperação por e-mail ativa.' : 'Enquanto não estiver configurado, o "Esqueci a senha" manda o parceiro para o WhatsApp.'}</p></form>`;
+  $('#f-mail').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('email', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+  $('#m-teste').addEventListener('click', async () => { toast('Enviando…'); const rr = await api('email', { o:'teste' }); rr.erro ? toast(rr.erro, true) : toast(rr.msg); });
+ }
+ if (maisAba === 'hist') box.innerHTML = `<ul class="hist">${r.historico.map(x => `<li class="ch"><span>${h(x.em)}</span><span>${h(x.quem)}</span><div><b>${h(x.acao)}</b> ${h(x.alvo)}${x.detalhe ? ` <span>· ${h(x.detalhe)}</span>` : ''}</div></li>`).join('')}</ul>`;
+ if (maisAba === 'senha') {
+  box.innerHTML = `<form class="form ch" id="f-pw" style="max-width:440px"><label class="f">Senha atual<input name="atual" type="password" required></label><label class="f">Senha nova (10 ou mais)<input name="nova" type="password" minlength="10" required></label><button class="btn" type="submit" style="justify-self:start">Trocar senha</button></form>`;
+  $('#f-pw').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('minha_senha', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), e.target.reset()); });
+ }
+};
+document.addEventListener('click', async e => {
+ const a = e.target.closest('[data-ma]'); if (a) { maisAba = a.dataset.ma; return TELAS.mais(); }
+ const u = e.target.closest('[data-ut]'); if (u) { const r = await api('equipe', { id:+u.dataset.ut }); r.erro ? toast(r.erro, true) : toast(r.msg); TELAS.mais(); }
+});
+
+/* ---------- começo ---------- */
+$('#me-n').textContent = BOOT.nome; $('#me-p').textContent = BOOT.papel === 'master' ? 'Master' : 'Atendimento';
+$('#me-av').textContent = $('#me-av2').textContent = iniciais(BOOT.nome);
+const inicio = (location.hash || '#hoje').slice(1);
+(async () => { await atualizaResumo(); ir(TELAS[inicio] ? inicio : 'hoje'); })();
+if (DEMO) { document.body.classList.add('ehdemo'); $('#demo-bar').hidden = false; $('#demo-reset').addEventListener('click', e => { e.preventDefault(); DEMO_RESET(); cache = {}; ir('hoje'); toast('Demonstração recomeçada.'); }); }
+}
+</script>
+</body>
+</html>

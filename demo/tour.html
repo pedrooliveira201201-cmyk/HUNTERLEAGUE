@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>Como funciona | Hunter League</title>
+<meta name="description" content="Indique internet fibra no seu estabelecimento e ganhe bônus por cada instalação. Sem custo para entrar. Programa da CALLNET BRASIL BPO LTDA.">
+<link rel="icon" type="image/png" href="/demo/icons/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#050505;--card:#0B0E10;--cyan:#19F7FF;--cyan2:#AEFCFF;--ink:#EEF1F3;--mute:#8A949B;--edge:#22292E;--cut:14px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.55 Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip}
+img{display:block;max-width:100%;height:auto}
+a{color:inherit}
+.wrap{width:min(100%,1060px);margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:"Big Shoulders Display",Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.01em;line-height:.95;margin:0}
+.k{color:var(--cyan)}
+.eyebrow{font:800 12px Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+
+/* topo */
+.top{position:sticky;top:0;z-index:5;background:rgba(5,5,5,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--edge)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font:900 20px "Big Shoulders Display",sans-serif;letter-spacing:.04em;text-transform:uppercase}
+.logo img{width:34px;height:34px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 22px;border:0;background:var(--cyan);color:#050505;font:800 15px Montserrat,sans-serif;text-decoration:none;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut));cursor:pointer}
+.btn.sm{min-height:40px;padding:0 16px;font-size:13.5px;--cut:9px}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--edge);clip-path:none}
+.btn:focus-visible{outline:3px solid var(--cyan2);outline-offset:3px}
+
+/* abertura */
+.hero{padding:44px 0 30px;background:radial-gradient(90% 60% at 80% 0%,rgba(25,247,255,.14),transparent 70%)}
+.hero .wrap{display:grid;gap:30px;align-items:center}
+.hero h1{font-size:clamp(52px,13vw,104px)}
+.hero p.lead{font-size:18px;color:#C9D1D6;margin:18px 0 26px;max-width:34ch}
+.hero .ctas{display:flex;flex-wrap:wrap;gap:12px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:30px}
+.chip{background:var(--card);border:1px solid var(--edge);padding:14px 12px}
+.chip b{display:block;font:900 clamp(20px,5.6vw,26px)/1 "Big Shoulders Display",sans-serif;color:var(--cyan)}
+.chip span{display:block;margin-top:6px;font-size:12.5px;line-height:1.35;color:var(--mute)}
+.hero .phone{justify-self:center}
+
+/* telefone */
+.phone{width:min(78vw,300px);padding:9px;background:#15191C;border-radius:34px;box-shadow:0 0 0 1px #2B3236,0 30px 60px rgba(0,0,0,.6),0 0 80px rgba(25,247,255,.10)}
+.phone img{border-radius:26px;aspect-ratio:540/1169;width:100%;object-fit:cover;background:#0B0E10}
+.pair{display:flex;gap:14px;justify-content:center}
+.pair .phone{width:min(42vw,250px);padding:7px;border-radius:28px}
+.pair .phone img{border-radius:22px}
+
+/* índice */
+.toc{padding:8px 0 8px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:6px}
+.toc ol::-webkit-scrollbar{display:none}
+.toc a{display:block;white-space:nowrap;text-decoration:none;font:700 13px Montserrat,sans-serif;color:var(--mute);border:1px solid var(--edge);padding:8px 12px}
+.toc a:hover{color:var(--ink);border-color:var(--cyan)}
+
+/* passos */
+.step{padding:56px 0;border-top:1px solid var(--edge)}
+.step .wrap{display:grid;gap:30px;align-items:center}
+.num{display:inline-grid;place-items:center;width:44px;height:44px;background:var(--cyan);color:#050505;font:900 24px "Big Shoulders Display",sans-serif;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);margin-bottom:14px}
+.step h2{font-size:clamp(40px,9vw,64px)}
+.step p{color:#C9D1D6;margin:14px 0 0;max-width:46ch}
+.step ul{margin:16px 0 0;padding:0;list-style:none;display:grid;gap:10px;max-width:48ch}
+.step li{position:relative;padding-left:26px;color:#C9D1D6}
+.step li::before{content:"";position:absolute;left:2px;top:.55em;width:10px;height:10px;background:var(--cyan);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.step li b,.step p b{color:var(--ink)}
+.note{margin-top:16px;padding:12px 14px;border-left:3px solid var(--cyan);background:var(--card);font-size:14px;color:#AFB9BF;max-width:48ch}
+
+/* tabela da escadinha */
+.lh{margin:20px 0 0!important;font-size:13px!important;color:var(--mute)!important}
+.ladder{margin-top:8px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-width:460px}
+.ladder div{background:var(--card);border:1px solid var(--edge);padding:8px 4px;text-align:center}
+.ladder small{display:block;font-size:11px;color:var(--mute)}
+.ladder b{font:900 19px "Big Shoulders Display",sans-serif;color:var(--ink)}
+.ladder .t{border-color:var(--cyan);grid-column:span 2}
+.ladder .t b{color:var(--cyan)}
+.ladder.mx b{font-size:18px;color:var(--cyan)}
+.ladder em,.ex em{display:block;font-style:normal;font-size:11.5px;color:var(--mute);font-weight:600}
+.ex b{display:block}
+.ex{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:460px}
+.ex div{background:var(--card);border:1px solid var(--edge);padding:12px}
+.ex small{display:block;color:var(--mute);font-size:12.5px}
+.ex b{font:900 28px "Big Shoulders Display",sans-serif;color:var(--cyan)}
+
+.plans{margin-top:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:480px}
+.plans article{background:var(--card);border:1px solid var(--edge);padding:12px}
+.plans article.best{border-color:var(--cyan)}
+.plans .pn{font:800 11px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.plans .sp{display:block;font:900 26px/1 "Big Shoulders Display",sans-serif;margin:4px 0 6px}
+.plans .pr{font:900 22px "Big Shoulders Display",sans-serif;color:var(--cyan)}
+.plans .pr small{font:600 11px Montserrat,sans-serif;color:var(--mute)}
+.plans ul{margin:8px 0 0!important;gap:4px!important}
+.plans li{padding-left:0!important;font-size:12.5px;line-height:1.35}
+.plans li::before{display:none}
+.plans li.cel{color:var(--cyan);font-weight:700}
+.pnote{margin-top:10px;font-size:12.5px;color:var(--mute);max-width:48ch}
+
+/* trilha de pagamento */
+.flow{margin-top:20px;display:grid;gap:0;max-width:460px}
+.flow div{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;padding-bottom:16px;position:relative}
+.flow div:not(:last-child)::after{content:"";position:absolute;left:16px;top:30px;bottom:0;width:2px;background:var(--edge)}
+.flow i{display:grid;place-items:center;width:34px;height:34px;border:2px solid var(--cyan);color:var(--cyan);font:900 16px "Big Shoulders Display",sans-serif;font-style:normal;background:var(--bg);position:relative;z-index:1}
+.flow p{margin:4px 0 0!important}
+
+/* níveis e prêmios */
+.levels{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:480px}
+.levels div{background:var(--card);border:1px solid var(--edge);padding:10px 6px;text-align:center}
+.levels b{display:block;font:900 17px/1.05 "Big Shoulders Display",sans-serif;text-transform:uppercase}
+.levels small{color:var(--mute);font-size:12px}
+.prizes{margin-top:18px;display:grid;gap:8px;max-width:480px}
+.prizes div{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--edge);padding:12px 14px}
+.prizes b{flex:none;display:grid;place-items:center;width:52px;height:46px;background:var(--cyan);color:#050505;font:900 24px "Big Shoulders Display",sans-serif;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.prizes span{font-weight:700}
+.prizes .kit{border-color:var(--cyan)}
+.prizes .kit b{font-size:20px}
+.prizes small{display:block;color:var(--mute);font-weight:500;font-size:13px}
+
+/* perguntas */
+.faq{padding:56px 0;border-top:1px solid var(--edge)}
+.faq h2{font-size:clamp(40px,9vw,64px);margin-bottom:22px}
+details{border-bottom:1px solid var(--edge)}
+summary{list-style:none;cursor:pointer;padding:18px 34px 18px 0;font-weight:700;position:relative}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:4px;top:12px;font:800 26px Montserrat,sans-serif;color:var(--cyan)}
+details[open] summary::after{content:"–"}
+details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
+
+/* fechamento */
+.end{padding:60px 0 120px;border-top:1px solid var(--edge);background:radial-gradient(80% 70% at 50% 100%,rgba(25,247,255,.12),transparent 70%);text-align:center}
+.end h2{font-size:clamp(46px,11vw,80px)}
+.end p{color:#C9D1D6;margin:16px auto 26px;max-width:40ch}
+.end .ctas{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.legal{margin-top:40px;font-size:12.5px;color:var(--mute);line-height:1.5}
+
+/* barra fixa no celular */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(5,5,5,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--edge)}
+.bar .btn{flex:1;min-height:48px;padding:0 10px;font-size:14px}
+
+@media (min-width:860px){
+ .hero .wrap{grid-template-columns:1.15fr .85fr}
+ .step .wrap{grid-template-columns:1fr 1fr}
+ .step:nth-of-type(even) .media{order:-1}
+ .bar{display:none}
+ .end{padding-bottom:70px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="top">
+ <div class="wrap">
+  <a class="logo" href="#inicio"><img src="/demo/icons/favicon-64.png" alt="" width="34" height="34">Hunter League</a>
+  <a class="btn sm" href="/cadastro">Quero participar</a>
+ </div>
+</header>
+
+<main>
+<section class="hero" id="inicio">
+ <div class="wrap">
+  <div>
+   <p class="eyebrow">Programa de parceiros · CallNet</p>
+   <h1>Seu balcão<br>vira <span class="k">bônus</span></h1>
+   <p class="lead">Indique internet fibra para os seus clientes e ganhe bônus por cada instalação. Sem custo para entrar, sem precisar vender: a equipe da CallNet atende e instala.</p>
+   <div class="ctas">
+    <a class="btn" href="#passo-1">Ver como funciona</a>
+    <a class="btn ghost" href="/demo/produtos.html">Abrir o app de demonstração</a>
+   </div>
+   <div class="chips">
+    <div class="chip"><b>R$ 50 a 100</b><span>de bônus por instalação</span></div>
+    <div class="chip"><b>PIX</b><span>saque direto na sua conta</span></div>
+    <div class="chip"><b>Kit + prêmios</b><span>kit na 1ª venda, depois Air Fryer, Smart TV e iPhone</span></div>
+   </div>
+  </div>
+  <div class="phone"><img src="/demo/tour/04-marca.webp" alt="Tela do app com o QR Code exclusivo do parceiro" width="540" height="1169" fetchpriority="high"></div>
+ </div>
+</section>
+
+<nav class="toc wrap" aria-label="Passos">
+ <ol>
+  <li><a href="#passo-1">1 · Cadastro</a></li>
+  <li><a href="#passo-2">2 · Seu QR</a></li>
+  <li><a href="#passo-3">3 · O cliente chama</a></li>
+  <li><a href="#passo-4">4 · Multiplicador</a></li>
+  <li><a href="#passo-5">5 · Saque</a></li>
+  <li><a href="#passo-6">6 · Prêmios</a></li>
+  <li><a href="#passo-7">7 · Níveis e ranking</a></li>
+  <li><a href="#duvidas">Dúvidas</a></li>
+ </ol>
+</nav>
+
+<section class="step" id="passo-1">
+ <div class="wrap">
+  <div>
+   <span class="num">1</span>
+   <h2>Cadastro <span class="k">grátis</span> em 2 minutos</h2>
+   <p>O estabelecimento se cadastra pelo celular. Não tem taxa, mensalidade nem meta obrigatória.</p>
+   <ul>
+    <li>Precisa de <b>CNPJ</b>.</li>
+    <li>Informe nome da empresa, responsável, WhatsApp, e-mail, cidade e a chave PIX para receber.</li>
+    <li>Aceite o contrato de parceria. A CallNet confere e libera o acesso.</li>
+   </ul>
+  </div>
+  <div class="media"><div class="phone"><img src="/demo/tour/01-cadastro.webp" alt="Tela de cadastro do parceiro" width="540" height="1169" loading="lazy"></div></div>
+ </div>
+</section>
+
+<section class="step" id="passo-2">
+ <div class="wrap">
+  <div>
+   <span class="num">2</span>
+   <h2>Escolha o produto e pegue o <span class="k">seu QR</span></h2>
+   <p>No app você escolhe a marca do produto em destaque. Lá dentro estão os planos, os preços e o seu <b>QR Code exclusivo</b>, com o seu código de parceiro.</p>
+   <ul>
+    <li>Imprima o cartaz e deixe no balcão, no caixa ou na vitrine.</li>
+    <li>Ou mostre o QR na tela do celular e mande o link pelo WhatsApp.</li>
+    <li>Tudo o que entra pelo seu QR fica registrado no seu nome.</li>
+    <li>Nos planos de 800 Mega e 1 Giga o cliente ainda leva <b>chip de celular</b> incluso, sem pagar a mais.</li>
+   </ul>
+   <div class="plans" aria-label="Planos que o cliente pode contratar">
+    <article><span class="pn">Essencial</span><span class="sp">600 Mega</span><span class="pr">R$ 55 <small>/mês</small></span><ul><li>Wi‑Fi 5</li></ul></article>
+    <article><span class="pn">Super</span><span class="sp">800 Mega</span><span class="pr">R$ 70 <small>/mês</small></span><ul><li>Wi‑Fi 6</li><li class="cel">+ 1 chip de celular 10 GB</li></ul></article>
+    <article class="best"><span class="pn">Ultra</span><span class="sp">1 Giga</span><span class="pr">R$ 85 <small>/mês</small></span><ul><li>Wi‑Fi 6 · Globoplay</li><li class="cel">+ 1 chip de celular 20 GB</li></ul></article>
+    <article><span class="pn">Ultra Mesh</span><span class="sp">1 Giga</span><span class="pr">R$ 100 <small>/mês</small></span><ul><li>Wi‑Fi 6 · Mesh · Globoplay</li><li class="cel">+ 2 chips de celular 20 GB cada</li></ul></article>
+   </div>
+   <p class="pnote">Preços da tabela promocional, fixos até janeiro de 2030, nas cidades participantes. Em outras cidades vale a tabela cheia, que aparece no app. Sujeito a disponibilidade técnica.</p>
+  </div>
+  <div class="media pair">
+   <div class="phone"><img src="/demo/tour/02-marcas.webp" alt="Página de marcas do app" width="540" height="1169" loading="lazy"></div>
+   <div class="phone"><img src="/demo/tour/05-qr.webp" alt="QR Code em tela cheia para o cliente apontar a câmera" width="540" height="1169" loading="lazy"></div>
+  </div>
+ </div>
+</section>
+
+<section class="step" id="passo-3">
+ <div class="wrap">
+  <div>
+   <span class="num">3</span>
+   <h2>O cliente chama. <span class="k">A CallNet faz o resto.</span></h2>
+   <p>O cliente aponta a câmera e cai direto no WhatsApp da CallNet, já com o seu código. Você não precisa explicar plano nem fechar venda.</p>
+   <ul>
+    <li>Prefere indicar alguém conhecido? Use <b>"Indicar um cliente"</b> no app, com a autorização dele.</li>
+    <li>A equipe atende, confere a cobertura e agenda a instalação.</li>
+    <li>Você acompanha cada cliente pelo app: em atendimento, instalado ou não deu certo.</li>
+   </ul>
+   <p class="note">Os dados do cliente vão só para a CallNet. No app você vê apenas o primeiro nome e a etapa, nunca CPF, telefone ou endereço.</p>
+  </div>
+  <div class="media"><div class="phone"><img src="/demo/tour/06-indicar.webp" alt="Formulário para indicar um cliente" width="540" height="1169" loading="lazy"></div></div>
+ </div>
+</section>
+
+<section class="step" id="passo-4">
+ <div class="wrap">
+  <div>
+   <span class="num">4</span>
+   <h2>Multiplicador <span class="k">da semana</span></h2>
+   <p>Toda instalação vale <b>R$ 50 × o seu multiplicador</b>. A cada instalação na semana o multiplicador sobe <b>0,1</b>, e ele vale para <b>todas</b> as instalações da semana, até <b>x2,0</b>. Zera toda segunda.</p>
+   <p class="lh">Instalações na semana → multiplicador → quanto vale cada uma</p>
+   <div class="ladder mx" aria-label="Multiplicador conforme a quantidade de instalações na semana">
+    <div><small>1</small><b>x1,0</b><em>R$ 50</em></div><div><small>2</small><b>x1,1</b><em>R$ 55</em></div><div><small>3</small><b>x1,2</b><em>R$ 60</em></div>
+    <div><small>4</small><b>x1,3</b><em>R$ 65</em></div><div><small>5</small><b>x1,4</b><em>R$ 70</em></div><div><small>6</small><b>x1,5</b><em>R$ 75</em></div>
+    <div><small>7</small><b>x1,6</b><em>R$ 80</em></div><div><small>8</small><b>x1,7</b><em>R$ 85</em></div><div><small>9</small><b>x1,8</b><em>R$ 90</em></div>
+    <div><small>10</small><b>x1,9</b><em>R$ 95</em></div><div class="t"><small>11 ou mais</small><b>x2,0</b><em>R$ 100</em></div>
+   </div>
+   <div class="ex">
+    <div><small>3 na semana · x1,2</small><b>R$ 180</b><em>3 × R$ 60</em></div>
+    <div><small>7 na semana · x1,6</small><b>R$ 560</b><em>7 × R$ 80</em></div>
+    <div><small>11 na semana · x2,0</small><b>R$ 1.100</b><em>11 × R$ 100</em></div>
+    <div><small>Cada nova instalação</small><b>+0,1</b><em>no multiplicador de todas</em></div>
+   </div>
+  </div>
+  <div class="media"><div class="phone"><img src="/demo/tour/08-escada.webp" alt="Multiplicador da semana no app" width="540" height="1169" loading="lazy"></div></div>
+ </div>
+</section>
+
+<section class="step" id="passo-5">
+ <div class="wrap">
+  <div>
+   <span class="num">5</span>
+   <h2>Cliente pagou, <span class="k">você saca no PIX</span></h2>
+   <p>O bônus de cada cliente é liberado quando ele paga a <b>1ª fatura</b>, cerca de 30 dias depois da instalação. Aí é só tocar em "Solicitar saque".</p>
+   <div class="flow">
+    <div><i>1</i><p><b>Instalou</b> · o bônus aparece em "A liberar".</p></div>
+    <div><i>2</i><p><b>Pagou a 1ª fatura</b> · o bônus vai para "Disponível para saque".</p></div>
+    <div><i>3</i><p><b>Pediu o saque</b> · leva todo o saldo, sem valor mínimo.</p></div>
+    <div><i>4</i><p><b>Caiu no PIX</b> · em até 3 dias úteis, com o comprovante no app.</p></div>
+   </div>
+  </div>
+  <div class="media pair">
+   <div class="phone"><img src="/demo/tour/07-vendas.webp" alt="Tela de vendas com saldo disponível para saque" width="540" height="1169" loading="lazy"></div>
+   <div class="phone"><img src="/demo/tour/09-fatura.webp" alt="Clientes esperando a 1ª fatura e saques feitos" width="540" height="1169" loading="lazy"></div>
+  </div>
+ </div>
+</section>
+
+<section class="step" id="passo-6">
+ <div class="wrap">
+  <div>
+   <span class="num">6</span>
+   <h2>Metas com <span class="k">prêmio</span></h2>
+   <p>Logo na <b>1ª instalação</b> você desbloqueia o <b>Kit do Estabelecimento</b> para divulgar no balcão. Depois, cada instalação validada (cliente pagou a 1ª fatura) soma para as metas, desde o dia em que você entrou.</p>
+   <div class="prizes">
+    <div class="kit"><b>1ª</b><span>Kit do Estabelecimento<small>Na 1ª instalação: adesivos, QR Code para o balcão e panfletos</small></span></div>
+    <div><b>20</b><span>Air Fryer<small>20 instalações validadas</small></span></div>
+    <div><b>60</b><span>Smart TV 50"<small>60 instalações validadas</small></span></div>
+    <div><b>200</b><span>iPhone 17<small>200 instalações validadas</small></span></div>
+   </div>
+   <p class="note">O prêmio é retirado 30 dias após a validação da meta. Prêmio por resultado, não é sorteio. Imagens do app meramente ilustrativas.</p>
+  </div>
+  <div class="media"><div class="phone"><img src="/demo/tour/12-metas.webp" alt="Metas e prêmios no perfil do parceiro" width="540" height="1169" loading="lazy"></div></div>
+ </div>
+</section>
+
+<section class="step" id="passo-7">
+ <div class="wrap">
+  <div>
+   <span class="num">7</span>
+   <h2>Suba de nível <span class="k">na liga</span></h2>
+   <p>Quanto mais instalações, mais alto o seu nível. No ranking você disputa só com parceiros da mesma divisão, por semana, por mês e no geral.</p>
+   <div class="levels">
+    <div><b>Recruta</b><small>0 a 19</small></div>
+    <div><b>Hunter</b><small>20 a 59</small></div>
+    <div><b>Hunter Elite</b><small>60 a 199</small></div>
+    <div><b>Líder</b><small>200+</small></div>
+   </div>
+  </div>
+  <div class="media pair">
+   <div class="phone"><img src="/demo/tour/11-perfil.webp" alt="Nível do parceiro no perfil" width="540" height="1169" loading="lazy"></div>
+   <div class="phone"><img src="/demo/tour/10-ranking.webp" alt="Ranking da liga" width="540" height="1169" loading="lazy"></div>
+  </div>
+ </div>
+</section>
+
+<section class="faq" id="duvidas">
+ <div class="wrap">
+  <h2>Dúvidas <span class="k">comuns</span></h2>
+  <details><summary>Tem algum custo para participar?</summary><p>Não. O cadastro é grátis, sem taxa de entrada nem mensalidade.</p></details>
+  <details><summary>Preciso vender ou explicar os planos?</summary><p>Não. Você só divulga o seu QR ou indica o cliente. A equipe da CallNet atende pelo WhatsApp, confere a cobertura e agenda a instalação.</p></details>
+  <details><summary>Quem paga o bônus?</summary><p>A CALLNET BRASIL BPO LTDA, por PIX, para a chave cadastrada no CNPJ do parceiro. O comprovante fica no app.</p></details>
+  <details><summary>Quando o bônus é liberado?</summary><p>Quando o cliente paga a 1ª fatura, cerca de 30 dias depois da instalação. Se o cliente não pagar ou cancelar antes, aquele bônus não é liberado.</p></details>
+  <details><summary>Ganho por trazer outros parceiros?</summary><p>Não. O bônus é só por instalação de cliente. Não existe ganho por recrutar outros estabelecimentos.</p></details>
+  <details><summary>E se o cliente já foi indicado por outra pessoa?</summary><p>Cada indicação vale por 60 dias. Se não houver instalação nesse prazo, o cliente pode ser indicado de novo. Cliente já instalado não pode ser indicado outra vez.</p></details>
+  <details><summary>Preciso ter CNPJ?</summary><p>Sim. O programa é para pessoa jurídica, com CNPJ ativo.</p></details>
+ </div>
+</section>
+
+<section class="end" id="participar">
+ <div class="wrap">
+  <h2>Bora <span class="k">caçar?</span></h2>
+  <p>Cadastre o seu estabelecimento agora. A CallNet confere os dados e libera o seu QR.</p>
+  <div class="ctas">
+   <a class="btn" href="/cadastro">Quero me cadastrar</a>
+   <a class="btn ghost" href="/demo/produtos.html">Testar o app de demonstração</a>
+   <a class="btn ghost" href="https://wa.me/553420281071?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20Hunter%20League.">Falar no WhatsApp</a>
+  </div>
+  <p class="legal">Hunter League é um programa da CALLNET BRASIL BPO LTDA. Valores, prêmios e regras conforme o contrato de parceria vigente (<a href="/termo">ler o contrato</a>). Telas do app de demonstração com dados de exemplo.</p>
+ </div>
+</section>
+</main>
+
+<nav class="bar" aria-label="Ações">
+ <a class="btn ghost" href="/demo/produtos.html">Ver o app</a>
+ <a class="btn" href="/cadastro">Quero participar</a>
+</nav>
+
+</body>
+</html>

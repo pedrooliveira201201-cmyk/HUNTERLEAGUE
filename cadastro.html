@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="hl-api" content="1">
+<meta name="theme-color" content="#050505">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<title>Cadastro | Hunter League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#050505;--cyan:#19F7FF;--silver:#BEC5CC;--ink:#EEF1F3;--mute:#8A939A;--edge:#2A3036;--field:#0C0E10;--red:#FF5C7A;--cut:12px}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:radial-gradient(90% 50% at 50% 0,#0C1518 0,#050505 70%) fixed,#050505;color:var(--ink);font:500 16px/1.5 Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:440px;margin:0 auto;padding:22px 20px calc(36px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:12px}
+.top img{width:52px;height:auto}
+.top a{margin-left:auto;color:var(--silver);font-weight:700;font-size:15px;text-decoration:none;padding:10px 4px}
+h1{margin:22px 0 4px;font:900 42px/.95 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;letter-spacing:.005em}
+h1 span{color:var(--cyan)}
+.lead{margin:8px 0 0;color:var(--silver);font-size:16px}
+.step{margin:28px 0 10px;font:800 13px Montserrat,sans-serif;color:var(--mute);text-transform:uppercase;letter-spacing:.1em}
+.tipos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tipo{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:122px;padding:16px 14px;border:1.5px solid var(--edge);background:var(--field);color:var(--ink);font:inherit;text-align:left;cursor:pointer;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.tipo b{font-size:17px;font-weight:800;line-height:1.15}
+.tipo small{color:var(--mute);font-size:13.5px;font-weight:600;line-height:1.3}
+.tipo svg{color:var(--silver)}
+.tipo[aria-checked=true]{border-color:var(--cyan);background:#0A1A1D}
+.tipo[aria-checked=true] svg{color:var(--cyan)}
+.tipo[aria-checked=true]::after{content:"";position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;background:var(--cyan) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%23050505' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat}
+.field{margin-top:14px}
+.field label{display:block;margin-bottom:6px;font-size:14.5px;font-weight:700;color:var(--silver)}
+.field label small{font-weight:600;color:var(--mute)}
+.inp{position:relative;background:var(--edge);padding:1.5px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.inp:focus-within{background:var(--cyan)}
+.inp.bad{background:var(--red)}
+.inp input,.inp select{display:block;width:100%;height:54px;border:0;border-radius:0;background:var(--field);color:var(--ink);font:600 17px Montserrat,sans-serif;padding:0 16px;outline:none;appearance:none;clip-path:polygon(calc(var(--cut) - 1px) 0,100% 0,100% calc(100% - var(--cut) + 1px),calc(100% - var(--cut) + 1px) 100%,0 100%,0 calc(var(--cut) - 1px))}
+.inp select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%23BEC5CC' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:20px}
+.cidf{position:relative}
+.cidl{position:absolute;left:0;right:0;z-index:20;max-height:290px;margin:4px 0 0;padding:4px 0;overflow:auto;list-style:none;background:#0C1215;border:1.5px solid var(--cyan);box-shadow:0 14px 34px rgba(0,0,0,.6)}
+.cidl li{display:flex;justify-content:space-between;gap:10px;padding:13px 16px;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer}
+.cidl li span{color:#7E8A90;font-weight:700;font-size:13px}
+.cidl li b{color:var(--cyan);font-weight:800}
+.cidl li[aria-selected="true"],.cidl li:hover{background:rgba(25,247,255,.1)}
+.cidl .nada{display:block;color:#7E8A90;cursor:default;font-size:14.5px;line-height:1.4}
+.cidf .ok2{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--cyan);font-weight:900;pointer-events:none}
+.msg{display:none;margin-top:5px;color:var(--red);font-size:14px;font-weight:600}
+.msg.on{display:block}
+.help{margin-top:5px;color:var(--mute);font-size:13.5px}
+.termo{display:flex;gap:12px;align-items:flex-start;margin-top:22px;padding:14px;border:1.5px solid var(--edge);cursor:pointer}
+.termo input{flex:none;width:24px;height:24px;margin:0;accent-color:var(--cyan)}
+.termo span{font-size:15px;line-height:1.4}
+.termo a{color:var(--cyan);font-weight:700}
+.termo.bad{border-color:var(--red)}
+.go{position:relative;display:block;width:100%;height:64px;margin-top:22px;border:0;padding:0 0 8px;background:var(--cyan);color:#050505;font:900 22px/1 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% 64%,50% 100%,0 64%,0 14px)}
+.go:disabled{opacity:.6}
+.err{display:none;margin-top:16px;padding:12px 14px;background:rgba(255,45,85,.1);border-left:3px solid var(--red);font-size:15px;font-weight:600}
+.err.on{display:block}
+.ok{display:none;text-align:center;padding-top:8vh}
+.ok h1{font-size:46px}
+.ok p{color:var(--silver);font-size:17px;max-width:30ch;margin:12px auto 0}
+.ok .go{display:grid;place-items:center;text-decoration:none;max-width:340px;margin:28px auto 0}
+body.done form,body.done .intro{display:none}
+body.done .ok{display:block}
+.loja{display:none}
+body.lojista .loja,body.vendedor .loja{display:block}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><img src="icons/icon-192.png" alt="Hunter League" style="border-radius:12px"><a href="./">Já tenho conta</a></div>
+
+ <div class="intro">
+  <h1>Entre para <span>a liga</span></h1>
+  <p class="lead">Indique o produto em destaque e ganhe bônus por cada venda instalada. Sem custo para entrar. Para participar é preciso ter CNPJ.</p>
+ </div>
+
+ <form id="f" novalidate>
+  <p class="step">1 · Quem é você?</p>
+  <div class="tipos" role="radiogroup" aria-label="Tipo de parceiro">
+   <button type="button" class="tipo" role="radio" aria-checked="false" data-t="lojista">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 9.5 4.5 4h15L21 9.5M3 9.5h18M3 9.5c0 1.4 1 2.5 2.25 2.5S7.5 10.9 7.5 9.5c0 1.4 1 2.5 2.25 2.5S12 10.9 12 9.5c0 1.4 1 2.5 2.25 2.5s2.25-1.1 2.25-2.5c0 1.4 1 2.5 2.25 2.5S21 10.9 21 9.5M5 12v8h14v-8M10 20v-5h4v5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    <b>Tenho uma loja</b><small>Deixo o QR no balcão</small>
+   </button>
+   <button type="button" class="tipo" role="radio" aria-checked="false" data-t="vendedor">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="7.5" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <b>Sou vendedor (MEI)</b><small>Indico para quem conheço</small>
+   </button>
+  </div>
+  <p class="msg" data-m="tipo"></p>
+
+  <p class="step">2 · Seus dados</p>
+  <div class="field"><label for="nome">Seu nome completo (responsável)</label><div class="inp"><input id="nome" autocomplete="name" maxlength="120"></div><p class="msg" data-m="nome"></p></div>
+  <div class="field loja"><label for="loja">Nome da empresa <small>(nome fantasia)</small></label><div class="inp"><input id="loja" autocomplete="organization" maxlength="120"></div><p class="msg" data-m="loja"></p></div>
+  <div class="field"><label for="doc">CNPJ</label><div class="inp"><input id="doc" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" autocomplete="off"></div><p class="msg" data-m="doc"></p><p class="help">É com ele que você entra no app.</p></div>
+  <div class="field"><label for="whatsapp">WhatsApp com DDD</label><div class="inp"><input id="whatsapp" inputmode="tel" maxlength="16" placeholder="(34) 99999-9999" autocomplete="tel-national"></div><p class="msg" data-m="whatsapp"></p></div>
+  <div class="field cidf"><label for="cidade-q">Sua cidade</label><div class="inp"><input id="cidade-q" autocomplete="off" placeholder="Digite o nome da cidade" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cid-l"><input type="hidden" id="cidade"></div>
+   <ul class="cidl" id="cid-l" role="listbox" hidden></ul><p class="msg" data-m="cidade"></p><p class="help" id="cid-h">Mais de 300 cidades com fibra. Digite para buscar.</p></div>
+  <div class="field"><label for="email">E-mail</label><div class="inp"><input id="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></div><p class="msg" data-m="email"></p></div>
+
+  <p class="step">3 · Para receber</p>
+  <div class="field"><label for="pix">Chave PIX</label><div class="inp"><input id="pix" maxlength="120" autocomplete="off" placeholder="CPF, celular, e-mail ou chave aleatória"></div><p class="msg" data-m="pix"></p><p class="help">O bônus é liberado quando o cliente paga a 1ª fatura. Aí você pede o saque no app.</p></div>
+
+  <p class="step">4 · Sua senha</p>
+  <div class="field"><label for="senha">Crie uma senha <small>(8 ou mais letras e números)</small></label><div class="inp"><input id="senha" type="password" autocomplete="new-password" minlength="8"></div><p class="msg" data-m="senha"></p></div>
+  <div class="field"><label for="senha2">Repita a senha</label><div class="inp"><input id="senha2" type="password" autocomplete="new-password"></div><p class="msg" data-m="senha2"></p></div>
+
+  <label class="termo" id="termo-l"><input type="checkbox" id="termo"><span>Li e aceito o <a href="termo.html" target="_blank" rel="noopener">contrato de parceria</a>. Ganho bônus só por instalação de verdade, sem taxa para entrar.</span></label>
+  <p class="msg" data-m="termo"></p>
+
+  <div class="err" id="err" role="alert"></div>
+  <button class="go" id="go" type="submit">Quero entrar</button>
+ </form>
+
+ <div class="ok" role="status">
+  <h1>Recebido, <span id="ok-n">parceiro</span>!</h1>
+  <p>Seu cadastro foi para análise. A CallNet confere e te avisa no WhatsApp quando liberar o acesso.</p>
+  <a class="go" href="./">Voltar para a entrada</a>
+ </div>
+</main>
+<script>
+{
+ const $ = s => document.querySelector(s);
+ const API = document.querySelector('meta[name="hl-api"]').content === '1';
+ let tipo = '';
+ for (const b of document.querySelectorAll('.tipo')) b.addEventListener('click', () => {
+  tipo = b.dataset.t;
+  for (const o of document.querySelectorAll('.tipo')) o.setAttribute('aria-checked', o === b);
+  document.body.classList.toggle('lojista', tipo === 'lojista'); document.body.classList.toggle('vendedor', tipo === 'vendedor'); marca('tipo', '');
+  if (navigator.vibrate) try { navigator.vibrate(8); } catch(e){}
+ });
+ const fmtDoc = d => d.length <= 11
+  ? d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')
+  : d.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2');
+ $('#doc').addEventListener('input', e => { e.target.value = fmtDoc(e.target.value.replace(/\D/g,'').slice(0,14)); });
+ $('#whatsapp').addEventListener('input', e => { const d = e.target.value.replace(/\D/g,'').slice(0,11);
+  e.target.value = d.length > 2 ? `(${d.slice(0,2)}) ${d.length > 7 ? d.slice(2, d.length-4) + '-' + d.slice(-4) : d.slice(2)}` : d; });
+ const okCPF = c => { if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false; for (let t = 9; t < 11; t++) { let s = 0; for (let i = 0; i < t; i++) s += c[i] * (t + 1 - i); if (((10 * s) % 11) % 10 != c[t]) return false; } return true; };
+ const okCNPJ = c => { if (c.length !== 14 || /^(\d)\1+$/.test(c)) return false; const calc = n => { let s = 0, p = n - 7; for (let i = 0; i < n; i++) { s += c[i] * p--; if (p < 2) p = 9; } const r = s % 11; return r < 2 ? 0 : 11 - r; }; return calc(12) == c[12] && calc(13) == c[13]; };
+ function marca(campo, txt) {
+  const m = document.querySelector(`[data-m="${campo}"]`); if (m) { m.textContent = txt; m.classList.toggle('on', !!txt); }
+  const el = document.getElementById(campo); const box = el && el.closest('.inp'); if (box) box.classList.toggle('bad', !!txt);
+  if (campo === 'termo') $('#termo-l').classList.toggle('bad', !!txt);
+ }
+ /* cidade: busca entre as cidades com fibra (sem precisar de acento) */
+ let CIDADES = ["Águas Lindas de Goiás - GO", "Alegrete - RS", "Almirante Tamandaré - PR", "Alvorada - RS", "Ananindeua - PA", "Anápolis - GO", "Andirá - PR", "Angra dos Reis - RJ", "Aparecida de Goiânia - GO", "Apucarana - PR", "Aracaju - SE", "Araguaína - TO", "Araguari - MG", "Arapiraca - AL", "Arapongas - PR", "Araruama - RJ", "Araucária - PR", "Armação dos Búzios - RJ", "Astorga - PR", "Bagé - RS", "Balneário Camboriú - SC", "Barra do Garças - MT", "Barra do Piraí - RJ", "Barra Mansa - RJ", "Barreiras - BA", "Belém - PA", "Belford Roxo - RJ", "Belo Horizonte - MG", "Bento Gonçalves - RS", "Berizal - MG", "Betim - MG", "Blumenau - SC", "Boa Vista - RR", "Brasília - DF", "Brusque - SC", "Cabedelo - PB", "Cabo de Santo Agostinho - PE", "Cabo Frio - RJ", "Cáceres - MT", "Cachoeirinha - RS", "Cachoeiro de Itapemirim - ES", "Cacoal - RO", "Camaquã - RS", "Cambé - PR", "Campina Grande - PB", "Campina Grande do Sul - PR", "Campinas - SP", "Campo Bom - RS", "Campo Grande - MS", "Campo Largo - PR", "Campo Magro - PR", "Campo Mourão - PR", "Campos dos Goytacazes - RJ", "Canoas - RS", "Carazinho - RS", "Cariacica - ES", "Caruaru - PE", "Cascavel - PR", "Casimiro de Abreu - RJ", "Castanhal - PA", "Castro - PR", "Cataguases - MG", "Catalão - GO", "Caucaia - CE", "Caxambu - MG", "Caxias do Sul - RS", "Chapecó - SC", "Cianorte - PR", "Cidade Ocidental - GO", "Colombo - PR", "Colorado - PR", "Contagem - MG", "Cordeiro - RJ", "Cornélio Procópio - PR", "Coronel Fabriciano - MG", "Corumbá - MS", "Criciúma - SC", "Cuiabá - MT", "Curitiba - PR", "Divinópolis - MG", "Dourados - MS", "Dracena - SP", "Duque de Caxias - RJ", "Eldorado do Sul - RS", "Erechim - RS", "Esmeraldas - MG", "Estância Velha - RS", "Esteio - RS", "Eunápolis - BA", "Farroupilha - RS", "Fazenda Rio Grande - PR", "Feira de Santana - BA", "Flores da Cunha - RS", "Floresta - PR", "Floriano - PI", "Florianópolis - SC", "Formosa - GO", "Fortaleza - CE", "Foz do Iguaçu - PR", "Fraiburgo - SC", "Francisco Beltrão - PR", "Garibaldi - RS", "Garopaba - SC", "Gaspar - SC", "Goiana - PE", "Goianésia - GO", "Goiânia - GO", "Goiás - GO", "Governador Valadares - MG", "Gravataí - RS", "Guabiruba - SC", "Guaíba - RS", "Guarapuava - PR", "Guaratuba - PR", "Guarulhos - SP", "Gurupi - TO", "Hortolândia - SP", "Ibiporã - PR", "Ibirité - MG", "Içara - SC", "Iguatu - CE", "Ijuí - RS", "Ilhéus - BA", "Imperatriz - MA", "Indaial - SC", "Inhumas - GO", "Ipatinga - MG", "Irati - PR", "Itabaiana - SE", "Itabira - MG", "Itabuna - BA", "Itaguaí - RJ", "Itajaí - SC", "Ituporanga - SC", "Jaboatão dos Guararapes - PE", "Jacobina - BA", "Jandaia do Sul - PR", "Japeri - RJ", "Jaru - RO", "Jataí - GO", "Jequié - BA", "Ji-Paraná - RO", "João Monlevade - MG", "João Pessoa - PB", "Joinville - SC", "Juazeiro - BA", "Juazeiro do Norte - CE", "Juína - MT", "Juiz de Fora - MG", "Jundiaí - SP", "Lages - SC", "Lagoa Santa - MG", "Lajeado - RS", "Laurentino - SC", "Lauro de Freitas - BA", "Lavras - MG", "Leopoldina - MG", "Londrina - PR", "Luís Eduardo Magalhães - BA", "Luziânia - GO", "Macapá - AP", "Maceió - AL", "Manaus - AM", "Mangaratiba - RJ", "Marabá - PA", "Maracaju - MS", "Maracanaú - CE", "Marau - RS", "Marechal Cândido Rondon - PR", "Marechal Deodoro - AL", "Maricá - RJ", "Maringá - PR", "Marituba - PA", "Matinhos - PR", "Medianeira - PR", "Mesquita - RJ", "Mogi das Cruzes - SP", "Montenegro - RS", "Montes Claros - MG", "Morrinhos - GO", "Mossoró - RN", "Muriaé - MG", "Natal - RN", "Navegantes - SC", "Nilópolis - RJ", "Niterói - RJ", "Nova Friburgo - RJ", "Nova Iguaçu - RJ", "Nova Lima - MG", "Nova Venécia - ES", "Novo Hamburgo - RS", "Olinda - PE", "Ouro Preto do Oeste - RO", "Paço do Lumiar - MA", "Paiçandu - PR", "Palhoça - SC", "Palmas - PR", "Palmas - TO", "Paracambi - RJ", "Paracatu - MG", "Paraíso do Tocantins - TO", "Paranaguá - PR", "Paranavaí - PR", "Paraty - RJ", "Parnaíba - PI", "Passo Fundo - RS", "Pato Branco - PR", "Patrocínio - MG", "Paulista - PE", "Paulo Afonso - BA", "Pelotas - RS", "Petrolina - PE", "Petrópolis - RJ", "Pimenta Bueno - RO", "Pinhais - PR", "Pinheiral - RJ", "Piraí - RJ", "Piraquara - PR", "Piripiri - PI", "Planaltina - GO", "Poços de Caldas - MG", "Pomerode - SC", "Ponta Grossa - PR", "Pontes e Lacerda - MT", "Porto Alegre - RS", "Porto Nacional - TO", "Porto Seguro - BA", "Porto Velho - RO", "Pouso Alegre - MG", "Primavera do Leste - MT", "Quatro Barras - PR", "Queimados - RJ", "Recife - PE", "Resende - RJ", "Ribeirão das Neves - MG", "Ribeirão do Pinhal - PR", "Rio Branco - AC", "Rio de Janeiro - RJ", "Rio do Sul - SC", "Rio Grande - RS", "Rio Largo - AL", "Rio Pardo - RS", "Rio Verde - GO", "Rolim de Moura - RO", "Rondonópolis - MT", "Rosário do Sul - RS", "Sabará - MG", "Salvador - BA", "Santa Cruz do Sul - RS", "Santa Inês - MA", "Santa Luzia - MG", "Santa Luzia - PB", "Santa Maria - RS", "Santa Rita do Sapucaí - MG", "Santana de Parnaíba - SP", "Santiago - RS", "Santo Ângelo - RS", "Santo Antônio da Platina - PR", "Santo Antônio do Descoberto - GO", "São Gabriel da Palha - ES", "São Gonçalo - RJ", "São João de Meriti - RJ", "São José - SC", "São José de Ribamar - MA", "São José dos Campos - SP", "São José dos Pinhais - PR", "São Leopoldo - RS", "São Lourenço - MG", "São Lourenço do Sul - RS", "São Luís - MA", "São Miguel do Guamá - PA", "São Paulo - SP", "São Pedro da Aldeia - RJ", "São Pedro do Ivaí - PR", "São Sebastião da Amoreira - PR", "Sapiranga - RS", "Sapucaia do Sul - RS", "Saquarema - RJ", "Sarandi - PR", "Senador Canedo - GO", "Serra - ES", "Sete Lagoas - MG", "Simões Filho - BA", "Sinop - MT", "Sobral - CE", "Sorocaba - SP", "Sorriso - MT", "Sumaré - SP", "Taboão da Serra - SP", "Tangará da Serra - MT", "Taquara - RS", "Teixeira de Freitas - BA", "Telêmaco Borba - PR", "Teresina - PI", "Teresópolis - RJ", "Timon - MA", "Timóteo - MG", "Toledo - PR", "Três Rios - RJ", "Trindade - GO", "Tubarão - SC", "Ubá - MG", "Uberaba - MG", "Umuarama - PR", "União da Vitória - PR", "Uruguaiana - RS", "Valença - RJ", "Valparaíso de Goiás - GO", "Varginha - MG", "Várzea Grande - MT", "Várzea Paulista - SP", "Venâncio Aires - RS", "Vespasiano - MG", "Viamão - RS", "Viana - ES", "Vila Velha - ES", "Vilhena - RO", "Vitória - ES", "Vitória da Conquista - BA", "Volta Redonda - RJ", "Votorantim - SP", "Wenceslau Braz - PR", "Xambrê - PR"];
+ if (API) fetch('/api/cidades.php').then(r => r.json()).then(j => { if (j.cidades && j.cidades.length) CIDADES = j.cidades; }).catch(() => {});
+ const semAc = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+ const cq = $('#cidade-q'), cl = $('#cid-l'), ch = $('#cidade'); let cSel = -1, cLista = [];
+ const cEsc = t => t.replace(/[<>&"]/g, '');
+ const cDraw = () => {
+  const q = semAc(cq.value.replace(/\s+-\s+[A-Z]{2}$/, ''));
+  if (!q) { cl.hidden = true; cq.setAttribute('aria-expanded', 'false'); return; }
+  const comeca = [], tem = [];
+  for (const c of CIDADES) { const n = semAc(c); if (n.startsWith(q)) comeca.push(c); else if (n.includes(q)) tem.push(c); }
+  cLista = comeca.concat(tem).slice(0, 8); cSel = cLista.length ? 0 : -1;
+  cl.innerHTML = cLista.length ? cLista.map((c, i) => { const [n, uf] = c.split(' - '); return `<li role="option" data-c="${cEsc(c)}" aria-selected="${i === cSel}">${cEsc(n)}<span>${uf}</span></li>`; }).join('')
+   : '<li class="nada">Ainda não tem fibra nessa cidade. Confira o nome ou fale com a CallNet no WhatsApp.</li>';
+  cl.hidden = false; cq.setAttribute('aria-expanded', 'true');
+ };
+ const cPega = c => { cq.value = c; ch.value = c; cl.hidden = true; cq.setAttribute('aria-expanded', 'false'); marca('cidade', ''); $('#cid-h').textContent = 'Cidade com fibra ✓'; };
+ cq.addEventListener('input', () => { ch.value = ''; $('#cid-h').textContent = 'Mais de 300 cidades com fibra. Digite para buscar.'; cDraw(); });
+ cq.addEventListener('focus', () => { if (cq.value && !ch.value) cDraw(); });
+ cq.addEventListener('keydown', e => {
+  if (cl.hidden || !cLista.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); cSel = (cSel + (e.key === 'ArrowDown' ? 1 : cLista.length - 1)) % cLista.length; cl.querySelectorAll('li').forEach((li, i) => li.setAttribute('aria-selected', i === cSel)); }
+  if (e.key === 'Enter') { e.preventDefault(); if (cSel >= 0) cPega(cLista[cSel]); }
+  if (e.key === 'Escape') cl.hidden = true;
+ });
+ cl.addEventListener('pointerdown', e => { const li = e.target.closest('[data-c]'); if (li) { e.preventDefault(); cPega(li.dataset.c); } });
+ cq.addEventListener('blur', () => setTimeout(() => { cl.hidden = true; if (!ch.value) { const ex = CIDADES.find(c => semAc(c.split(' - ')[0]) === semAc(cq.value)); if (ex) cPega(ex); } }, 150));
+ $('#f').addEventListener('submit', e => {
+  e.preventDefault(); $('#err').classList.remove('on');
+  const v = id => $('#' + id).value.trim();
+  const doc = v('doc').replace(/\D/g,''), wa = v('whatsapp').replace(/\D/g,'');
+  const erros = {};
+  if (!tipo) erros.tipo = 'Escolha uma das opções acima.';
+  if (v('nome').split(/\s+/).length < 2) erros.nome = 'Escreva nome e sobrenome.';
+  if (tipo && v('loja').length < 2) erros.loja = 'Escreva o nome da empresa.';
+  if (!okCNPJ(doc)) erros.doc = doc.length === 11 ? 'Precisa ser CNPJ. Se ainda não tem, o MEI é gratuito e sai na hora.' : 'CNPJ inválido. Confira os números.';
+  if (wa.length < 10) erros.whatsapp = 'Coloque o DDD e o número.';
+  if (!v('cidade')) erros.cidade = 'Digite e escolha sua cidade na lista.';
+  if (!/^\S+@\S+\.\S+$/.test(v('email'))) erros.email = 'Informe seu e-mail. Ele serve para recuperar a senha.';
+  if (v('pix').length < 5) erros.pix = 'Informe a chave PIX.';
+  if ($('#senha').value.length < 8) erros.senha = 'Use pelo menos 8 caracteres.';
+  else if ($('#senha').value !== $('#senha2').value) erros.senha2 = 'As senhas não são iguais.';
+  if (!$('#termo').checked) erros.termo = 'Marque para aceitar o contrato.';
+  for (const c of ['tipo','nome','loja','doc','whatsapp','email','pix','senha','senha2','termo','cidade']) marca(c, erros[c] || '');
+  const prim = Object.keys(erros)[0];
+  if (prim) { const el = document.getElementById(prim === 'cidade' ? 'cidade-q' : prim) || document.querySelector('.tipos'); el.scrollIntoView({ behavior:'smooth', block:'center' }); if (el.focus) el.focus({ preventScroll:true }); return; }
+  const dados = { tipo, nome:v('nome'), loja:v('loja'), doc, whatsapp:wa, cidade:v('cidade'), email:v('email'), pix:v('pix'), senha:$('#senha').value, termo:true };
+  const pronto = nome => { $('#ok-n').textContent = nome; document.body.classList.add('done'); scrollTo(0,0); };
+  if (!API) return pronto(dados.nome.split(' ')[0]);
+  const go = $('#go'); go.disabled = true; go.textContent = 'Enviando…';
+  fetch('/api/cadastro.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(dados) })
+   .then(r => r.json()).then(j => {
+    go.disabled = false; go.textContent = 'Quero entrar';
+    if (j.ok) return pronto(j.nome);
+    for (const [c, t] of Object.entries(j.campos || {})) marca(c, t);
+    $('#err').textContent = j.erro || 'Não deu para enviar. Tente de novo.'; $('#err').classList.add('on');
+   }).catch(() => { go.disabled = false; go.textContent = 'Quero entrar'; $('#err').textContent = 'Sem conexão. Confira a internet e tente de novo.'; $('#err').classList.add('on'); });
+ });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#050505">
+<title>Senha nova | Hunter League</title>
+<link rel="icon" href="icons/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#050505;color:#EAF2F4;font-family:Montserrat,system-ui,sans-serif}
+body{min-height:100vh;padding:6vh 16px 24px;background:radial-gradient(90% 60% at 50% 0,rgba(25,247,255,.12),transparent 70%),#050505}
+.card{width:100%;max-width:420px;margin:0 auto;padding:30px 24px;background:linear-gradient(160deg,#0F2328,#0A1316);border:1px solid rgba(25,247,255,.22);clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+img{display:block;width:84px;height:auto;margin:0 auto 10px}
+h1{margin:0;text-align:center;font:900 42px/.95 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;letter-spacing:.01em}
+p{margin:10px 0 0;text-align:center;color:#9FB0B6;font-size:15px;line-height:1.45}
+label{display:block;margin:20px 0 6px;font-weight:700;font-size:14px;color:#BEC5CC}
+.inp{display:flex;align-items:center;height:56px;border:1.5px solid #2A363C;background:#0A1013}
+.inp:focus-within{border-color:#19F7FF;box-shadow:0 0 0 3px rgba(25,247,255,.15)}
+input{flex:1;width:100%;min-width:0;height:100%;padding:0 14px;border:0;background:transparent;color:#fff;font:600 17px Montserrat,sans-serif;outline:none}
+.eye{height:100%;padding:0 14px;border:0;background:none;color:#9FB0B6;font:700 13px Montserrat,sans-serif;cursor:pointer}
+button.go{width:100%;height:58px;margin-top:22px;border:0;background:#19F7FF;color:#050505;font:900 22px "Big Shoulders Display",Impact,sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+button.go:disabled{opacity:.6}
+.msg{display:none;margin-top:16px;padding:12px 14px;font-size:14.5px;font-weight:600;line-height:1.45}
+.msg.err{display:block;background:rgba(255,45,85,.12);border-left:3px solid #FF2D55;color:#FFC4CE}
+.msg.ok{display:block;background:rgba(124,240,160,.1);border-left:3px solid #7CF0A0;color:#C9F9DA}
+a.go{display:grid;place-items:center;height:58px;margin-top:18px;background:#19F7FF;color:#050505;text-decoration:none;font:900 22px "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+small{display:block;margin-top:6px;color:#6F8188;font-size:12.5px}
+</style>
+</head>
+<body>
+<main class="card">
+ <img src="img/crest-160.webp" alt="Hunter League" width="160" height="176">
+ <h1>Senha nova</h1>
+ <p id="sub">Crie uma senha para entrar no app. Use pelo menos 8 caracteres.</p>
+ <form id="f" novalidate>
+  <label for="n1">Senha nova</label>
+  <div class="inp"><input id="n1" type="password" autocomplete="new-password" minlength="8" required><button class="eye" type="button" id="eye">Mostrar</button></div>
+  <label for="n2">Repita a senha</label>
+  <div class="inp"><input id="n2" type="password" autocomplete="new-password" minlength="8" required></div>
+  <small>Dica: uma frase curta fica fácil de lembrar e difícil de adivinhar.</small>
+  <button class="go" type="submit" id="go">Salvar senha</button>
+ </form>
+ <div class="msg" id="msg" role="status"></div>
+ <a class="go" href="/" id="entrar" hidden>Entrar no app</a>
+</main>
+<script>
+(() => {
+ const $ = s => document.querySelector(s), t = new URLSearchParams(location.search).get('t') || '';
+ const msg = (txt, ok) => { const m = $('#msg'); m.textContent = txt; m.className = 'msg ' + (ok ? 'ok' : 'err'); };
+ if (!/^[0-9a-f]{64}$/.test(t)) { $('#f').hidden = true; msg('Link incompleto. Abra o link direto do e-mail, ou peça outro em "Esqueci a senha".'); $('#entrar').hidden = false; }
+ $('#eye').addEventListener('click', () => { const s = $('#n1').type === 'password'; $('#n1').type = $('#n2').type = s ? 'text' : 'password'; $('#eye').textContent = s ? 'Esconder' : 'Mostrar'; });
+ $('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const a = $('#n1').value, b = $('#n2').value;
+  if (a.length < 8) return msg('A senha precisa ter pelo menos 8 caracteres.');
+  if (a !== b) return msg('As duas senhas não são iguais.');
+  $('#go').disabled = true;
+  let r; try { r = await (await fetch('/api/senha_nova.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ t, nova:a }) })).json(); } catch { r = { erro:'Sem conexão. Tente de novo.' }; }
+  $('#go').disabled = false;
+  if (!r.ok) return msg(r.erro || 'Não deu certo. Tente de novo.');
+  $('#f').hidden = true; $('#sub').textContent = 'Pronto! Sua senha foi trocada.'; msg('Agora é só entrar com o CNPJ e a senha nova.', true); $('#entrar').hidden = false;
+ });
+})();
+</script>
+</body>
+</html>

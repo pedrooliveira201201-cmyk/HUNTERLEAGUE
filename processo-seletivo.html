@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Processo seletivo · Callnet</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/logo-callnet-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,500;0,600;0,700;0,800;1,500&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one centered column, one step per screen, network-light canvas behind; brand is dark-only by choice */
+:root{
+  --ink:#04070F;          /* page ground */
+  --panel:#0A1428;        /* card surface */
+  --panel-2:#0E1B35;      /* inputs */
+  --line:#1C2D52;         /* hairlines */
+  --fg:#EEF4FF;           /* text */
+  --muted:#8EA3C6;        /* secondary text */
+  --cyan:#00D6F5;
+  --blue:#0084FF;
+  --grad:linear-gradient(100deg,var(--cyan),var(--blue));
+  --ok:#2BD48A; --warn:#FFC24A; --bad:#FF6B7A;
+  --display:"Poppins",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{margin:0;background:var(--ink);color:var(--fg);font:16px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#net{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header.top img{height:40px;width:auto}
+.badge{font:600 11px/1 var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:rgba(10,20,40,.6)}
+.progress{display:flex;gap:6px}
+.progress span{flex:1;height:4px;border-radius:4px;background:var(--line);transition:background .3s}
+.progress span.on{background:var(--grad)}
+.steplabel{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:-12px}
+.card{background:linear-gradient(180deg,rgba(14,27,53,.92),rgba(8,15,32,.94));border:1px solid var(--line);border-radius:18px;padding:clamp(20px,4vw,36px);box-shadow:0 0 0 1px rgba(0,132,255,.06),0 20px 60px -20px rgba(0,132,255,.25);display:flex;flex-direction:column;gap:24px}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.08}
+h1{font-size:clamp(40px,8vw,68px);font-weight:500;font-style:italic;letter-spacing:-.01em}
+h1 b,h2 b{font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:clamp(26px,4.5vw,36px);font-weight:700}
+.kicker{font:600 12px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+.lead{color:var(--muted);margin:0;max-width:60ch}
+.glow{height:2px;background:linear-gradient(90deg,transparent,var(--blue),var(--cyan),transparent);border:0;margin:4px 0}
+.qs{display:flex;flex-direction:column;gap:6px;font:500 italic clamp(20px,3.4vw,26px)/1.35 var(--display)}
+.field{display:flex;flex-direction:column;gap:10px;min-width:0}
+.field>label,.field>.lbl{font-weight:600;font-size:16px}
+.hint{font-size:13px;color:var(--muted);margin-top:-6px}
+.req{color:var(--cyan)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+input[type=text],input[type=tel],input[type=number],select,textarea{width:100%;font:inherit;color:var(--fg);background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;transition:border-color .2s,box-shadow .2s}
+textarea{min-height:130px;resize:vertical;line-height:1.6}
+textarea.big{min-height:280px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,132,255,.25)}
+.invalid input,.invalid select,.invalid textarea,.invalid .opts{border-color:var(--bad)!important}
+.err{color:var(--bad);font-size:13px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;border:1px solid transparent;border-radius:14px}
+.opt{position:relative;display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover{border-color:#2E4A80}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt .dot{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid #3A5285;display:grid;place-items:center}
+.opt.chk .dot{border-radius:5px}
+.opt input:checked~.dot{border-color:var(--cyan);background:var(--cyan);box-shadow:0 0 12px rgba(0,214,245,.6)}
+.opt input:checked~.dot::after{content:"";width:6px;height:6px;border-radius:2px;background:var(--ink)}
+.opt:has(input:checked){border-color:var(--blue);background:rgba(0,132,255,.12)}
+.opt:has(input:focus-visible){box-shadow:0 0 0 3px rgba(0,132,255,.35)}
+.math{display:flex;flex-direction:column;gap:14px;padding:18px;border:1px solid var(--line);border-radius:14px;background:rgba(4,7,15,.35)}
+.math .n{font:700 13px/1 var(--display);color:var(--cyan);letter-spacing:.1em}
+.math .opts{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.counter{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.counter b{font-variant-numeric:tabular-nums}
+.counter .okc{color:var(--ok)}
+.nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+button{font:600 16px/1 var(--display);cursor:pointer;border-radius:12px;padding:15px 24px;border:1px solid var(--line);background:transparent;color:var(--fg);transition:transform .15s,box-shadow .2s,opacity .2s}
+button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+button.primary{border:0;background:var(--grad);color:#03101F;box-shadow:0 8px 30px -8px rgba(0,132,255,.7)}
+button.primary:hover{transform:translateY(-1px);box-shadow:0 10px 36px -6px rgba(0,214,245,.7)}
+button:disabled{opacity:.5;cursor:default;transform:none}
+.center{align-items:center;text-align:center}
+.center .lead{margin-inline:auto}
+.thanks img{width:min(420px,90%)}
+.foot{font-size:12px;color:#55698F;text-align:center}
+.foot a{color:inherit}
+.back{color:var(--cyan);font:600 15px var(--display);text-decoration:none}
+/* Painel */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--panel-2)}
+.stat .v{font:700 28px/1 var(--display);font-variant-numeric:tabular-nums}
+.stat .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--panel)}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.row{cursor:pointer}
+tr.row:hover td{background:rgba(0,132,255,.06)}
+.pill{display:inline-block;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-ok{background:rgba(43,212,138,.15);color:var(--ok)}
+.p-warn{background:rgba(255,194,74,.15);color:var(--warn)}
+.p-bad{background:rgba(255,107,122,.15);color:var(--bad)}
+.detail td{background:rgba(4,7,15,.5)}
+.detail dl{display:grid;grid-template-columns:minmax(140px,240px) 1fr;gap:8px 16px;margin:0}
+.detail dt{color:var(--muted);font-size:13px}
+.detail dd{margin:0;white-space:pre-wrap;min-width:0;overflow-wrap:anywhere}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar input{max-width:280px}
+.note{font-size:13px;color:var(--warn)}
+@media (max-width:560px){.detail dl{grid-template-columns:1fr}.nav button{flex:1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.fade{animation:fade .35s ease}
+@keyframes fade{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<canvas id="net" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header class="top">
+    <img src="assets/logo-callnet.png" alt="Callnet: Conecta, Atende, Transforma">
+    <span class="badge">Processo seletivo · Consultor de vendas</span>
+  </header>
+  <div id="prog" hidden>
+    <div class="progress" id="bars"></div>
+  </div>
+  <div class="steplabel" id="steplabel" hidden><span id="stepname"></span><span id="stepcount"></span></div>
+  <main id="app"></main>
+  <p class="foot">Callnet Brasil · Uberlândia, MG</p>
+</div>
+
+<script>
+/* ---------- Conteúdo da prova ---------- */
+const STEPS = [
+  { id:"voce", kicker:"Etapa 1", title:"Quem é <b>você?</b>", lead:"Comece se apresentando. Não existe resposta certa aqui, queremos te conhecer.",
+    fields:[
+      {k:"nome",t:"text",l:"Nome completo",req:1,half:1},
+      {k:"whatsapp",t:"tel",l:"WhatsApp com DDD",req:1,half:1,ph:"(34) 9 0000-0000"},
+      {k:"idade",t:"number",l:"Idade",req:1,half:1},
+      {k:"bairro",t:"text",l:"Bairro e cidade onde mora",req:1,half:1},
+      {k:"escolaridade",t:"select",l:"Até onde você estudou?",req:1,o:["Ensino fundamental incompleto","Ensino fundamental completo","Ensino médio incompleto","Ensino médio completo","Curso técnico","Ensino superior incompleto","Ensino superior completo"]},
+      {k:"estuda",t:"radio",l:"Você está estudando atualmente?",req:1,o:["Sim","Não"]},
+      {k:"curso",t:"text",l:"O que você está estudando e onde?",req:1,show:a=>a.estuda==="Sim"},
+      {k:"porqueNaoEstuda",t:"textarea",l:"O que te impediu de continuar estudando até agora?",hint:"Pode ser sincero. Isso nos ajuda a pensar no seu caminho aqui dentro.",req:1,show:a=>a.estuda==="Não"},
+      {k:"situacao",t:"radio",l:"Qual é a sua situação de trabalho hoje?",req:1,o:["Desempregado(a)","Trabalho informal / bicos","Trabalho registrado em outra empresa","Primeiro emprego"]},
+      {k:"experiencia",t:"radio",l:"Você já trabalhou com vendas?",req:1,o:["Nunca, quero começar","Até 1 ano","Mais de 1 ano"]},
+      {k:"sobreVoce",t:"textarea",l:"Conte um pouco sobre você: sua rotina, sua família, o que você gosta de fazer.",req:1}
+    ]},
+  { id:"trouxe", kicker:"Etapa 2", title:"O que te trouxe <b>até aqui?</b>", lead:"Queremos entender o seu momento e o que te fez vir até a Callnet hoje.",
+    fields:[
+      {k:"comoSoube",t:"radio",l:"Como você ficou sabendo da vaga?",req:1,o:["Instagram","Indicação de alguém","Site da Callnet","Grupo de WhatsApp","Outro"]},
+      {k:"momento",t:"textarea",l:"O que hoje te deixa insatisfeito(a) e que você quer mudar na sua vida?",hint:"Pode ser dinheiro, trabalho, estudo, um sonho parado. Seja específico.",req:1},
+      {k:"chamou",t:"checks",l:"O que mais chamou sua atenção na apresentação?",hint:"Marque até 3.",req:1,max:3,o:["Plano de carreira","Premiações e viagens","Salário e comissão","Bônus de efetivação","Benefícios (VR, VT, Wellhub, psicólogo)","Trabalhar em feiras e ações externas","Treinamento Hunter League","A parceria com a Nio"]},
+      {k:"externo",t:"radio",l:"O trabalho é de segunda a sexta, no escritório e também em feiras e ações externas, abordando pessoas. Você está disposto(a)?",req:1,o:["Sim, gosto de estar na rua e falar com pessoas","Sim, mas prefiro o escritório","Tenho dificuldade com trabalho externo"]},
+      {k:"meta",t:"radio",l:"A meta é de R$ 10.000 em vendas por mês. Até 99% da meta você recebe 10% de comissão, a partir de 100% recebe 20%, e a partir de 125% recebe 30%. Como você se sente com isso?",req:1,o:["Animado(a), quero bater e passar","Tranquilo(a), acho possível","Inseguro(a), mas quero tentar","Acho difícil para mim"]}
+    ]},
+  { id:"chegar", kicker:"Etapa 3", title:"E onde você <b>quer chegar?</b>", lead:"O plano de carreira da Callnet foi feito para levar você até o seu objetivo. Conte qual é o seu.",
+    fields:[
+      {k:"objetivo",t:"radio",l:"Qual é o seu maior objetivo para os próximos 12 meses?",req:1,o:["Trocar de celular ou comprar algo que quero","Viajar ou fazer o cruzeiro","Ter minha moto ou meu carro","Ajudar minha família / pagar dívidas","Voltar a estudar ou fazer faculdade","Juntar dinheiro para a casa própria","Outro"]},
+      {k:"objetivoDetalhe",t:"textarea",l:"Descreva esse objetivo com detalhes. Quanto custa, para quando você quer e por que ele é importante para você?",req:1},
+      {k:"nivel",t:"radio",l:"Em 12 meses, em qual nível do plano de carreira você quer estar?",req:1,o:["Recruta","Hunter","Hunter Elite","Líder"]},
+      {k:"comoAjuda",t:"textarea",l:"Como a Callnet pode te ajudar a chegar nesse objetivo?",req:1},
+      {k:"vaiPorQue",t:"textarea",l:"Por que você vai bater a meta onde outras pessoas desistem?",req:1}
+    ]},
+  { id:"redacao", kicker:"Etapa 4", title:"Sua <b>redação</b>", lead:"Esta é a parte mais importante da prova. Escreva com calma e com suas palavras.",
+    fields:[
+      {k:"redacao",t:"textarea",big:1,l:"O que você entendeu do projeto apresentado hoje, e por que você deve ser um dos escolhidos para a próxima etapa?",hint:"Fale sobre a Callnet, o trabalho de consultor, o plano de carreira e onde você se vê dentro dele.",req:1},
+      {k:"objecao",t:"textarea",l:"Situação: o cliente diz “vou pensar e depois te falo”. O que você responderia?",req:1}
+    ]}
+];
+
+
+/* ---------- Estado ---------- */
+let answers = {}, step = -1;
+const app = document.getElementById("app");
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- Telas ---------- */
+function intro(){
+  step=-1; answers={};
+  setProgress();
+  app.innerHTML = `<section class="card fade">
+    <span class="kicker">Hunter League · Prova de seleção</span>
+    <h1>Agora é<br><b>sua vez!</b></h1>
+    <hr class="glow">
+    <div class="qs"><span>Quem é você?</span><span>O que te trouxe até aqui?</span><span>E onde você quer chegar?</span></div>
+    <p class="lead">São 4 etapas e leva cerca de 15 minutos. Responda com sinceridade e capriche nas respostas abertas: é por elas que escolhemos quem segue para a entrevista.</p>
+    <div class="nav"><span></span><button class="primary" id="start">Começar a prova</button></div>
+  </section>`;
+  document.getElementById("start").onclick = ()=>go(0);
+  window.scrollTo(0,0);
+}
+
+function setProgress(){
+  const p=document.getElementById("prog"), sl=document.getElementById("steplabel");
+  const on = step>=0 && step<STEPS.length;
+  p.hidden = sl.hidden = !on;
+  if(!on) return;
+  document.getElementById("bars").innerHTML = STEPS.map((_,i)=>`<span class="${i<=step?"on":""}"></span>`).join("");
+  document.getElementById("stepname").textContent = STEPS[step].kicker+" · "+STEPS[step].title.replace(/<[^>]+>/g,"");
+  document.getElementById("stepcount").textContent = `${step+1} de ${STEPS.length}`;
+}
+
+function fieldHTML(f){
+  if (f.show && !f.show(answers)) return "";
+  const v = answers[f.k];
+  const id = "f_"+f.k;
+  const star = f.req||f.t==="mcq" ? ' <span class="req">*</span>':"";
+  const hint = f.hint?`<div class="hint">${esc(f.hint)}</div>`:"";
+  let inner="";
+  if (["text","tel","number"].includes(f.t)){
+    inner = `<label for="${id}">${esc(f.l)}${star}</label>${hint}<input id="${id}" type="${f.t}" ${f.t==="number"?'min="14" max="80" inputmode="numeric"':""} placeholder="${esc(f.ph||"")}" value="${esc(v||"")}" autocomplete="off">`;
+  } else if (f.t==="select"){
+    inner = `<label for="${id}">${esc(f.l)}${star}</label>${hint}<select id="${id}"><option value="">Selecione</option>${f.o.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  } else if (f.t==="textarea"){
+    inner = `<label for="${id}">${esc(f.l)}${star}</label>${hint}<textarea id="${id}" class="${f.big?"big":""}" spellcheck="true">${esc(v||"")}</textarea>${f.min?`<div class="counter" id="${id}_c"></div>`:""}`;
+  } else if (f.t==="radio"||f.t==="mcq"||f.t==="checks"){
+    const multi=f.t==="checks";
+    const opts = f.o.map((o,i)=>{
+      const checked = multi ? (v||[]).includes(o) : (f.t==="mcq" ? v===i : v===o);
+      return `<label class="opt ${multi?"chk":""}"><input type="${multi?"checkbox":"radio"}" name="${id}" id="${id}_${i}" value="${i}" ${checked?"checked":""}><span class="dot"></span><span>${esc(o)}</span></label>`;
+    }).join("");
+    inner = `<span class="lbl">${esc(f.l)}${star}</span>${hint}<div class="opts" role="${multi?"group":"radiogroup"}">${opts}</div>`;
+    if (f.t==="mcq") return `<div class="math field" data-k="${f.k}"><span class="n">QUESTÃO ${f.k.slice(1)}</span>${inner}</div>`;
+  }
+  return `<div class="field" data-k="${f.k}">${inner}</div>`;
+}
+
+function render(){
+  const s=STEPS[step];
+  const halves=[], rest=[];
+  const html = s.fields.map(f=>({f,h:fieldHTML(f)}));
+  // agrupa campos curtos lado a lado
+  let out="", buf=[];
+  for(const {f,h} of html){
+    if(!h) continue;
+    if(f.half){buf.push(h);continue;}
+    if(buf.length){out+=`<div class="grid2">${buf.join("")}</div>`;buf=[];}
+    out+=h;
+  }
+  if(buf.length) out+=`<div class="grid2">${buf.join("")}</div>`;
+  const last = step===STEPS.length-1;
+  app.innerHTML = `<section class="card fade">
+    <div style="display:flex;flex-direction:column;gap:10px"><span class="kicker">${s.kicker}</span><h2>${s.title}</h2><p class="lead">${esc(s.lead)}</p></div>
+    ${out}
+    <div class="nav"><button id="back">Voltar</button><button class="primary" id="next">${last?"Enviar prova":"Continuar"}</button></div>
+  </section>`;
+  bind(s);
+  setProgress();
+  document.getElementById("back").onclick=()=>{ collect(s); step===0?intro():go(step-1); };
+  document.getElementById("next").onclick=()=>{ collect(s); if(validate(s)){ last?submit():go(step+1); } };
+}
+
+function bind(s){
+  s.fields.forEach(f=>{
+    if(f.t==="textarea"&&f.min) updCounter(f);
+    const el=document.getElementById("f_"+f.k);
+    if(el){ el.addEventListener("input",()=>{answers[f.k]=el.value; if(f.min) updCounter(f); clearErr(f.k);}); }
+    if(["radio","mcq","checks"].includes(f.t)){
+      document.querySelectorAll(`input[name="f_${f.k}"]`).forEach(inp=>inp.addEventListener("change",()=>{
+        collect(s); clearErr(f.k);
+        if(f.t==="checks"&&f.max&&(answers[f.k]||[]).length>f.max){inp.checked=false;collect(s);}
+        if(s.fields.some(x=>x.show)) { const y=window.scrollY; render(); window.scrollTo(0,y); }
+      }));
+    }
+  });
+}
+function updCounter(f){
+  const c=document.getElementById("f_"+f.k+"_c"); if(!c) return;
+  const n=(answers[f.k]||"").trim().length;
+  c.innerHTML = `<span>${n>=f.min?'<span class="okc">Tamanho mínimo atingido</span>':`Faltam <b>${f.min-n}</b> caracteres para o mínimo`}</span><span><b>${n}</b> caracteres</span>`;
+}
+function collect(s){
+  s.fields.forEach(f=>{
+    if(f.show&&!f.show(answers)){ delete answers[f.k]; return; }
+    if(f.t==="checks"){ answers[f.k]=[...document.querySelectorAll(`input[name="f_${f.k}"]:checked`)].map(i=>f.o[+i.value]); }
+    else if(f.t==="radio"){ const i=document.querySelector(`input[name="f_${f.k}"]:checked`); if(i) answers[f.k]=f.o[+i.value]; }
+    else if(f.t==="mcq"){ const i=document.querySelector(`input[name="f_${f.k}"]:checked`); if(i) answers[f.k]=+i.value; }
+    else { const el=document.getElementById("f_"+f.k); if(el) answers[f.k]=el.value.trim(); }
+  });
+}
+function clearErr(k){ const w=document.querySelector(`.field[data-k="${k}"]`); if(w){w.classList.remove("invalid"); w.querySelector(".err")?.remove();} }
+function validate(s){
+  let first=null;
+  s.fields.forEach(f=>{
+    if(f.show&&!f.show(answers)) return;
+    clearErr(f.k);
+    const v=answers[f.k]; let msg="";
+    if(f.t==="mcq"){ if(v===undefined) msg="Escolha uma alternativa."; }
+    else if(f.req){
+      if(f.t==="checks"){ if(!v||!v.length) msg="Marque pelo menos uma opção."; }
+      else if(v===undefined||v==="") msg = f.t==="radio"?"Escolha uma opção.":"Preencha este campo.";
+      else if(f.min&&v.length<f.min) msg=`Escreva pelo menos ${f.min} caracteres. Faltam ${f.min-v.length}.`;
+      else if(f.k==="whatsapp"&&v.replace(/\D/g,"").length<10) msg="Digite o número com DDD.";
+      else if(f.k==="idade"&&(+v<14||+v>80)) msg="Digite uma idade válida.";
+    }
+    if(msg){ const w=document.querySelector(`.field[data-k="${f.k}"]`); w.classList.add("invalid"); w.insertAdjacentHTML("beforeend",`<div class="err">${msg}</div>`); first=first||w; }
+  });
+  if(first){ first.scrollIntoView({behavior:"smooth",block:"center"}); return false; }
+  return true;
+}
+function go(i){ step=i; render(); window.scrollTo(0,0); }
+
+
+// As provas ficam guardadas no servidor do site e aparecem em recrutamento.php
+const ENVIO = "enviar-prova.php";
+const LBL = {}; STEPS.forEach(s=>s.fields.forEach(f=>LBL[f.k]=f.l));
+async function submit(){
+  const btn=document.getElementById("next"); btn.disabled=true; btn.textContent="Enviando…";
+  const rotulos = {};
+  for (const k of Object.keys(answers)) rotulos[k] = LBL[k]||k;
+  const payload = { respostas: answers, rotulos, enviadoEm: new Date().toLocaleString("pt-BR") };
+  try {
+    const r = await fetch(ENVIO, {
+      method:"POST", headers:{"Content-Type":"application/json","Accept":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json().catch(()=>({}));
+    if (!r.ok || data.ok !== true) throw new Error(data.erro || r.status);
+    thanks();
+  } catch (e) {
+    btn.disabled=false; btn.textContent="Tentar enviar de novo";
+    let m=document.getElementById("sendErr");
+    if(!m){ btn.closest(".nav").insertAdjacentHTML("beforebegin",'<p class="err" id="sendErr">Não foi possível enviar agora. Confira a internet e clique em “Tentar enviar de novo”. Suas respostas continuam aqui.</p>'); }
+  }
+}
+
+let resetTimer;
+function thanks(){
+  step=STEPS.length; setProgress();
+  app.innerHTML = `<section class="card center thanks fade">
+    <h1 style="font-size:clamp(34px,6vw,54px)">Agradecemos sua<br><b>participação!</b></h1>
+    <hr class="glow" style="width:70%">
+    <img src="assets/logo-callnet.png" alt="Callnet">
+    <p class="lead">Sua prova foi enviada. Nossa equipe vai avaliar as respostas e os selecionados serão chamados no WhatsApp para a entrevista presencial.</p>
+    
+    <a class="back" href="./">Voltar para o site</a>
+  </section>`;
+  
+  window.scrollTo(0,0);
+}
+
+/* ---------- Início ---------- */
+intro();
+
+/* ---------- Fundo: rede de luz ---------- */
+(()=>{
+  const cv=document.getElementById("net"), cx=cv.getContext("2d");
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W,H,P=[];
+  function size(){ W=cv.width=innerWidth*devicePixelRatio; H=cv.height=innerHeight*devicePixelRatio;
+    const n=Math.round(Math.min(70,innerWidth/18));
+    P=Array.from({length:n},()=>{const edge=Math.random()<.5; return {x:(edge?Math.random()*.3:.7+Math.random()*.3)*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.6+.6};}); }
+  function draw(){
+    cx.clearRect(0,0,W,H);
+    const g=cx.createRadialGradient(W*.15,H*.1,0,W*.15,H*.1,W*.6); g.addColorStop(0,"rgba(0,132,255,.16)"); g.addColorStop(1,"rgba(0,132,255,0)");
+    cx.fillStyle=g; cx.fillRect(0,0,W,H);
+    const d=160*devicePixelRatio;
+    for(let i=0;i<P.length;i++){const a=P[i];
+      for(let j=i+1;j<P.length;j++){const b=P[j],dx=a.x-b.x,dy=a.y-b.y,dd=Math.hypot(dx,dy);
+        if(dd<d){cx.strokeStyle=`rgba(0,150,255,${(1-dd/d)*.35})`;cx.lineWidth=devicePixelRatio*.8;cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke();}}
+      cx.fillStyle="rgba(120,220,255,.9)";cx.shadowColor="#00D6F5";cx.shadowBlur=10;cx.beginPath();cx.arc(a.x,a.y,a.r*devicePixelRatio,0,7);cx.fill();cx.shadowBlur=0;
+      if(!reduce){a.x+=a.vx;a.y+=a.vy; if(a.x<0||a.x>W)a.vx*=-1; if(a.y<0||a.y>H)a.vy*=-1;}
+    }
+    if(!reduce) requestAnimationFrame(draw);
+  }
+  addEventListener("resize",()=>{size(); if(reduce) draw();}); size(); draw();
+})();
+</script>
+</body>
+</html>

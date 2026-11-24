@@ -1,0 +1,9 @@
+# Segredos: ficam só no servidor, nunca no GitHub
+config.php
+recrutamento-config.php
+*.sqlite
+*.db
+*.log
+# Arquivos enviados pelos usuários (comprovantes etc.)
+arquivos/*
+!arquivos/.htaccess

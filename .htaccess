@@ -1,0 +1,51 @@
+# Hunter League — rotas e proteção
+Options -Indexes
+DirectoryIndex index.html index.php
+RewriteEngine On
+
+# endereço oficial com www (o QR, os links e o login ficam sempre no mesmo endereço)
+RewriteCond %{HTTP_HOST} ^hunterleague\.com\.br$ [NC]
+RewriteRule ^ https://www.hunterleague.com.br%{REQUEST_URI} [L,R=301]
+
+# força HTTPS
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# QR do parceiro
+RewriteRule ^i/([A-Za-z0-9-]{3,16})/?$ i.php?c=$1 [L,QSA]
+# app, cadastro e termo
+RewriteRule ^app/?$ app.php [L]
+RewriteRule ^cadastro/?$ cadastro.html [L]
+RewriteRule ^termo/?$ termo.html [L]
+RewriteRule ^senha-nova/?$ senha-nova.html [L]
+# apresentação para os estabelecimentos (operação PAP)
+RewriteRule ^(conheca|apresentacao)/?$ demo/tour.html [L]
+
+# arquivos internos nunca abrem pelo navegador
+RewriteRule ^arquivos(/|$) - [F,L]
+RewriteRule ^(config\.php|app\.tpl\.html|api/_.*\.php|admin/_.*\.php|admin/app\.tpl\.html)$ - [F,L]
+<FilesMatch "\.(sqlite|db|sql|log|md|py)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "same-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  # páginas sempre conferem a versão nova (atualização chega na hora para todo mundo)
+  <FilesMatch "\.(html|webmanifest)$|^sw\.js$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+# rapidez: compressão e cache dos arquivos fixos (as páginas com dados nunca vão para o cache)
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml application/manifest+json
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+</IfModule>
