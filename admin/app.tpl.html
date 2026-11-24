@@ -285,6 +285,7 @@ body.ehdemo main{padding-top:24px}
 <div id="jan-root"></div>
 
 <script>
+const TIPO = t => ({ pj: 'Pessoa Jurídica', pf: 'Pessoa Física', lojista: 'Lojista', vendedor: 'Vendedor' })[t] || t;
 /*__ADMIN_BOOT__*/
 </script>
 <script>
@@ -541,9 +542,9 @@ const parDraw = () => {
  const pend = cache.pars.filter(p => p.status === 'pendente' && bate(p));
  const outros = cache.pars.filter(p => p.status !== 'pendente' && bate(p) && (parFiltro === 'todos' || p.status === parFiltro));
  const cont = s => cache.pars.filter(p => p.status === s).length;
- $('#par-corpo').innerHTML = (pend.length ? `<p class="sec" style="margin-top:0;color:var(--warn)">Para aprovar (${pend.length})</p><div class="pend">${pend.map(p => `<div class="pc ch"><span class="nm">${h(p.loja || p.nome)}</span><span class="meta">${h(p.tipo === 'lojista' ? 'Lojista' : 'Vendedor')} · ${h(p.nome)}<br>${h(p.doc)} · ${h(p.cidade)}<br><a class="tel" href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a> · cadastro em ${h(p.desde)}</span><div class="acoes"><button class="btn sm ok" type="button" data-apr="${p.id}">✓ Aprovar</button><button class="btn sm g" type="button" data-ver="${p.id}">Ver</button><button class="btn sm bad" type="button" data-rec="${p.id}">Recusar</button></div></div>`).join('')}</div>` : '')
+ $('#par-corpo').innerHTML = (pend.length ? `<p class="sec" style="margin-top:0;color:var(--warn)">Para aprovar (${pend.length})</p><div class="pend">${pend.map(p => `<div class="pc ch"><span class="nm">${h(p.loja || p.nome)}</span><span class="meta">${h(TIPO(p.tipo))} · ${h(p.nome)}<br>${h(p.doc)} · ${h(p.cidade)}<br><a class="tel" href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a> · cadastro em ${h(p.desde)}</span><div class="acoes"><button class="btn sm ok" type="button" data-apr="${p.id}">✓ Aprovar</button><button class="btn sm g" type="button" data-ver="${p.id}">Ver</button><button class="btn sm bad" type="button" data-rec="${p.id}">Recusar</button></div></div>`).join('')}</div>` : '')
   + `<div class="tabs" style="margin-bottom:12px">${[['todos', 'Todos'], ['ativo', 'Ativos'], ['bloqueado', 'Bloqueados'], ['desfiliado', 'Desfiliados'], ['recusado', 'Recusados']].map(([k, t]) => `<button type="button" data-pf="${k}" aria-selected="${parFiltro === k}">${t}<i>${k === 'todos' ? cache.pars.filter(p => p.status !== 'pendente').length : cont(k)}</i></button>`).join('')}</div>`
-  + (outros.length ? `<div class="lista">${outros.map(p => `<button class="pr ch" type="button" data-ver="${p.id}"><span class="av">${h(iniciais(p.loja || p.nome))}</span><span><span class="nm" style="display:block">${h(p.loja || p.nome)}</span><span class="sub" style="display:block">${p.codigo ? `<span class="cod">${h(p.codigo)}</span> · ` : ''}${h(p.tipo === 'lojista' ? 'Lojista' : 'Vendedor')} · ${h(p.cidade)}</span></span><span class="dir"><span class="pill ${pclass(p.status)}">${h(p.status)}</span><span class="nums"><b>${p.leit}</b> QR · <b>${p.ind}</b> ind · <b>${p.inst}</b> inst</span></span></button>`).join('')}</div>`
+  + (outros.length ? `<div class="lista">${outros.map(p => `<button class="pr ch" type="button" data-ver="${p.id}"><span class="av">${h(iniciais(p.loja || p.nome))}</span><span><span class="nm" style="display:block">${h(p.loja || p.nome)}</span><span class="sub" style="display:block">${p.codigo ? `<span class="cod">${h(p.codigo)}</span> · ` : ''}${h(TIPO(p.tipo))} · ${h(p.cidade)}</span></span><span class="dir"><span class="pill ${pclass(p.status)}">${h(p.status)}</span><span class="nums"><b>${p.leit}</b> QR · <b>${p.ind}</b> ind · <b>${p.inst}</b> inst</span></span></button>`).join('')}</div>`
    : `<div class="vazio ch"><b>Ninguém aqui</b>${q ? 'Tente outra busca.' : 'Os parceiros aprovados aparecem nesta lista.'}</div>`);
 };
 const acaoParceiro = async (id, o, extra) => {
@@ -564,7 +565,7 @@ document.addEventListener('click', async e => {
   const p = cache.pars.find(x => x.id === id);
   const st = p.status;
   const j = jan(`<h2 class="bs">${h(p.loja || p.nome)}</h2><p class="sub"><span class="pill ${pclass(st)}">${h(st)}</span> ${p.codigo ? `<span class="cod" style="margin-left:6px">${h(p.codigo)}</span>` : ''}</p>
-   <dl class="det"><dt>Nome</dt><dd>${h(p.nome)}</dd><dt>Tipo</dt><dd>${p.tipo === 'lojista' ? 'Lojista' : 'Vendedor'}</dd><dt>CPF/CNPJ</dt><dd>${h(p.doc)}</dd><dt>WhatsApp</dt><dd><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a></dd>${p.email ? `<dt>E-mail</dt><dd>${h(p.email)}</dd>` : ''}<dt>Cidade</dt><dd>${h(p.cidade)}</dd>
+   <dl class="det"><dt>Nome</dt><dd>${h(p.nome)}</dd><dt>Tipo</dt><dd>${h(TIPO(p.tipo))}</dd><dt>CPF/CNPJ</dt><dd>${h(p.doc)}</dd><dt>WhatsApp</dt><dd><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a></dd>${p.email ? `<dt>E-mail</dt><dd>${h(p.email)}</dd>` : ''}<dt>Cidade</dt><dd>${h(p.cidade)}</dd>
    <dt>Chave PIX</dt><dd>${h(p.pix)} <button class="btn sm g" type="button" data-cp="${h(p.pix)}" style="height:28px;margin-left:6px">Copiar</button></dd>${p.link ? `<dt>Link do QR</dt><dd>${h(p.link)}</dd>` : ''}<dt>Nível</dt><dd>${h(p.nivel)}</dd><dt>Números</dt><dd>${p.leit} leituras · ${p.ind} indicações · ${p.inst} instalações</dd><dt>Cadastro</dt><dd>${h(p.desde)} · termo ${h(p.termo)}</dd>${p.obs ? `<dt>Observações</dt><dd>${h(p.obs)}</dd>` : ''}</dl>
    <div class="rod" style="justify-content:flex-start">
     ${st === 'pendente' || st === 'recusado' ? `<button class="btn ok" type="button" data-o="aprovar">✓ Aprovar</button>` : ''}

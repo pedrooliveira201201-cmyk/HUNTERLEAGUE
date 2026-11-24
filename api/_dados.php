@@ -139,7 +139,7 @@ function mascara_pix(string $k, string $doc = ''): string {
 }
 function mascara_pix_antiga(string $k): string { $k = trim(strip_tags($k)); $n = mb_strlen($k); return $n <= 6 ? str_repeat('*', $n) : mb_substr($k, 0, 3) . str_repeat('*', min(6, $n - 6)) . mb_substr($k, -3); }
 function nome_ranking(array $r): string {
-  if ($r['tipo'] === 'lojista' && $r['loja']) return mb_substr(trim(strip_tags($r['loja'])), 0, 28);
+  if (in_array($r['tipo'], ['lojista', 'pj', 'pf'], true) && $r['loja']) return mb_substr(trim(strip_tags($r['loja'])), 0, 28);
   $partes = preg_split('/\s+/', trim(strip_tags($r['nome'])));
   $ult = count($partes) > 1 ? ' ' . mb_strtoupper(mb_substr(end($partes), 0, 1)) . '.' : '';
   return primeiro_nome($r['nome']) . $ult;

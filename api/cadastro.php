@@ -10,17 +10,18 @@ $t = fn($k, $max = 120) => mb_substr(trim(preg_replace('/\s+/', ' ', (string)($e
 
 if (travado('cad:' . ip_hash(), 5, 3600) > 0) json_out(['erro' => 'Muitos cadastros deste aparelho. Tente mais tarde.'], 429);
 
-$tipo = in_array($e['tipo'] ?? '', ['lojista', 'vendedor'], true) ? $e['tipo'] : '';
+$tipo = in_array($e['tipo'] ?? '', ['pj', 'pf'], true) ? $e['tipo'] : '';
 $nome = $t('nome'); $loja = $t('loja'); $doc = so_digitos($e['doc'] ?? '');
 $wa = tel_normal((string)($e['whatsapp'] ?? '')); $email = $t('email'); $cidade = $t('cidade', 60); $pix = $t('pix');
 $senha = (string)($e['senha'] ?? '');
 $cidades = cidades_liberadas();
 
 $erros = [];
-if ($tipo === '') $erros['tipo'] = 'Escolha se você é lojista ou vendedor.';
+if ($tipo === '') $erros['tipo'] = 'Escolha Pessoa Jurídica ou Pessoa Física.';
 if (mb_strlen($nome) < 5 || !str_contains($nome, ' ')) $erros['nome'] = 'Escreva seu nome completo.';
-if ($tipo === 'lojista' && mb_strlen($loja) < 2) $erros['loja'] = 'Escreva o nome do estabelecimento.';
-if (!doc_valido($doc)) $erros['doc'] = 'CPF ou CNPJ inválido. Confira os números.';
+if ($tipo === 'pj' && mb_strlen($loja) < 2) $erros['loja'] = 'Escreva o nome da empresa.';
+if ($tipo === 'pj' && !cnpj_valido($doc)) $erros['doc'] = 'CNPJ inválido. Confira os números.';
+if ($tipo === 'pf' && !cpf_valido($doc)) $erros['doc'] = 'CPF inválido. Confira os números.';
 if (strlen($wa) < 10 || strlen($wa) > 11) $erros['whatsapp'] = 'WhatsApp com DDD, só números.';
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $erros['email'] = 'Informe um e-mail válido (serve para recuperar a senha).';
 if (!in_array($cidade, $cidades, true)) $erros['cidade'] = 'Escolha sua cidade na lista.';
