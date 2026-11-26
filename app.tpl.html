@@ -1309,7 +1309,7 @@ body.offline:not(.sigback) .map{opacity:.18}
   }
   return `<li id="ind-${i}" style="--c:${COL[x.s]};animation-delay:${.05*i}s"><div class="lt"><span class="nm">${x.n}</span><span class="dt">${x.d}</span></div>
    <div class="path" aria-hidden="true">${path}</div>
-   <div class="msg">${FALA[x.s] || x.s}${x.s==='Instalado' ? `<span class="plus">${x.q ? 'bônus sacado ✓' : x.f ? '1ª conta paga · bônus liberado ✓' : 'falta pagar a 1ª conta'}</span>` : ''}</div>${fail ? `<div class="why">${MOTIVO[x.w] || x.w}</div>` : ''}</li>`;
+   <div class="msg">${FALA[x.s] || x.s}${x.s==='Instalado' ? `<span class="plus">${x.q ? 'bônus sacado ✓' : x.f ? '1ª conta paga · bônus liberado ✓' : 'falta pagar a 1ª conta'}</span>` : ''}</div>${fail && x.w ? `<div class="why">${MOTIVO[x.w] || x.w}</div>` : ''}</li>`;
  }).join('') || '<li class="vazio" style="--c:#C2FFCA">Ainda ninguém chamou pelo seu QR. Deixe a plaquinha no balcão e mostre para cada cliente.</li>';
 
  // casinhas do mês: cada indicação é uma casa; instalou, a luz acende
