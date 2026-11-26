@@ -203,9 +203,11 @@ case 'parceiro': {
   if (in_array($o, ['recusar', 'bloquear', 'desfiliar', 'reativar'], true)) {
     if ($o === 'reativar' && !$p['codigo']) json_out(['erro' => 'Use Aprovar para este cadastro.'], 422);
     $novo = ['recusar' => 'recusado', 'bloquear' => 'bloqueado', 'desfiliar' => 'desfiliado', 'reativar' => 'ativo'][$o];
-    q('UPDATE parceiros SET status = ? WHERE id = ?', [$novo, $p['id']]);
-    auditar($quem, $o . ' parceiro', $alvo);
-    json_out(['ok' => true, 'msg' => 'Parceiro ' . $novo . '.']);
+    /* recusou quem ocupou um QR genérico e nunca foi aprovado: o código volta a ficar livre para outro cartaz */
+    $solta = $o === 'recusar' && !$p['aprovado_em'] && qr_generico($p['codigo']);
+    q('UPDATE parceiros SET status = ?' . ($solta ? ', codigo = NULL' : '') . ' WHERE id = ?', [$novo, $p['id']]);
+    auditar($quem, $o . ' parceiro', $alvo, $solta ? "QR {$p['codigo']} liberado" : '');
+    json_out(['ok' => true, 'msg' => 'Parceiro ' . $novo . '.' . ($solta ? " O QR {$p['codigo']} voltou a ficar livre." : '')]);
   }
   if ($o === 'senha') {
     $nova = substr(str_replace(['+', '/', '='], '', base64_encode(random_bytes(9))), 0, 10);

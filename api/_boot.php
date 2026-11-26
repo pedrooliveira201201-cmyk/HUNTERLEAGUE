@@ -165,6 +165,16 @@ const PLANOS = ['600 Mega', '800 Mega', '1 Giga', 'Ultra Mesh'];
 
 function link_parceiro(string $codigo): string { return rtrim(conf('site_url', 'https://www.hunterleague.com.br'), '/') . '/i/' . $codigo; }
 
+/* QR genéricos: códigos impressos no adesivo A3 de porta antes de o parceiro existir.
+   Na visita, o parceiro lê o QR do cartaz, toca em "Ative o QR" e faz o cadastro (cadastro?r=CODIGO): o código passa a ser dele.
+   A lista fica na Central (config 'qr_genericos', separada por vírgula). Padrão: HL-ARG-9001 a HL-ARG-9020. */
+function qr_genericos(): array {
+  $cfg = trim((string)conf('qr_genericos', ''));
+  $lista = $cfg !== '' ? explode(',', $cfg) : array_map(fn($n) => sprintf('HL-ARG-%04d', $n), range(9001, 9020));
+  return array_values(array_unique(array_filter(array_map(fn($c) => strtoupper((string)preg_replace('/[^A-Za-z0-9-]/', '', $c)), $lista))));
+}
+function qr_generico(?string $codigo): bool { return $codigo !== null && $codigo !== '' && in_array(strtoupper($codigo), qr_genericos(), true); }
+
 /* Cliente já indicado? Bloqueia se já foi instalado (por qualquer parceiro) ou se foi indicado
    nos últimos N dias (config validade_dias, padrão 60). Depois disso, sem instalação, pode ser indicado de novo. */
 function indicacao_valida(string $cpf, string $tel, int $exceto = 0): ?array {

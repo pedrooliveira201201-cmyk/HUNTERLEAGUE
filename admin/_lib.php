@@ -22,8 +22,11 @@ function novo_codigo(string $cidade): string {
   $mapa = ['Araguari' => 'ARG', 'Uberlândia' => 'UDI', 'Uberaba' => 'UBA'];
   $pre = $mapa[$cidade] ?? strtoupper(substr(preg_replace('/[^A-Za-z]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $cidade) ?: 'HLG'), 0, 3));
   if (strlen($pre) < 3) $pre = str_pad($pre, 3, 'X');
-  $n = (int)(one("SELECT COUNT(*) AS n FROM parceiros WHERE codigo LIKE ?", ["HL-{$pre}-%"])['n'] ?? 0);
-  do { $n++; $c = sprintf('HL-%s-%04d', $pre, $n); } while (one('SELECT id FROM parceiros WHERE codigo = ?', [$c]));
+  /* os QR genéricos (HL-ARG-9001 em diante) não entram na contagem da sequência normal */
+  $gen = qr_genericos();
+  $fora = $gen ? ' AND codigo NOT IN (' . implode(',', array_fill(0, count($gen), '?')) . ')' : '';
+  $n = (int)(one("SELECT COUNT(*) AS n FROM parceiros WHERE codigo LIKE ?{$fora}", array_merge(["HL-{$pre}-%"], $gen))['n'] ?? 0);
+  do { $n++; $c = sprintf('HL-%s-%04d', $pre, $n); } while (one('SELECT id FROM parceiros WHERE codigo = ?', [$c]) || qr_generico($c));
   return $c;
 }
 function duplicado(string $cpf, string $tel, int $exceto = 0): ?array { return indicacao_valida($cpf, $tel, $exceto); }

@@ -16,6 +16,14 @@ $wa = tel_normal((string)($e['whatsapp'] ?? '')); $email = $t('email'); $cidade 
 $senha = (string)($e['senha'] ?? '');
 $cidades = cidades_liberadas();
 
+/* QR genérico do adesivo A3: o cadastro ocupa o código já impresso no cartaz (cadastro?r=CODIGO) */
+$reserva = strtoupper((string)preg_replace('/[^A-Za-z0-9-]/', '', mb_substr((string)($e['reserva'] ?? ''), 0, 20)));
+$ocupado = fn() => json_out(['erro' => "O QR {$reserva} já foi ativado em outro cadastro. Peça outro cartaz à equipe da CallNet."], 409);
+if ($reserva !== '') {
+  if (!qr_generico($reserva)) json_out(['erro' => "O QR {$reserva} não está na lista da CallNet. Fale com a equipe que te visitou."], 422);
+  if (one('SELECT id FROM parceiros WHERE codigo = ?', [$reserva])) $ocupado();
+}
+
 $erros = [];
 if ($tipo === '') $erros['tipo'] = 'Escolha Pessoa Jurídica ou Pessoa Física.';
 if (mb_strlen($nome) < 5 || !str_contains($nome, ' ')) $erros['nome'] = 'Escreva seu nome completo.';
@@ -33,7 +41,13 @@ if ($erros) json_out(['erro' => 'Confira os campos marcados.', 'campos' => $erro
 if (one('SELECT id FROM parceiros WHERE doc = ?', [$doc])) json_out(['erro' => 'Já existe um cadastro com este ' . (strlen($doc) === 11 ? 'CPF' : 'CNPJ') . '. Entre com sua senha ou fale com a CallNet.', 'campos' => ['doc' => 'Documento já cadastrado.']], 409);
 
 errou('cad:' . ip_hash());
-q('INSERT INTO parceiros (tipo, doc, nome, loja, whatsapp, email, cidade, pix, status, senha_hash, termo_versao, termo_aceito_em, termo_ip, criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-  [$tipo, $doc, $nome, $loja !== '' ? $loja : null, $wa, $email, $cidade, $pix, 'pendente', password_hash($senha, PASSWORD_DEFAULT), TERMO_VERSAO, agora(), ip(), agora()]);
-auditar('cadastro', 'novo parceiro', $doc, $tipo);
-json_out(['ok' => true, 'nome' => primeiro_nome($nome)]);
+try {
+  q('INSERT INTO parceiros (tipo, doc, nome, loja, whatsapp, email, cidade, pix, codigo, status, senha_hash, termo_versao, termo_aceito_em, termo_ip, criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    [$tipo, $doc, $nome, $loja !== '' ? $loja : null, $wa, $email, $cidade, $pix, $reserva !== '' ? $reserva : null, 'pendente', password_hash($senha, PASSWORD_DEFAULT), TERMO_VERSAO, agora(), ip(), agora()]);
+} catch (PDOException $ex) {
+  /* dois cadastros no mesmo QR ao mesmo tempo: vale o primeiro */
+  if ($reserva !== '' && $ex->getCode() === '23000' && one('SELECT id FROM parceiros WHERE codigo = ?', [$reserva])) $ocupado();
+  throw $ex;
+}
+auditar('cadastro', 'novo parceiro', $doc, $tipo . ($reserva !== '' ? " · QR {$reserva}" : ''));
+json_out(['ok' => true, 'nome' => primeiro_nome($nome), 'qr' => $reserva !== '' ? $reserva : null]);

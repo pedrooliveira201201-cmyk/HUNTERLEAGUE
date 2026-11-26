@@ -64,6 +64,8 @@ h1 span{color:var(--cyan)}
 .ok .go{display:grid;place-items:center;text-decoration:none;max-width:340px;margin:28px auto 0}
 body.done form,body.done .intro{display:none}
 body.done .ok{display:block}
+.qrres{margin:16px 0 0;padding:14px 16px;border:1.5px solid var(--cyan);background:#0A1A1D;font-size:15px;line-height:1.4}
+.qrres b{color:var(--cyan);font-weight:800;letter-spacing:.02em}
 .loja{display:none}
 body.pj .loja,body.pf .loja{display:block}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
@@ -76,6 +78,7 @@ body.pj .loja,body.pf .loja{display:block}
  <div class="intro">
   <h1>Entre para <span>a liga</span></h1>
   <p class="lead">Indique o produto em destaque e ganhe bônus por cada venda instalada. Sem custo para entrar.</p>
+  <p class="qrres" id="qrres" hidden>Este cadastro ativa o QR do seu cartaz: <b id="qrres-c"></b></p>
  </div>
 
  <form id="f" novalidate>
@@ -117,7 +120,7 @@ body.pj .loja,body.pf .loja{display:block}
 
  <div class="ok" role="status">
   <h1>Recebido, <span id="ok-n">parceiro</span>!</h1>
-  <p>Seu cadastro foi para análise. A CallNet confere e te avisa no WhatsApp quando liberar o acesso.</p>
+  <p id="ok-p">Seu cadastro foi para análise. A CallNet confere e te avisa no WhatsApp quando liberar o acesso.</p>
   <a class="go" href="./">Voltar para a entrada</a>
  </div>
 </main>
@@ -125,6 +128,9 @@ body.pj .loja,body.pf .loja{display:block}
 {
  const $ = s => document.querySelector(s);
  const API = document.querySelector('meta[name="hl-api"]').content === '1';
+ /* QR genérico do adesivo A3 (cadastro?r=CODIGO): o cadastro ocupa o código do cartaz */
+ const RES = (new URLSearchParams(location.search).get('r') || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16);
+ if (RES) { $('#qrres-c').textContent = RES; $('#qrres').hidden = false; }
  let tipo = '';
  for (const b of document.querySelectorAll('.tipo')) b.addEventListener('click', () => {
   tipo = b.dataset.t;
@@ -196,13 +202,18 @@ body.pj .loja,body.pf .loja{display:block}
   const prim = Object.keys(erros)[0];
   if (prim) { const el = document.getElementById(prim === 'cidade' ? 'cidade-q' : prim) || document.querySelector('.tipos'); el.scrollIntoView({ behavior:'smooth', block:'center' }); if (el.focus) el.focus({ preventScroll:true }); return; }
   const dados = { tipo, nome:v('nome'), loja:v('loja'), doc, whatsapp:wa, cidade:v('cidade'), email:v('email'), pix:v('pix'), senha:$('#senha').value, termo:true };
-  const pronto = nome => { $('#ok-n').textContent = nome; document.body.classList.add('done'); scrollTo(0,0); };
+  if (RES) dados.reserva = RES;
+  const pronto = (nome, qr) => {
+   $('#ok-n').textContent = nome;
+   if (qr) $('#ok-p').textContent = `O QR ${qr} do seu cartaz já está ligado ao seu cadastro: quem ler cai no WhatsApp da CallNet com o seu código. A CallNet confere os dados e te avisa no WhatsApp quando liberar o app.`;
+   document.body.classList.add('done'); scrollTo(0,0);
+  };
   if (!API) return pronto(dados.nome.split(' ')[0]);
   const go = $('#go'); go.disabled = true; go.textContent = 'Enviando…';
   fetch('/api/cadastro.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(dados) })
    .then(r => r.json()).then(j => {
     go.disabled = false; go.textContent = 'Quero entrar';
-    if (j.ok) return pronto(j.nome);
+    if (j.ok) return pronto(j.nome, j.qr);
     for (const [c, t] of Object.entries(j.campos || {})) marca(c, t);
     $('#err').textContent = j.erro || 'Não deu para enviar. Tente de novo.'; $('#err').classList.add('on');
    }).catch(() => { go.disabled = false; go.textContent = 'Quero entrar'; $('#err').textContent = 'Sem conexão. Confira a internet e tente de novo.'; $('#err').classList.add('on'); });
