@@ -65,7 +65,7 @@ h1 span{color:var(--cyan)}
 body.done form,body.done .intro{display:none}
 body.done .ok{display:block}
 .loja{display:none}
-body.lojista .loja,body.vendedor .loja{display:block}
+body.pj .loja,body.pf .loja{display:block}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 </style>
 </head>
@@ -75,27 +75,27 @@ body.lojista .loja,body.vendedor .loja{display:block}
 
  <div class="intro">
   <h1>Entre para <span>a liga</span></h1>
-  <p class="lead">Indique o produto em destaque e ganhe bônus por cada venda instalada. Sem custo para entrar. Para participar é preciso ter CNPJ.</p>
+  <p class="lead">Indique o produto em destaque e ganhe bônus por cada venda instalada. Sem custo para entrar.</p>
  </div>
 
  <form id="f" novalidate>
   <p class="step">1 · Quem é você?</p>
-  <div class="tipos" role="radiogroup" aria-label="Tipo de parceiro">
-   <button type="button" class="tipo" role="radio" aria-checked="false" data-t="lojista">
+  <div class="tipos" role="radiogroup" aria-label="Tipo de cadastro">
+   <button type="button" class="tipo" role="radio" aria-checked="false" data-t="pj">
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 9.5 4.5 4h15L21 9.5M3 9.5h18M3 9.5c0 1.4 1 2.5 2.25 2.5S7.5 10.9 7.5 9.5c0 1.4 1 2.5 2.25 2.5S12 10.9 12 9.5c0 1.4 1 2.5 2.25 2.5s2.25-1.1 2.25-2.5c0 1.4 1 2.5 2.25 2.5S21 10.9 21 9.5M5 12v8h14v-8M10 20v-5h4v5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-    <b>Tenho uma loja</b><small>Deixo o QR no balcão</small>
+    <b>Pessoa Jurídica</b><small>CNPJ</small>
    </button>
-   <button type="button" class="tipo" role="radio" aria-checked="false" data-t="vendedor">
+   <button type="button" class="tipo" role="radio" aria-checked="false" data-t="pf">
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="7.5" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    <b>Sou vendedor (MEI)</b><small>Indico para quem conheço</small>
+    <b>Pessoa Física</b><small>CPF</small>
    </button>
   </div>
   <p class="msg" data-m="tipo"></p>
 
   <p class="step">2 · Seus dados</p>
   <div class="field"><label for="nome">Seu nome completo (responsável)</label><div class="inp"><input id="nome" autocomplete="name" maxlength="120"></div><p class="msg" data-m="nome"></p></div>
-  <div class="field loja"><label for="loja">Nome da empresa <small>(nome fantasia)</small></label><div class="inp"><input id="loja" autocomplete="organization" maxlength="120"></div><p class="msg" data-m="loja"></p></div>
-  <div class="field"><label for="doc">CNPJ</label><div class="inp"><input id="doc" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" autocomplete="off"></div><p class="msg" data-m="doc"></p><p class="help">É com ele que você entra no app.</p></div>
+  <div class="field loja"><label for="loja" id="loja-l">Nome da empresa</label><div class="inp"><input id="loja" autocomplete="organization" maxlength="120"></div><p class="msg" data-m="loja"></p></div>
+  <div class="field"><label for="doc" id="doc-l">CPF ou CNPJ</label><div class="inp"><input id="doc" inputmode="numeric" maxlength="18" autocomplete="off"></div><p class="msg" data-m="doc"></p><p class="help">É com ele que você entra no app.</p></div>
   <div class="field"><label for="whatsapp">WhatsApp com DDD</label><div class="inp"><input id="whatsapp" inputmode="tel" maxlength="16" placeholder="(34) 99999-9999" autocomplete="tel-national"></div><p class="msg" data-m="whatsapp"></p></div>
   <div class="field cidf"><label for="cidade-q">Sua cidade</label><div class="inp"><input id="cidade-q" autocomplete="off" placeholder="Digite o nome da cidade" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cid-l"><input type="hidden" id="cidade"></div>
    <ul class="cidl" id="cid-l" role="listbox" hidden></ul><p class="msg" data-m="cidade"></p><p class="help" id="cid-h">Mais de 300 cidades com fibra. Digite para buscar.</p></div>
@@ -129,7 +129,10 @@ body.lojista .loja,body.vendedor .loja{display:block}
  for (const b of document.querySelectorAll('.tipo')) b.addEventListener('click', () => {
   tipo = b.dataset.t;
   for (const o of document.querySelectorAll('.tipo')) o.setAttribute('aria-checked', o === b);
-  document.body.classList.toggle('lojista', tipo === 'lojista'); document.body.classList.toggle('vendedor', tipo === 'vendedor'); marca('tipo', '');
+  document.body.classList.toggle('pj', tipo === 'pj'); document.body.classList.toggle('pf', tipo === 'pf'); marca('tipo', '');
+  $('#loja-l').textContent = tipo === 'pf' ? 'Nome do estabelecimento (opcional)' : 'Nome da empresa';
+  $('#doc-l').textContent = tipo === 'pf' ? 'CPF' : 'CNPJ';
+  $('#doc').placeholder = tipo === 'pf' ? '000.000.000-00' : '00.000.000/0000-00';
   if (navigator.vibrate) try { navigator.vibrate(8); } catch(e){}
  });
  const fmtDoc = d => d.length <= 11
@@ -179,8 +182,9 @@ body.lojista .loja,body.vendedor .loja{display:block}
   const erros = {};
   if (!tipo) erros.tipo = 'Escolha uma das opções acima.';
   if (v('nome').split(/\s+/).length < 2) erros.nome = 'Escreva nome e sobrenome.';
-  if (tipo && v('loja').length < 2) erros.loja = 'Escreva o nome da empresa.';
-  if (!okCNPJ(doc)) erros.doc = doc.length === 11 ? 'Precisa ser CNPJ. Se ainda não tem, o MEI é gratuito e sai na hora.' : 'CNPJ inválido. Confira os números.';
+  if (tipo === 'pj' && v('loja').length < 2) erros.loja = 'Escreva o nome da empresa.';
+  if (tipo === 'pj' && !okCNPJ(doc)) erros.doc = 'CNPJ inválido. Confira os números.';
+  if (tipo === 'pf' && !okCPF(doc)) erros.doc = 'CPF inválido. Confira os números.';
   if (wa.length < 10) erros.whatsapp = 'Coloque o DDD e o número.';
   if (!v('cidade')) erros.cidade = 'Digite e escolha sua cidade na lista.';
   if (!/^\S+@\S+\.\S+$/.test(v('email'))) erros.email = 'Informe seu e-mail. Ele serve para recuperar a senha.';
