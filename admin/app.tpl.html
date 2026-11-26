@@ -159,6 +159,7 @@ main.largo{max-width:none}
 .kc>p.dica{margin:-4px 4px 2px;color:var(--mut);font-size:12.5px;line-height:1.35}
 .kc .ci{padding:13px}.kc .ci .nm{font-size:15.5px}.kc .vz{color:var(--mut);font-size:13px;padding:14px 6px;text-align:center}
 .ci .acoes .btn.sq{flex:none;width:42px;padding:0}
+.kc .ci .chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:normal;text-align:left}.kc .ci .chip .cod{white-space:nowrap}
 .kc .ci .acoes{flex-wrap:wrap}.kc .ci .acoes [data-av],.kc .ci .acoes [data-inst],.kc .ci .acoes [data-fat]{flex:1 1 100%;order:-1}
 .pr .alerta7{display:inline-block;margin-top:4px;padding:2px 8px;font-size:12px;font-weight:800;color:#FFB86B;background:rgba(255,159,67,.12)}
 .parados{display:flex;flex-direction:column;gap:8px}.parados .pd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;background:var(--p1);border:1px solid var(--ln);border-left:0}
@@ -467,7 +468,7 @@ const cardInd = i => {
  else if (!i.pago) acoes = `<button class="btn sm g" type="button" data-reabrir="${i.id}">Reabrir</button>`;
  return `<article class="ci ch" id="ind-${i.id}">
   <div class="l1"><span class="nm">${h(i.nome)}</span>${aberta ? `<span class="idade${velha ? ' velha' : ''}">${idade}</span>` : `<span class="pill ${pclass(i.status)}">${h(i.status)}</span>`}</div>
-  <div class="meta"><a class="tel" href="https://wa.me/55${h(i.tel_d)}" target="_blank" rel="noopener">${I.wa}${h(i.tel)}</a>${i.cpf ? ` · CPF ${h(i.cpf)}` : ''}</div>
+  ${i.tel || i.cpf ? `<div class="meta">${i.tel ? `<a class="tel" href="https://wa.me/55${h(i.tel_d)}" target="_blank" rel="noopener">${I.wa}${h(i.tel)}</a>` : ''}${i.cpf ? `${i.tel ? ' · ' : ''}CPF ${h(i.cpf)}` : ''}</div>` : ''}
   <div class="meta"><span class="chip"><span class="cod">${h(i.parceiro.codigo)}</span>${h(i.parceiro.nome)}</span>${i.origem === 'app' ? '<span class="chip app">pelo app</span>' : ''}${i.plano ? `<span class="chip pl">${h(i.plano)}</span>` : ''}</div>
   ${i.email || i.cep ? `<div class="meta">${i.email ? h(i.email) : ''}${i.cep ? ` · CEP ${h(i.cep)}, nº ${h(i.num)}` : ''}</div>` : ''}
   ${i.status === 'Instalado' ? `<div class="meta" style="color:var(--ok)">Instalado em ${h(i.inst)}${i.bonus != null ? ` · bônus ${reais(i.bonus)}` : ''} · ${i.saque === 'pago' ? 'bônus pago' : i.saque === 'pedido' ? 'saque pedido' : i.fatura ? `liberado em ${h(i.fatura)}` : 'aguardando 1ª fatura'}</div>` : i.motivo ? `<div class="meta" style="color:var(--bad)">${h(i.motivo)}</div>` : ''}
