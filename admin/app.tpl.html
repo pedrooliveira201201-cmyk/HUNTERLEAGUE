@@ -45,6 +45,7 @@ a{color:var(--c)}
 .side .foot b{display:block;font-size:14px}.side .foot small{color:var(--mut);font-size:12px}
 .side .foot button{margin-left:auto;border:0;background:none;color:var(--mut);padding:8px}
 main{margin-left:248px;padding:28px 32px 60px;max-width:1240px}
+main.largo{max-width:none}
 .top{display:none}
 .bot{display:none}
 @media (max-width:900px){
@@ -151,7 +152,7 @@ main{margin-left:248px;padding:28px 32px 60px;max-width:1240px}
 .pill::before{content:"";width:7px;height:7px;background:currentColor;transform:rotate(45deg)}
 .p-Nova{color:var(--c2);background:rgba(174,252,255,.1)}.p-Em{color:#7FD8FF;background:rgba(127,216,255,.1)}.p-Agendado{color:var(--warn);background:rgba(255,200,87,.12)}
 /* funil (kanban) */
-.kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(270px,1fr);gap:12px;overflow-x:auto;padding-bottom:10px;align-items:start}
+.kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(222px,1fr);gap:10px;overflow-x:auto;padding-bottom:10px;align-items:start}
 .kc{display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,.02);border:1px solid var(--ln);min-height:160px}
 .kc>h3{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 4px 2px;font-size:14px;font-weight:800;letter-spacing:.3px;color:var(--k,var(--sil))}
 .kc>h3 i{font-style:normal;min-width:24px;padding:1px 7px;background:var(--k,#1A262C);color:#050607;font-size:12px;text-align:center}
@@ -378,7 +379,7 @@ const navDraw = () => {
  $('#top-t').textContent = (MENU.find(m => m[0] === pagina) || ['', 'Central'])[1];
 };
 const ir = async (k, extra) => {
- pagina = k; navDraw(); scrollTo(0, 0);
+ pagina = k; navDraw(); scrollTo(0, 0); $('#main').classList.remove('largo');
  if (location.hash !== '#' + k) history.replaceState(null, '', '#' + k);
  await TELAS[k](extra);
  navDraw();
@@ -432,6 +433,7 @@ const COLS = [
 ];
 TELAS.indicacoes = async () => {
  const r = await api('indicacoes'); cache.inds = r.itens;
+ $('#main').classList.add('largo');
  $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Indicações</h1><p>Funil de vendas: avance cada cliente de etapa. O parceiro acompanha no app.</p></div><div class="busca">${I.busca}<input id="ind-q" type="search" placeholder="Buscar nome, telefone ou código" value="${h(indBusca)}" autocomplete="off"></div><div class="exp"><button class="btn g sm" type="button" data-exp="indicacoes">${I.baixar}Planilha</button></div></div>
   <div class="tabs" role="tablist" id="ind-tabs"></div><div id="ind-lista"></div>`;
  $('#ind-q').addEventListener('input', e => { indBusca = e.target.value; indDraw(); });
