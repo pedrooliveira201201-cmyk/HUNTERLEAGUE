@@ -131,7 +131,35 @@ function parceiro_logado(): ?array {
   return $p;
 }
 
-const ETAPAS = ['Nova', 'Em atendimento', 'Aguardando instalação', 'Instalado', 'Não instalado', 'Cancelado'];
+const ETAPAS = ['Nova', 'Em contato', 'Em negociação', 'Agendado', 'Instalado', 'Não instalado', 'Cancelado'];
+/* etapas em andamento (funil do CRM). "1ª fatura paga" é o Instalado com fatura_em preenchida. */
+const ETAPAS_ABERTAS = ['Nova', 'Em contato', 'Em negociação', 'Agendado'];
+const ETAPAS_SQL = "('Nova','Em contato','Em negociação','Agendado')";
+/* parceiro ativo sem indicar há este número de dias entra no alerta do admin */
+const DIAS_SEM_INDICAR = 7;
+
+/* parceiros ativos parados: sem nenhuma indicação nos últimos DIAS_SEM_INDICAR dias
+   (conta a partir da última indicação ou, se nunca indicou, da aprovação) */
+function parceiros_parados(): array {
+  $lim = date('Y-m-d H:i:s', strtotime('-' . DIAS_SEM_INDICAR . ' days'));
+  return all("SELECT * FROM (SELECT p.id, p.codigo, COALESCE(p.loja, p.nome) AS nome, p.nome AS resp, p.whatsapp, p.aprovado_em,
+                (SELECT MAX(i.criado_em) FROM indicacoes i WHERE i.parceiro_id = p.id) AS ultima
+              FROM parceiros p WHERE p.status = 'ativo') t
+              WHERE COALESCE(ultima, aprovado_em) < ? ORDER BY COALESCE(ultima, aprovado_em) LIMIT 300", [$lim]);
+}
+function dias_desde(?string $dt): ?int { return $dt ? (int)floor((time() - strtotime($dt)) / 86400) : null; }
+
+/* migração única: as etapas antigas viram as novas (26/11/2026) */
+function hl_migrar_etapas(): void {
+  static $feito = false;
+  if ($feito) return; $feito = true;
+  try {
+    if (conf('etapas_v') === '2') return;
+    q("UPDATE indicacoes SET status = 'Em contato' WHERE status = 'Em atendimento'");
+    q("UPDATE indicacoes SET status = 'Agendado' WHERE status = 'Aguardando instalação'");
+    q("INSERT INTO config (chave, valor) VALUES ('etapas_v', '2')");
+  } catch (Throwable $e) { /* tenta de novo na próxima requisição */ }
+}
 const MOTIVOS = ['Restrição de CPF', 'Sem cabeamento', 'Desistiu', 'Sem contato', 'Endereço fora da cobertura', 'Outro'];
 const PLANOS = ['600 Mega', '800 Mega', '1 Giga', 'Ultra Mesh'];
 

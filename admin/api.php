@@ -12,7 +12,8 @@ $e = $post ? entrada() : [];
 $s = fn($k, $max = 200) => mb_substr(trim((string)($e[$k] ?? '')), 0, $max);
 $quem = 'admin:' . $a['usuario'];
 $master = $a['papel'] === 'master';
-$ABERTAS = ['Nova', 'Em atendimento', 'Aguardando instalação'];
+hl_migrar_etapas();
+$ABERTAS = ETAPAS_ABERTAS;
 /* Perfis: master faz tudo. Atendimento só mexe em indicações (registra, muda etapa, edita dados básicos). */
 const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'etapa', 'config', 'minha_senha', 'sair'];
 if (!$master && !in_array($acao, ACOES_ATENDIMENTO, true)) json_out(['erro' => 'Seu acesso é de atendimento: só indicações. Peça ao master.'], 403);
@@ -23,9 +24,11 @@ case 'resumo': {
   $n = fn($sql, $p = []) => (int)(one($sql, $p)['n'] ?? 0);
   $saq = one('SELECT COUNT(*) AS n, SUM(valor) AS v FROM saques WHERE pago_em IS NULL');
   $tar = [
-    'paradas' => $n("SELECT COUNT(*) AS n FROM indicacoes WHERE status IN ('Nova','Em atendimento','Aguardando instalação') AND atualizado_em < ?", [date('Y-m-d H:i:s', strtotime('-2 days'))]),
+    'paradas' => $n("SELECT COUNT(*) AS n FROM indicacoes WHERE status IN " . ETAPAS_SQL . " AND atualizado_em < ?", [date('Y-m-d H:i:s', strtotime('-2 days'))]),
     'novas' => $n("SELECT COUNT(*) AS n FROM indicacoes WHERE status = 'Nova'"),
   ];
+  $parados = array_map(fn($r) => ['id' => (int)$r['id'], 'codigo' => $r['codigo'], 'nome' => $r['nome'], 'resp' => primeiro_nome($r['resp']),
+    'wa_d' => $r['whatsapp'], 'dias' => dias_desde($r['ultima'] ?: $r['aprovado_em']), 'nunca' => !$r['ultima']], parceiros_parados());
   if ($master) $tar += [
     'pendentes' => $n("SELECT COUNT(*) AS n FROM parceiros WHERE status = 'pendente'"),
     'saques' => ['n' => (int)($saq['n'] ?? 0), 'total' => (float)($saq['v'] ?? 0)],
@@ -35,6 +38,7 @@ case 'resumo': {
   json_out([
     'me' => ['nome' => primeiro_nome($a['nome']), 'papel' => $a['papel']],
     'tarefas' => $tar,
+    'parados' => $parados, 'dias_alerta' => DIAS_SEM_INDICAR,
     'stats' => [
       'ind_hoje' => $n("SELECT COUNT(*) AS n FROM indicacoes WHERE criado_em >= ?", [date('Y-m-d 00:00:00')]),
       'ind_mes' => $n("SELECT COUNT(*) AS n FROM indicacoes WHERE criado_em >= ?", [date('Y-m-01 00:00:00')]),
@@ -50,7 +54,7 @@ case 'resumo': {
 case 'indicacoes': {
   $rows = all("SELECT i.*, p.codigo, COALESCE(p.loja, p.nome) AS pnome, g.pago_em AS sq_pago
                FROM indicacoes i JOIN parceiros p ON p.id = i.parceiro_id LEFT JOIN saques g ON g.id = i.saque_id
-               WHERE i.status IN ('Nova','Em atendimento','Aguardando instalação') OR i.atualizado_em >= ?
+               WHERE i.status IN " . ETAPAS_SQL . " OR i.atualizado_em >= ?
                ORDER BY i.criado_em DESC LIMIT 600", [date('Y-m-d H:i:s', strtotime('-60 days'))]);
   json_out(['itens' => array_map(fn($r) => [
     'id' => (int)$r['id'], 'nome' => $r['cliente_nome'], 'tel' => tel_br($r['cliente_tel']), 'tel_d' => $r['cliente_tel'], 'cpf' => $r['cliente_cpf'] ? doc_br($r['cliente_cpf']) : '',
@@ -66,14 +70,16 @@ case 'indicacoes': {
 case 'parceiros': {
   $rows = all("SELECT p.*, (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = p.id) AS ninds,
                  (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = p.id AND i.status = 'Instalado') AS ninst,
-                 (SELECT COUNT(*) FROM leituras l WHERE l.parceiro_id = p.id) AS nleit
+                 (SELECT COUNT(*) FROM leituras l WHERE l.parceiro_id = p.id) AS nleit,
+                 (SELECT MAX(i.criado_em) FROM indicacoes i WHERE i.parceiro_id = p.id) AS ultima
                FROM parceiros p ORDER BY CASE p.status WHEN 'pendente' THEN 0 ELSE 1 END, p.criado_em DESC LIMIT 1000");
   if (!$master) json_out(['itens' => array_values(array_map(fn($p) => ['id' => (int)$p['id'], 'tipo' => $p['tipo'], 'nome' => $p['nome'], 'loja' => $p['loja'], 'codigo' => $p['codigo'],
-    'status' => $p['status'], 'cidade' => $p['cidade']], array_filter($rows, fn($p) => $p['codigo'])))]);
+    'status' => $p['status'], 'cidade' => $p['cidade'], 'sem_ind' => $p['status'] === 'ativo' ? dias_desde($p['ultima'] ?: $p['aprovado_em']) : null], array_filter($rows, fn($p) => $p['codigo'])))]);
   json_out(['itens' => array_map(fn($p) => [
     'id' => (int)$p['id'], 'tipo' => $p['tipo'], 'nome' => $p['nome'], 'loja' => $p['loja'], 'doc' => doc_br($p['doc']), 'wa' => tel_br($p['whatsapp']), 'wa_d' => $p['whatsapp'],
     'email' => $p['email'] ?? '', 'cidade' => $p['cidade'], 'pix' => $p['pix'], 'codigo' => $p['codigo'], 'status' => $p['status'], 'nivel' => $p['nivel'],
     'desde' => data_br($p['criado_em']), 'termo' => 'v' . $p['termo_versao'] . ' em ' . data_br($p['termo_aceito_em']), 'obs' => $p['obs'] ?? '',
+    'sem_ind' => $p['status'] === 'ativo' ? dias_desde($p['ultima'] ?: $p['aprovado_em']) : null, 'ultima' => data_br($p['ultima']),
     'leit' => (int)$p['nleit'], 'ind' => (int)$p['ninds'], 'inst' => (int)$p['ninst'], 'link' => $p['codigo'] ? link_parceiro($p['codigo']) : '',
   ], $rows)]);
 }

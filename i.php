@@ -28,12 +28,20 @@ $link = 'https://wa.me/' . $wa . '?text=' . rawurlencode($msg);
 $pixel = preg_replace('/\D/', '', (string)conf('pixel_meta', ''));
 
 if ($pixel === '') { header('Location: ' . $link, true, 302); exit; }
+/* Página do pixel: registra o evento e abre o WhatsApp. Alguns navegadores (Safari do iPhone, navegador
+   interno do Instagram e do Facebook) bloqueiam a abertura automática, então o botão fica sempre visível. */
 ?><!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="2;url=<?= h($link) ?>"><title>Abrindo o WhatsApp…</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#32E000;color:#14412A;font:700 18px system-ui,sans-serif}</style>
+<meta http-equiv="refresh" content="3;url=<?= h($link) ?>"><title>Abrindo o WhatsApp…</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#32E000;color:#14412A;font:17px/1.45 system-ui,sans-serif;text-align:center}main{padding:24px;max-width:360px}h1{font-size:22px;margin:0 0 6px}a{display:block;margin-top:20px;padding:18px;border-radius:16px;background:#14412A;color:#fff;font-weight:800;font-size:19px;text-decoration:none}small{display:block;margin-top:14px;opacity:.8}</style>
+<main><h1>Abrindo o WhatsApp da CallNet…</h1><p>Se não abrir sozinho, toque no botão.</p><a id="go" href="<?= h($link) ?>">Abrir o WhatsApp</a><small>Internet fibra Nio · parceiro credenciado</small></main>
 <script>
-!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','<?= $pixel ?>');fbq('track','PageView');fbq('track','Contact',{content_name:'QR parceiro'});
-setTimeout(function(){location.replace(<?= json_encode($link) ?>)},500);
-</script>
-<p>Abrindo o WhatsApp da CallNet…</p></html>
+(function(){
+  var link = <?= json_encode($link) ?>, foi = false;
+  function abrir(){ if (foi) return; foi = true; location.href = link; }
+  try {
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init','<?= $pixel ?>'); fbq('track','PageView'); fbq('track','Contact',{content_name:'QR parceiro'});
+  } catch (e) {}
+  setTimeout(abrir, 600);
+})();
+</script></html>

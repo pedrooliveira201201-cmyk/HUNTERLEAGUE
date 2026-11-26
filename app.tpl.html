@@ -249,6 +249,7 @@ body.compact .sub{display:none}
 .sec{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:32px 0 12px;font:800 21px/1.1 "Plus Jakarta Sans",sans-serif;color:var(--ink);letter-spacing:-.02em}
 .sec small{font-size:13px;font-weight:700;color:var(--mut);letter-spacing:0}
 /* indicações como rastreio de entrega */
+.parado{margin:18px 0 4px;padding:16px 18px;border-radius:20px;background:#FFF4E5;color:#5A3A00;font-size:16px;line-height:1.45;box-shadow:var(--sh)}.parado b{display:block;font-size:17px;margin-bottom:2px;color:#3D2700}
 .inds{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .inds li{padding:16px;background:var(--card);border-radius:20px;box-shadow:var(--sh);opacity:0;transform:translateY(6px);animation:li .4s cubic-bezier(.2,.8,.2,1) forwards;scroll-margin:90px}
 .inds li.flash{box-shadow:0 0 0 3px var(--c),var(--sh)}
@@ -856,6 +857,7 @@ body.offline:not(.sigback) .map{opacity:.18}
 
   <button type="button" class="indicar" id="a-ind"><span class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9.5" cy="8" r="3.6" stroke="currentColor" stroke-width="2"/><path d="M3 20c.7-3.6 3.3-5.6 6.5-5.6 1.3 0 2.5.3 3.5 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 13v7M14.5 16.5h7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span><span><b>Indicar um cliente</b><small>A CallNet chama ele no WhatsApp</small></span><svg class="ar" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
+  <div class="parado" id="parado" hidden></div>
   <h3 class="sec">Suas indicações <small id="ex">exemplo</small></h3>
   <ol class="inds" id="inds"></ol>
 
@@ -1274,32 +1276,40 @@ body.offline:not(.sigback) .map{opacity:.18}
  const toast = (t) => { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(()=>el.classList.remove('on'), 2400); };
 
  // indicações de exemplo: primeiro nome, data e etapa (sem CPF, endereço ou e-mail)
- const STEPS = { 'Nova':1, 'Em atendimento':2, 'Aguardando instalação':3, 'Instalado':4, 'Não instalado':4 };
- const COL = { 'Nova':'#6B7A6F', 'Em atendimento':'#0F7A8A', 'Aguardando instalação':'#B07600', 'Instalado':'#1A7F00', 'Não instalado':'#C2334D' };
- const FALA = { 'Nova':'Chegou pelo seu QR', 'Em atendimento':'Estamos conversando', 'Aguardando instalação':'Técnico vai instalar', 'Instalado':'Instalado!', 'Não instalado':'Não deu certo' };
+ const STEPS = { 'Nova':1, 'Em contato':2, 'Em negociação':3, 'Agendado':4, 'Instalado':5, 'Não instalado':5 };
+ const COL = { 'Nova':'#6B7A6F', 'Em contato':'#0F7A8A', 'Em negociação':'#5B4FC4', 'Agendado':'#B07600', 'Instalado':'#1A7F00', 'Não instalado':'#C2334D' };
+ const FALA = { 'Nova':'Recebemos a sua indicação', 'Em contato':'Já falamos com a pessoa', 'Em negociação':'Escolhendo o plano', 'Agendado':'Instalação marcada', 'Instalado':'Instalado!', 'Não instalado':'Não deu certo' };
  const MOTIVO = { 'Restrição de CPF':'O nome tem restrição', 'Sem cabeamento':'A fibra ainda não chega na rua' };
  const INDS = HL ? HL.inds : [
   { n:'Luiza',  d:'21/11', s:'Nova' },
   { n:'Ana',    d:'20/11', s:'Instalado' },
-  { n:'Marcos', d:'19/11', s:'Aguardando instalação' },
-  { n:'Júlia',  d:'18/11', s:'Em atendimento' },
+  { n:'Marcos', d:'19/11', s:'Agendado' },
+  { n:'Júlia',  d:'18/11', s:'Em negociação' },
+  { n:'Rafael', d:'18/11', s:'Em contato' },
   { n:'Pedro',  d:'17/11', s:'Não instalado', w:'Restrição de CPF' },
   { n:'Carla',  d:'15/11', s:'Instalado' },
   { n:'Bruno',  d:'14/11', s:'Não instalado', w:'Sem cabeamento' }
  ];
  const HOUSE = `<svg viewBox="0 0 40 44" fill="none" aria-hidden="true"><g class="wf" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M30 4.5a7 7 0 0 1 6 3.5" stroke="currentColor"/><path d="M30 0.5a11 11 0 0 1 9.4 5.4" stroke="currentColor"/></g><path d="M4 21 20 7l16 14" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M8 18v22h24V18" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect class="win" x="12" y="23" width="8" height="7" rx="1"/><path d="M24 40v-10h5v10" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>`;
  let MES = [];
+ function desenhaParado() {
+  const el = $('#parado'), si = HL ? HL.sem_indicar : null;
+  if (!el || !si || si.dias == null || si.dias < si.alerta) { if (el) el.hidden = true; return; }
+  el.innerHTML = si.nunca ? `<b>Vamos começar?</b>Você ainda não indicou ninguém. Mostre a plaquinha para os clientes e mande o seu link para quem precisa de internet.` : `<b>Faz ${si.dias} dias sem indicação</b>Que tal lembrar 3 clientes hoje? Mostre a plaquinha no balcão ou mande o seu link pelo WhatsApp.`;
+  el.hidden = false;
+ }
+ desenhaParado();
  function desenhaInds() {
  $('#inds').innerHTML = INDS.map((x,i) => {
   const k = STEPS[x.s], fail = x.s === 'Não instalado';
   let path = '';
-  for (let j = 1; j <= 4; j++) {
+  for (let j = 1; j <= 5; j++) {
    if (j > 1) path += `<b class="${j<=k?'on':''}"></b>`;
-   path += fail && j === 4 ? '<i class="x">×</i>' : `<i class="${j<=k?'on':''}${j===k && k<4 ?' now':''}"></i>`;
+   path += fail && j === 5 ? '<i class="x">×</i>' : `<i class="${j<=k?'on':''}${j===k && k<5 ?' now':''}"></i>`;
   }
   return `<li id="ind-${i}" style="--c:${COL[x.s]};animation-delay:${.05*i}s"><div class="lt"><span class="nm">${x.n}</span><span class="dt">${x.d}</span></div>
    <div class="path" aria-hidden="true">${path}</div>
-   <div class="msg">${FALA[x.s] || x.s}${x.s==='Instalado' ? `<span class="plus">${x.q ? 'bônus sacado ✓' : x.f ? 'bônus liberado ✓' : '+ bônus pra você'}</span>` : ''}</div>${fail ? `<div class="why">${MOTIVO[x.w] || x.w}</div>` : ''}</li>`;
+   <div class="msg">${FALA[x.s] || x.s}${x.s==='Instalado' ? `<span class="plus">${x.q ? 'bônus sacado ✓' : x.f ? '1ª conta paga · bônus liberado ✓' : 'falta pagar a 1ª conta'}</span>` : ''}</div>${fail ? `<div class="why">${MOTIVO[x.w] || x.w}</div>` : ''}</li>`;
  }).join('') || '<li class="vazio" style="--c:#C2FFCA">Ainda ninguém chamou pelo seu QR. Deixe a plaquinha no balcão e mostre para cada cliente.</li>';
 
  // casinhas do mês: cada indicação é uma casa; instalou, a luz acende
@@ -1599,7 +1609,7 @@ body.offline:not(.sigback) .map{opacity:.18}
   if (lock || (KIT.em && !KIT.entregue)) { const v = $('#v-kit'); v.className = cls; v.innerHTML = html; v.hidden = false; }
  })();
  const TOTAL = HL ? HL.validadas : 34;
- const METAS = HL ? HL.metas : [{ alvo:20, premio:'Air Fryer ou R$ 250', em:'10/11/2026', entregue:null }, { alvo:60, premio:'Smart TV 50" ou R$ 2.000', em:null, entregue:null }, { alvo:200, premio:'iPhone 17 ou R$ 6.000', em:null, entregue:null }];
+ const METAS = HL ? HL.metas : [{ alvo:20, premio:'Air Fryer ou R$ 350', em:'10/11/2026', entregue:null }, { alvo:60, premio:'Smart TV 50" ou R$ 2.000', em:null, entregue:null }, { alvo:200, premio:'iPhone 17 ou R$ 6.000', em:null, entregue:null }];
  const proxMeta = METAS.find(m => TOTAL < m.alvo);
  $('#pf-metas').innerHTML = '<span class="fill" id="mt-fill"></span>' + METAS.map(m => {
   const ok = TOTAL >= m.alvo, px = m === proxMeta, ant = (METAS[METAS.indexOf(m) - 1] || { alvo:0 }).alvo;
@@ -1649,7 +1659,7 @@ body.offline:not(.sigback) .map{opacity:.18}
    const o = b.dataset.demo;
    if (o === 'wa') { $('#dw-msg').textContent = `Olá! Quero saber da internet Nio Fibra. Código do parceiro: ${CODE}`; dw.hidden = false; requestAnimationFrame(() => dw.classList.add('on')); }
    if (o === 'inst') {
-    const k = INDS.findIndex(x => ['Aguardando instalação', 'Em atendimento', 'Nova'].includes(x.s));
+    const k = INDS.findIndex(x => ['Agendado', 'Em negociação', 'Em contato', 'Nova'].includes(x.s));
     if (k < 0) return toast('Todas as indicações de exemplo já foram instaladas');
     INDS[k].s = 'Instalado'; INDS[k].i = new Date().toLocaleDateString('pt-BR').slice(0,5); desenhaInds();
     abreNio(() => festa([INDS[k]]));
@@ -1771,7 +1781,7 @@ body.offline:not(.sigback) .map{opacity:.18}
   recebido:160, prazo:'até 3 dias úteis'
  };
  const SAQUES = BONUS.saques;
- const CAMINHO = HL ? HL.caminho : INDS.filter(x => x.s === 'Aguardando instalação').length;
+ const CAMINHO = HL ? HL.caminho : INDS.filter(x => x.s === 'Agendado').length;
  const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
  let oculto = !!store.get('hl_ocultar');
  const $$ = v => oculto ? '<span class="oculto">R$ •••</span>' : REAIS(v);

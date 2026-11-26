@@ -39,12 +39,13 @@ function semana_atual(int $pid): array {
 function nome_mes(string $comp): string { [$a, $m] = explode('-', $comp); return MESES[(int)$m] . ' de ' . $a; }
 
 function hl_dados(array $p): array {
+  hl_migrar_etapas();
   $id = (int)$p['id'];
   $inicioMes = date('Y-m-01 00:00:00');
   $limite = date('Y-m-d 00:00:00', strtotime('-60 days'));
   $rows = all("SELECT cliente_nome, status, motivo, criado_em, instalado_em, fatura_em, saque_id FROM indicacoes
                WHERE parceiro_id = ? AND status <> 'Cancelado'
-                 AND (criado_em >= ? OR status IN ('Nova','Em atendimento','Aguardando instalação'))
+                 AND (criado_em >= ? OR status IN " . ETAPAS_SQL . ")
                ORDER BY criado_em DESC LIMIT 60", [$id, $limite]);
   $inds = array_map(function ($r) use ($inicioMes) {
     $motivo = $r['motivo'] === 'Outro' ? null : $r['motivo'];
@@ -112,8 +113,12 @@ function hl_dados(array $p): array {
     'tabela' => cidade_promo((string)$p['cidade']) ? 'promo' : 'cheia',
     'inds' => $inds,
     'bonus' => $bonus,
-    'caminho' => (int)(one("SELECT COUNT(*) AS n FROM indicacoes WHERE parceiro_id = ? AND status = 'Aguardando instalação'", [$id])['n'] ?? 0),
+    'caminho' => (int)(one("SELECT COUNT(*) AS n FROM indicacoes WHERE parceiro_id = ? AND status = 'Agendado'", [$id])['n'] ?? 0),
     'qr' => HLQR::svg($link),
+    'sem_indicar' => (function () use ($id, $p) {
+      $u = one('SELECT MAX(criado_em) AS u FROM indicacoes WHERE parceiro_id = ?', [$id])['u'] ?? null;
+      return ['dias' => dias_desde($u ?: ($p['aprovado_em'] ?: $p['criado_em'])), 'nunca' => !$u, 'alerta' => DIAS_SEM_INDICAR];
+    })(),
   ];
 }
 
@@ -230,11 +235,12 @@ function ranking_liga(int $eu): array {
 /* ---------- metas com prêmio ----------
    "20|Air Fryer" por linha (configurável no admin). Contam só instalações com a 1ª fatura paga.
    O prêmio conquistado fica registrado para o admin entregar. */
-const METAS_PADRAO = "20|Air Fryer ou R$ 250\n60|Smart TV 50\" ou R$ 2.000\n200|iPhone 17 ou R$ 6.000";
+const METAS_PADRAO = "20|Air Fryer ou R$ 350\n60|Smart TV 50\" ou R$ 2.000\n200|iPhone 17 ou R$ 6.000";
 function metas_conf(): array {
   $m = [];
   $txt = (string)conf('metas', METAS_PADRAO);
   if (preg_replace('/\s+/', '', $txt) === preg_replace('/\s+/', '', "20|Air Fryer\n60|Smart TV 50\"\n200|iPhone 17")) $txt = METAS_PADRAO;   // metas antigas, sem a opção em dinheiro
+  $txt = str_replace('Air Fryer ou R$ 250', 'Air Fryer ou R$ 350', $txt);   // valor corrigido em 26/11/2026
   foreach (preg_split('/\R/', $txt) as $l) {
     [$a, $b] = array_pad(array_map('trim', explode('|', $l, 2)), 2, '');
     if ((int)$a > 0 && $b !== '') $m[] = [(int)$a, mb_substr(strip_tags($b), 0, 80)];
