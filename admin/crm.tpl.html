@@ -30,11 +30,18 @@ button,input,select,textarea{font:inherit;color:inherit}
 .wrap{display:grid;grid-template-columns:minmax(0,1fr) 420px;height:calc(100vh - 62px);height:calc(100dvh - 62px)}
 #map{position:relative;background:#06090B}
 .leaflet-container{background:#06090B;font:600 13px Montserrat,sans-serif}
+/* OpenStreetMap escurecido para combinar com o app */
+.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.78) contrast(.92) saturate(.35)}
+.leaflet-control-attribution{background:rgba(5,6,7,.75)!important;color:#8A959C!important}.leaflet-control-attribution a{color:#8A959C!important}
+.leaflet-bar a{background:#0B1013!important;color:#EEF2F4!important;border-color:#1E2A30!important}
 .ferr{position:absolute;z-index:500;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 70px)}
 .ferr button,.ferr select,.ferr input{min-height:36px;padding:5px 11px;border:1px solid var(--edge);background:rgba(11,16,19,.92);color:var(--mute);font-weight:700;font-size:13px;cursor:pointer}
 .ferr input{cursor:text;width:170px;color:var(--ink)}
 .ferr button[aria-pressed=true]{color:var(--ink);border-color:var(--cyan)}
 .ferr .des[aria-pressed=true]{background:var(--amb);color:#050607;border-color:var(--amb)}
+.segp{position:absolute;z-index:520;left:10px;top:56px;width:min(440px,calc(100% - 20px));max-height:60%;overflow:auto;padding:12px;background:rgba(11,16,19,.97);border:1px solid var(--edge)}
+.segp .chips button{text-align:left}
+.segp .chips b{margin-left:6px;color:var(--cyan)}
 .leg{position:absolute;z-index:500;left:10px;bottom:22px;display:flex;flex-wrap:wrap;gap:4px 12px;max-width:calc(100% - 20px);padding:7px 11px;background:rgba(11,16,19,.92);border:1px solid var(--edge);font-size:12px;font-weight:700}
 .leg button{border:0;background:none;padding:2px 0;color:var(--ink);font-weight:700;font-size:12px;cursor:pointer;opacity:.95}
 .leg button[aria-pressed=false]{opacity:.35;text-decoration:line-through}
@@ -50,6 +57,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .lin{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--edge);font-size:14px}
 .lin span:first-child{color:var(--mute)}
 .lin span:last-child{text-align:right;overflow-wrap:anywhere}
+.bt,.abas button,.ferr button,.chips button,.placar div{clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+.bt.go,.bt.ok,.bt.am{font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;letter-spacing:.02em}
 .bt{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 14px;border:1px solid var(--edge);background:var(--p2);color:var(--ink);font-weight:800;font-size:14px;cursor:pointer;text-decoration:none;text-align:center}
 .bt.go{background:var(--cyan);color:#050607;border-color:var(--cyan)}
 .bt.ok{background:var(--nio);color:#050607;border-color:var(--nio)}
@@ -78,6 +87,13 @@ textarea{min-height:70px;resize:vertical}
 .barra{height:10px;background:#16222A;margin-top:6px}.barra i{display:block;height:100%;background:var(--cyan);transition:width .4s}
 table.t{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
 table.t td,table.t th{border-top:1px solid var(--edge);padding:5px 4px;text-align:left;vertical-align:top}
+.tour{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55)}
+.tour-c{position:absolute;width:min(360px,calc(100vw - 24px));padding:18px;background:#0B1013;border:2px solid var(--cyan);box-shadow:0 0 0 4000px rgba(0,0,0,0),0 18px 50px rgba(0,0,0,.7)}
+.tour-c .n{font:900 14px Montserrat,sans-serif;color:var(--cyan)}
+.tour-c h3{margin:4px 0 6px;font:900 26px/1.05 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase}
+.tour-c p{margin:0;color:#C9D1D6}
+.tour-c .pts{display:flex;gap:6px;margin-top:14px}.tour-c .pts i{flex:1;height:5px;background:#1E2A30}.tour-c .pts i.on{background:var(--cyan)}
+.tour-alvo{position:relative;z-index:3001!important;outline:3px solid var(--cyan)!important;outline-offset:3px;box-shadow:0 0 30px rgba(25,247,255,.5)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;max-width:min(92vw,520px);padding:12px 18px;background:#0E2A2E;border:1px solid var(--cyan);font-weight:700;display:none}
 .toast.on{display:block}.toast.err{background:#2A0E15;border-color:var(--red)}
 details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px}
@@ -96,26 +112,28 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
  <h1>Conquista <span>Araguari</span></h1>
  <nav class="abas" role="tablist" aria-label="Seções">
   <button type="button" role="tab" data-v="mapa" aria-selected="true">Mapa</button>
-  <button type="button" role="tab" data-v="ligar" aria-selected="false">Ligar</button>
+  <button type="button" role="tab" data-v="ligar" aria-selected="false">Agendar</button>
   <button type="button" role="tab" data-v="agenda" aria-selected="false">Agenda</button>
   <button type="button" role="tab" data-v="base" aria-selected="false">Base</button>
  </nav>
  <div class="placar" id="placar"></div>
+ <button class="bt" type="button" id="b-tour" aria-label="Como usar" style="min-height:38px;width:38px;padding:0;font-size:18px">?</button>
 </header>
 <div class="wrap">
  <div id="map" aria-label="Mapa de Araguari">
   <div class="ferr">
    <input id="busca" type="search" placeholder="Buscar empresa, bairro…" aria-label="Buscar">
-   <select id="f-seg" aria-label="Segmento"><option value="">Todos os segmentos</option></select>
-   <button type="button" id="f-cabo" aria-pressed="false">Só dentro do cabo</button>
-   <button type="button" id="f-ligar" aria-pressed="false">Para ligar</button>
+   <button type="button" id="b-seg" aria-expanded="false">Segmentos</button>
+      <button type="button" id="f-ligar" aria-pressed="false">A agendar</button>
    <button type="button" class="des" id="b-des" aria-pressed="false">Desenhar região</button>
   </div>
+  <div class="segp" id="segp" hidden></div>
   <div class="leg" id="leg"></div>
  </div>
  <aside class="lado" id="lado" aria-live="polite"></aside>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<div class="tour" id="tour" hidden><div class="tour-c" id="tour-c" role="dialog" aria-modal="true" aria-labelledby="tour-t"></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
 {
@@ -131,21 +149,22 @@ const api = async (a, dados, q = '') => {
 const COR = { mapeado:'#6B777D', agendado:'#FFB547', visitado:'#5B8CFF', afiliado:'#19F7FF', conquistado:'#32E000', venda:'#FFD84D', perdido:'#FF5C7A' };
 const ETN = { mapeado:'Mapeado', agendado:'Agendado', visitado:'Visitado', afiliado:'Afiliado', conquistado:'QR ativo', venda:'Com venda', perdido:'Perdido' };
 const CONQ = new Set(['afiliado', 'conquistado', 'venda']);
-let S = { empresas:[], regioes:[], celulas:[], geo:{} }, vis = 'mapa', etapasOn = new Set(Object.keys(COR)), regSel = null, fichaId = null, camadas = { cabo:true, reg:true, hex:true, ind:true };
+let segOn = new Set(), S = { empresas:[], regioes:[], celulas:[], geo:{} }, vis = 'mapa', etapasOn = new Set(Object.keys(COR)), regSel = null, fichaId = null, camadas = { cabo:true, reg:true, hex:true, ind:true };
 /* empresas: [id, nome, seg, bairro, lat, lng, etapa, vencido, noCabo, geo, temTel, leituras, indicados] */
 const E = r => ({ id:r[0], nome:r[1], seg:r[2], bairro:r[3], lat:r[4], lng:r[5], et:r[6], venc:r[7] === 1 ? 1 : 0, fut:r[7] === 2, cabo:r[8], geo:r[9], tel:r[10], leit:r[11], ind:r[12] });
 
 /* ---------- mapa ---------- */
-const map = L.map('map', { preferCanvas:true, zoomControl:true }).setView([-18.6475, -48.1875], 14);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19, subdomains:'abcd', attribution:'&copy; OpenStreetMap &copy; CARTO' }).addTo(map);
+const map = L.map('map', { preferCanvas:true, zoomControl:false }).setView([-18.6475, -48.1875], 14);
+L.control.zoom({ position:'topright' }).addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap' }).addTo(map);
 const G = { cabo:L.layerGroup().addTo(map), hex:L.layerGroup().addTo(map), reg:L.layerGroup().addTo(map), emp:L.layerGroup().addTo(map), ind:L.layerGroup().addTo(map), des:L.layerGroup().addTo(map) };
 const rend = L.canvas({ padding:.3 });
 /* empresas mapeadas só pelo bairro ficam espalhadas em volta do centro do bairro (até refinar pela rua) */
 const pos = e => { if (e.lat == null) return null; if (e.geo === 'bairro' || e.geo === 'bairro_ok') { const a = (e.id * 2.39996) % 6.283, d = 0.0006 + ((e.id * 7919) % 100) / 100 * 0.0022; return [e.lat + Math.sin(a) * d, e.lng + Math.cos(a) * d * 1.05]; } return [e.lat, e.lng]; };
 const dentro = (p, poly) => { let o = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [yi, xi] = poly[i], [yj, xj] = poly[j]; if ((yi > p[0]) !== (yj > p[0]) && p[1] < (xj - xi) * (p[0] - yi) / ((yj - yi) || 1e-12) + xi) o = !o; } return o; };
 function filtradas() {
- const q = $('#busca').value.trim().toLowerCase(), seg = $('#f-seg').value, soCabo = $('#f-cabo').getAttribute('aria-pressed') === 'true', lig = $('#f-ligar').getAttribute('aria-pressed') === 'true';
- return S.empresas.filter(e => etapasOn.has(e.et) && (!seg || e.seg === seg) && (!soCabo || e.cabo) && (!lig || (e.et === 'mapeado' && e.tel && !e.fut))
+ const q = $('#busca').value.trim().toLowerCase(), lig = $('#f-ligar').getAttribute('aria-pressed') === 'true';
+ return S.empresas.filter(e => etapasOn.has(e.et) && (!segOn.size || segOn.has(e.seg)) && (!lig || (e.et === 'mapeado' && e.tel && !e.fut))
   && (!q || (e.nome + ' ' + e.bairro + ' ' + e.seg).toLowerCase().includes(q)));
 }
 function desenhaCabo() {
@@ -213,8 +232,18 @@ $('#leg').addEventListener('click', ev => { const b = ev.target.closest('button'
  if (b.dataset.et) { etapasOn.has(b.dataset.et) ? etapasOn.delete(b.dataset.et) : etapasOn.add(b.dataset.et); }
  if (b.dataset.cam) { camadas[b.dataset.cam] = !camadas[b.dataset.cam]; if (b.dataset.cam === 'cabo') desenhaCabo(); }
  legenda(); desenha(); });
-for (const id of ['#f-cabo', '#f-ligar']) $(id).addEventListener('click', e => { e.currentTarget.setAttribute('aria-pressed', e.currentTarget.getAttribute('aria-pressed') !== 'true'); desenha(); });
-$('#f-seg').addEventListener('change', desenha);
+for (const id of ['#f-ligar']) $(id).addEventListener('click', e => { e.currentTarget.setAttribute('aria-pressed', e.currentTarget.getAttribute('aria-pressed') !== 'true'); desenha(); });
+function segPainel() {
+ const c = {}; for (const e of S.empresas) { const k = e.seg || 'Sem segmento'; c[k] = (c[k] || 0) + 1; }
+ const l = Object.entries(c).sort((a, b) => b[1] - a[1]);
+ $('#segp').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Segmentos da planilha</b><button class="bt" type="button" data-seg-limpa style="min-height:32px">Todos</button></div>
+  <div class="chips">${l.map(([k, n]) => `<button type="button" data-seg="${h(k)}" aria-pressed="${segOn.has(k)}" title="${h(k)}">${h(k.length > 46 ? k.slice(0, 44) + '…' : k)}<b>${n}</b></button>`).join('')}</div>`;
+ $('#b-seg').textContent = segOn.size ? `Segmentos (${segOn.size})` : 'Segmentos';
+}
+$('#b-seg').addEventListener('click', () => { const p = $('#segp'); p.hidden = !p.hidden; $('#b-seg').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) segPainel(); });
+$('#segp').addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return;
+ if (b.hasAttribute('data-seg-limpa')) segOn.clear(); else { const k = b.dataset.seg; segOn.has(k) ? segOn.delete(k) : segOn.add(k); }
+ segPainel(); fichaId = null; desenha(); });
 $('#busca').addEventListener('input', () => { clearTimeout(desenha.t); desenha.t = setTimeout(() => { fichaId = null; regSel = null; desenha(); }, 250); });
 
 /* ---------- painel: lista, região ---------- */
@@ -258,14 +287,14 @@ let F = null, modoLigar = false;
 async function abreFicha(id, ligando) {
  fichaId = id; modoLigar = !!ligando; lado.innerHTML = '<p class="vazio">Abrindo…</p>';
  const r = await api('empresa', null, '&id=' + id); if (r.erro) return toast(r.erro, true); F = r;
- const e = r.empresa, nome = e.fantasia || e.razao, p = pos(E([e.id, '', '', '', e.lat !== null ? +e.lat : null, e.lng !== null ? +e.lng : null, e.etapa, 0, 0, e.geo]));
+ const e = r.empresa, nome = e.fantasia || e.responsavel || e.razao, p = pos(E([e.id, '', '', '', e.lat !== null ? +e.lat : null, e.lng !== null ? +e.lng : null, e.etapa, 0, 0, e.geo]));
  if (p) map.setView(p, Math.max(map.getZoom(), 16), { animate:true });
  const end = [e.logradouro, e.numero].filter(Boolean).join(', ') + (e.complemento ? ' · ' + e.complemento : '');
  const precisao = { rua:'ponto pela rua', manual:'ponto ajustado à mão', bairro:'ponto aproximado (bairro)', bairro_ok:'ponto aproximado (bairro)', falhou:'endereço não achado' }[e.geo] || 'ainda não mapeado';
  const prox = e.proximo_em ? new Date(e.proximo_em.replace(' ', 'T')) : null;
  const a = r.app;
  lado.innerHTML = `<button class="bt" type="button" data-voltar>← ${regSel ? 'Região' : 'Lista'}</button>
-  <h2 style="margin-top:12px">${h(nome)}</h2>${e.fantasia && e.razao ? `<div class="sub">${h(e.razao)}</div>` : ''}
+  <h2 style="margin-top:12px">${h(nome)}</h2><div class="sub">${h(e.segmento || '')}${e.razao && e.razao !== nome ? ' · ' + h(e.razao) : ''}</div>
   <div style="margin-top:8px"><span class="tag" style="background:${COR[e.etapa]}">${ETN[e.etapa]}${e.motivo ? ' · ' + h(e.motivo) : ''}</span>
    ${prox ? `<span class="sub"> · próxima ação ${prox.toLocaleDateString('pt-BR')}</span>` : ''}${e.visita_dia ? `<span class="sub"> · visita ${new Date(e.visita_dia + 'T12:00:00').toLocaleDateString('pt-BR')} (${e.visita_turno === 'tarde' ? 'tarde' : 'manhã'})</span>` : ''}</div>
   <div class="g2" style="margin-top:12px"><a class="bt go big" href="${telLink(e.tel1)}" id="b-lig"${e.tel1 ? '' : ' aria-disabled="true"'}>Ligar</a><button class="bt big" type="button" id="b-msg">Mensagem</button></div>
@@ -377,7 +406,7 @@ let novaPonto = null, novaMarcando = false, geoRodando = false;
 async function base() {
  const g = S.geo || {}, t = g.t || 0, feito = (g.bairro || 0) + (g.rua || 0) + (g.so_bairro || 0) + (g.falhou || 0);
  const pr = t ? Math.round(((g.rua || 0) + (g.so_bairro || 0) + (g.falhou || 0)) / t * 100) : 0;
- lado.innerHTML = `<h2>Base de empresas</h2><p class="sub">${t} empresas na base.</p>
+ lado.innerHTML = `<h2>Base de empresas</h2><p class="sub">${t} empresas na base${g.fora ? `, ${g.fora} delas fora do cabo (guardadas, não aparecem)` : ''}.</p>
   <p class="sec">1 · Subir a planilha da Casa dos Dados</p>
   <form id="f-imp" class="box"><input type="file" name="arq" accept=".xlsx,.csv,.txt" required style="width:100%">
    <label class="f" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" name="so_cidade" value="1" checked style="width:auto;margin:0"> Só empresas de Araguari</label>
@@ -386,7 +415,7 @@ async function base() {
   <p class="sec">2 · Mapear endereços</p>
   <div class="box"><p class="sub" style="margin:0">Primeiro pelo bairro (rápido, já dá a contagem por região). Depois pela rua, aos poucos (1 endereço por segundo). Pode deixar rodando com esta aba aberta.</p>
    <div class="barra"><i style="width:${pr}%"></i></div>
-   <p class="sub">${g.rua || 0} pela rua · ${(g.bairro || 0) + (g.so_bairro || 0)} pelo bairro · ${g.sem || 0} sem mapear · ${g.falhou || 0} não achados</p>
+   <p class="sub">${g.rua || 0} pela rua · ${(g.bairro || 0) + (g.so_bairro || 0)} pelo bairro · ${g.sem || 0} sem mapear · ${g.falhou || 0} não achados${g.fora ? ` · <b>${g.fora} fora do cabo, guardadas</b>` : ''}</p>
    <button class="bt ${geoRodando ? 'am' : 'go'}" type="button" id="b-geo" style="width:100%">${geoRodando ? 'Pausar mapeamento' : 'Mapear endereços'}</button></div>
   ${g.falhou ? `<p class="sec">Não achados (${g.falhou})</p><p class="sub">Abra a empresa e clique em "Ajustar ponto" para marcar no mapa.</p><ul class="lista">${S.empresas.filter(e => e.geo === 'falhou').slice(0, 60).map(itemLista).join('')}</ul>` : ''}
   <p class="sec">3 · Cadastrar empresa achada na rua</p>
@@ -421,13 +450,37 @@ async function rodaGeo() {
 async function carrega() {
  const r = await api('estado'); if (r.erro) { toast(r.erro, true); return; }
  S = Object.assign(r, { empresas:r.empresas.map(E) });
- const segs = [...new Set(S.empresas.map(e => e.seg).filter(Boolean))].sort(); const cur = $('#f-seg').value;
- $('#f-seg').innerHTML = '<option value="">Todos os segmentos</option>' + segs.map(s => `<option${s === cur ? ' selected' : ''}>${h(s)}</option>`).join('');
+ if (!$('#segp').hidden) segPainel();
  if (!HEX) { montaHex(); desenhaCabo(); }
  desenha();
 }
+/* ---------- tour de uso (5 passos) ---------- */
+const PASSOS = [
+ ['#map', 'O mapa de Araguari', 'A mancha verde é o cabo da Nio. Cada bolinha grande é uma região com o total de empresas. Os pontos são as empresas, na cor da etapa.'],
+ ['#leg', 'As cores', 'Cinza a agendar, amarelo agendado, azul visitado, ciano afiliado, verde QR ativo, dourado com venda. Toque numa cor para esconder ou mostrar.'],
+ ['#lado', 'Região e lista', 'Clique numa região: aparece a lista das empresas dali. Clique numa empresa para abrir a ficha com tudo dela.'],
+ ['.abas [data-v="ligar"]', 'Agendar', 'Abre a fila e liga um por um. Depois da ligação, toque no resultado (Agendou, Não atendeu, Não quer…) e a próxima empresa já aparece.'],
+ ['.abas [data-v="agenda"]', 'Agenda e Base', 'Em Agenda ficam as visitas de cada dia, de manhã e à tarde. Em Base vocês sobem a planilha e cadastram a empresa achada na rua.']];
+let passo = 0;
+function tour(i) {
+ document.querySelectorAll('.tour-alvo').forEach(x => x.classList.remove('tour-alvo'));
+ if (i >= PASSOS.length || i < 0) { $('#tour').hidden = true; try { localStorage.setItem('crm_tour_v1', '1'); } catch (e) {} return; }
+ passo = i; const [sel, t, txt] = PASSOS[i], alvo = document.querySelector(sel); $('#tour').hidden = false;
+ if (alvo) alvo.classList.add('tour-alvo');
+ const c = $('#tour-c'); c.innerHTML = `<div class="n">${i + 1} de ${PASSOS.length}</div><h3 id="tour-t">${t}</h3><p>${txt}</p><div class="pts">${PASSOS.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div>
+  <div class="g2" style="margin-top:14px"><button class="bt" type="button" data-t="${i - 1}"${i ? '' : ' disabled'}>Voltar</button><button class="bt go" type="button" data-t="${i + 1}">${i === PASSOS.length - 1 ? 'Entendi' : 'Próximo'}</button></div>
+  <button type="button" data-t="99" style="margin-top:10px;border:0;background:none;color:var(--mute);font-weight:700;cursor:pointer">Pular</button>`;
+ const r = alvo ? alvo.getBoundingClientRect() : { left:20, top:80, right:20, bottom:80, width:0 };
+ const w = c.offsetWidth, hh = c.offsetHeight;
+ let x = r.right + 14, y = r.top; if (x + w > innerWidth - 8) x = Math.max(8, r.left - w - 14); if (x < 8 || r.width > innerWidth * .5) { x = Math.min(innerWidth - w - 8, Math.max(8, r.left + 20)); y = Math.min(innerHeight - hh - 12, r.top + 60); }
+ c.style.left = x + 'px'; c.style.top = Math.max(8, Math.min(y, innerHeight - hh - 8)) + 'px';
+ c.querySelector('.go').focus();
+}
+$('#tour').addEventListener('click', ev => { const b = ev.target.closest('[data-t]'); if (b) tour(+b.dataset.t); });
+document.addEventListener('keydown', ev => { if (!$('#tour').hidden && ev.key === 'Escape') tour(99); });
+$('#b-tour').addEventListener('click', () => tour(0));
 legenda();
-carrega().then(() => painelLista(filtradas()));
+carrega().then(() => { painelLista(filtradas()); let visto = false; try { visto = localStorage.getItem('crm_tour_v1') === '1'; } catch (e) {} if (!visto) setTimeout(() => tour(0), 600); });
 }
 </script>
 </body>
