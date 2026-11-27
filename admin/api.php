@@ -352,6 +352,34 @@ case 'goto': {
   }
   json_out(['erro' => 'Ação desconhecida.'], 400);
 }
+case 'zerar': {
+  /* começo da produção: apaga os dados de teste. Fica a conta de quem está logado, as configurações, os códigos e a base do CRM. */
+  if (!$master) json_out(['erro' => 'Só o master pode zerar.'], 403);
+  require_once __DIR__ . '/../api/_crm.php'; crm_migrar();
+  $crm = ($e['crm'] ?? '') === '1';
+  $n = fn($sql, $p = []) => (int)(one($sql, $p)['n'] ?? 0);
+  $prev = ['parceiros' => $n('SELECT COUNT(*) AS n FROM parceiros'), 'indicacoes' => $n('SELECT COUNT(*) AS n FROM indicacoes'), 'leituras' => $n('SELECT COUNT(*) AS n FROM leituras'),
+    'saques' => $n('SELECT COUNT(*) AS n FROM saques'), 'premios' => $n('SELECT COUNT(*) AS n FROM premios'),
+    'usuarios' => array_map(fn($u) => $u['nome'] . ' (' . $u['usuario'] . ')', all('SELECT nome, usuario FROM admins WHERE id <> ? ORDER BY nome', [$a['id']])),
+    'qr_ativos' => array_column(all("SELECT codigo FROM parceiros WHERE codigo IS NOT NULL AND codigo <> '' ORDER BY codigo"), 'codigo'),
+    'lojas_ligadas' => $n("SELECT COUNT(*) AS n FROM empresas WHERE parceiro_id IS NOT NULL OR etapa IN ('afiliado','conquistado','venda')"),
+    'crm_trabalhadas' => $n("SELECT COUNT(*) AS n FROM empresas WHERE etapa <> 'mapeado' OR proximo_em IS NOT NULL OR tentativas > 0"), 'crm_hist' => $n('SELECT COUNT(*) AS n FROM empresa_hist'),
+    'empresas' => $n('SELECT COUNT(*) AS n FROM empresas'), 'fica' => $a['nome'] . ' (' . $a['usuario'] . ')'];
+  if ($s('o') !== 'zerar') json_out(['previa' => $prev]);
+  if ($s('confirma', 10) !== 'ZERAR') json_out(['erro' => 'Digite ZERAR para confirmar.'], 422);
+  $pdo = db(); $pdo->beginTransaction();
+  try {
+    foreach (['indicacoes', 'saques', 'leituras', 'premios', 'senha_tokens', 'tentativas'] as $t) q("DELETE FROM $t");
+    if ($crm) { q('DELETE FROM empresa_hist');
+      q("UPDATE empresas SET etapa = 'mapeado', parceiro_id = NULL, motivo = NULL, proximo_em = NULL, tentativas = 0, tel_ok = NULL, visita_dia = NULL, visita_turno = NULL, visita_quem = NULL, atualizado_em = ?", [agora()]); }
+    else q("UPDATE empresas SET etapa = CASE WHEN etapa IN ('afiliado','conquistado','venda') THEN 'mapeado' ELSE etapa END, parceiro_id = NULL, atualizado_em = ? WHERE parceiro_id IS NOT NULL OR etapa IN ('afiliado','conquistado','venda')", [agora()]);
+    q('DELETE FROM parceiros');
+    q('DELETE FROM admins WHERE id <> ?', [$a['id']]);
+    $pdo->commit();
+  } catch (Throwable $x) { $pdo->rollBack(); json_out(['erro' => 'Não zerou (nada foi apagado): ' . mb_substr($x->getMessage(), 0, 160)], 500); }
+  auditar($quem, 'zerou os dados de teste', $crm ? 'com o CRM' : 'base do CRM mantida', $prev['parceiros'] . ' parceiros, ' . $prev['indicacoes'] . ' indicações, ' . count($prev['usuarios']) . ' usuários');
+  json_out(['ok' => true, 'msg' => 'Pronto. Começo da produção: só a sua conta ficou, e os ' . count(qr_genericos()) . ' códigos estão livres.']);
+}
 case 'email': {
   if ($s('o') === 'teste') {
     if (!email_configurado()) json_out(['erro' => 'Salve o usuário e a senha do e-mail antes de testar.'], 422);

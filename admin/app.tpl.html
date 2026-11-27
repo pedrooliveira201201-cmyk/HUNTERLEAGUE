@@ -761,7 +761,7 @@ document.addEventListener('click', async e => {
 let maisAba = 'config';
 TELAS.mais = async () => {
  const r = cache.cfg = await api('config'); const c = r.config;
- const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['goto', 'GoTo (WhatsApp)'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
+ const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['goto', 'GoTo (WhatsApp)'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['zerar', 'Zerar testes'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
  if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
  $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
   <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
@@ -830,6 +830,25 @@ TELAS.mais = async () => {
   $('#f-cdd').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('integracoes', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
   $('#cdd-t').addEventListener('click', async () => { toast('Testando…'); const rr = await api('integracoes', { o:'testar' }); rr.ok ? toast(rr.msg) : toast(rr.msg || rr.erro, true); });
   const x = $('#cdd-x'); if (x) x.addEventListener('click', async () => { const rr = await api('integracoes', { o:'apagar' }); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+ }
+ if (maisAba === 'zerar') {
+  const z = await api('zerar', { o:'previa' });
+  if (z.erro) { box.innerHTML = `<p class="sub">${h(z.erro)}</p>`; return; }
+  const p = z.previa, li = (t) => `<li>${t}</li>`;
+  box.innerHTML = `<form class="form ch" id="f-zr" style="max-width:640px">
+   <p class="sub" style="margin:0">Para começar a produção limpa. <b>Não tem volta.</b></p>
+   <div><b style="color:#FF5C7A">Sai</b><ul style="margin:6px 0 0 18px;padding:0">
+    ${li(`${p.parceiros} parceiro(s), com ${p.indicacoes} indicação(ões), ${p.leituras} leitura(s) do QR, ${p.saques} saque(s) e ${p.premios} prêmio(s)`)}
+    ${li(p.usuarios.length ? `Usuários da Central: ${p.usuarios.map(h).join(', ')}` : 'Nenhum outro usuário da Central')}
+    ${li(p.qr_ativos.length ? `Os QR ativados voltam a ficar livres: ${p.qr_ativos.map(h).join(', ')}` : 'Nenhum QR ativado')}
+    ${li(`${p.lojas_ligadas} loja(s) do CRM ligada(s) a parceiros de teste voltam para "a ligar"`)}</ul></div>
+   <div><b style="color:var(--nio,#19F7FF)">Fica</b><ul style="margin:6px 0 0 18px;padding:0">${li('Sua conta: ' + h(p.fica))}${li('Configurações (WhatsApp, bônus, mensagem, e-mail) e os códigos dos QR')}${li(`A base do CRM: ${p.empresas} empresa(s), mapa e regiões`)}</ul></div>
+   <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="crm" value="1"><span>Também limpar o trabalho do CRM feito nos testes: ${p.crm_trabalhadas} empresa(s) com parecer, agendamento ou tentativa, e ${p.crm_hist} anotação(ões) do histórico. Todas voltam para "a ligar".</span></label>
+   <label class="f">Digite ZERAR para confirmar<input name="confirma" autocomplete="off" spellcheck="false"></label>
+   <button class="btn" type="submit" style="justify-self:start;background:#FF5C7A">Zerar agora</button></form>`;
+  $('#f-zr').addEventListener('submit', async e => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); f.o = 'zerar'; f.crm = f.crm ? '1' : '';
+   if (f.confirma !== 'ZERAR') return toast('Digite ZERAR para confirmar.', true);
+   const rr = await api('zerar', f); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), cache = {}, TELAS.mais()); });
  }
  if (maisAba === 'hist') box.innerHTML = `<ul class="hist">${r.historico.map(x => `<li class="ch"><span>${h(x.em)}</span><span>${h(x.quem)}</span><div><b>${h(x.acao)}</b> ${h(x.alvo)}${x.detalhe ? ` <span>· ${h(x.detalhe)}</span>` : ''}</div></li>`).join('')}</ul>`;
  if (maisAba === 'senha') {
