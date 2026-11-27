@@ -30,8 +30,10 @@ case 'estado': {
   $hoje = date('Y-m-d');
   $emp = array_map(fn($r) => [(int)$r['id'], crm_nome($r), (string)$r['segmento'], (string)$r['bairro'],
       $r['lat'] !== null ? (float)$r['lat'] : null, $r['lng'] !== null ? (float)$r['lng'] : null, $r['etapa'],
-      $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds'], (string)$r['cnae'], $r['celula'] && $r['celula'] !== '-' ? (string)$r['celula'] : ''],
-    all("SELECT e.id, e.fantasia, e.razao, e.responsavel, e.segmento, e.cnae, e.bairro, e.lat, e.lng, e.etapa, e.proximo_em, e.celula, e.geo, e.tel1,
+      $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds'], (string)$r['cnae'], $r['celula'] && $r['celula'] !== '-' ? (string)$r['celula'] : '',
+      /* WhatsApp: 1 aguardando resposta (ainda no prazo), 2 respondeu */
+      $r['etapa'] === 'mapeado' ? ($r['motivo'] === CRM_ZAP_RESPONDEU ? 2 : ($r['motivo'] === CRM_ZAP_ESPERA && $r['proximo_em'] && $r['proximo_em'] > agora() ? 1 : 0)) : 0],
+    all("SELECT e.id, e.fantasia, e.razao, e.responsavel, e.segmento, e.cnae, e.bairro, e.lat, e.lng, e.etapa, e.motivo, e.proximo_em, e.celula, e.geo, e.tel1,
       COALESCE(lc.n, 0) AS leit, COALESCE(ic.n, 0) AS inds
       FROM empresas e
       LEFT JOIN (SELECT parceiro_id, COUNT(*) AS n FROM leituras GROUP BY parceiro_id) lc ON lc.parceiro_id = e.parceiro_id
@@ -82,7 +84,12 @@ case 'parecer': {
   $antes = array_intersect_key($x, array_flip(['etapa','motivo','proximo_em','tentativas','visita_dia','visita_turno','visita_quem','tel_ok','tel1','tel2']));
   try { $txt = crm_parecer($x, $s('p', 20), $e, $quem); } catch (InvalidArgumentException $z) { json_out(['erro' => $z->getMessage()], 422); }
   $prox = crm_proximo(crm_regiao_poli((int)($e['regiao'] ?? 0) ?: null), (int)$x['id'], crm_cels_de((string)($e['cels'] ?? '')));
-  $_SESSION['crm_desfazer'] = ['id' => (int)$x['id'], 'antes' => $antes, 'hist' => (int)(one('SELECT MAX(id) AS m FROM empresa_hist WHERE empresa_id = ?', [$x['id']])['m'] ?? 0), 'em' => time()];
+  $hid = (int)(one('SELECT MAX(id) AS m FROM empresa_hist WHERE empresa_id = ?', [$x['id']])['m'] ?? 0);
+  /* "Mandar WhatsApp" logo depois do "Não atendeu": o Desfazer volta os dois de uma vez */
+  $u = $_SESSION['crm_desfazer'] ?? null;
+  if (!empty($e['junto']) && $u && $u['id'] === (int)$x['id'] && time() - $u['em'] <= 120)
+    $_SESSION['crm_desfazer'] = ['id' => $u['id'], 'antes' => $u['antes'], 'hist' => array_merge((array)$u['hist'], [$hid]), 'em' => time()];
+  else $_SESSION['crm_desfazer'] = ['id' => (int)$x['id'], 'antes' => $antes, 'hist' => [$hid], 'em' => time()];
   json_out(['ok' => true, 'msg' => $txt, 'proximo' => $prox ? (int)$prox['id'] : null, 'desfazer' => true]);
 }
 
@@ -92,7 +99,7 @@ case 'desfazer': {
   if (!$u || time() - $u['em'] > 60) json_out(['erro' => 'Não dá mais para desfazer.'], 409);
   $set = []; $par = []; foreach ($u['antes'] as $k => $v) { $set[] = "$k = ?"; $par[] = $v; }
   q('UPDATE empresas SET ' . implode(', ', $set) . ', atualizado_em = ? WHERE id = ?', array_merge($par, [agora(), $u['id']]));
-  q('DELETE FROM empresa_hist WHERE id = ? AND empresa_id = ?', [$u['hist'], $u['id']]);
+  foreach ((array)$u['hist'] as $hid) q('DELETE FROM empresa_hist WHERE id = ? AND empresa_id = ?', [(int)$hid, $u['id']]);
   unset($_SESSION['crm_desfazer']);
   json_out(['ok' => true, 'id' => $u['id'], 'msg' => 'Parecer desfeito.']);
 }

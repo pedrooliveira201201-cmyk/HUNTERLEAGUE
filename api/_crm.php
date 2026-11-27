@@ -6,11 +6,15 @@ declare(strict_types=1);
 const CRM_ETAPAS = ['mapeado' => 'Mapeado', 'agendado' => 'Agendado', 'visitado' => 'Visitado', 'afiliado' => 'Afiliado',
   'conquistado' => 'QR ativo', 'venda' => 'Com venda', 'perdido' => 'Perdido'];
 const CRM_PARECERES = ['agendou' => 'Agendou', 'depois' => 'Interesse, mas não agora', 'nao_atendeu' => 'Não atendeu',
-  'nao_quer' => 'Não quer', 'numero_errado' => 'Número errado', 'fechou' => 'Fechou'];
+  'aguardando_zap' => 'Mandei WhatsApp', 'nao_quer' => 'Não quer', 'numero_errado' => 'Número errado', 'fechou' => 'Fechou'];
 /* fora do cabo (endereço achado pela rua e fora das células da Nio): guardada, não aparece */
 const CRM_VISIVEL = "NOT (COALESCE(geo, '') = 'rua' AND COALESCE(celula, '') = '-')";
 const CRM_SAFRA_DIAS = 7;          /* "interesse, mas não agora" volta na próxima safra */
 const CRM_RETENTATIVAS = [1, 3, 7]; /* não atendeu: amanhã, em 3 dias, em 7 dias; depois encerra */
+/* mandou WhatsApp e espera a resposta: sai da fila de ligação; sem resposta, volta sozinho depois deste prazo */
+const CRM_ZAP_DIAS = 2;
+const CRM_ZAP_ESPERA = 'Aguardando WhatsApp';
+const CRM_ZAP_RESPONDEU = 'Respondeu no WhatsApp';
 
 /* segmentos pelo CNAE (7 dígitos); o resto fica com a descrição do próprio CNAE */
 const CRM_SEGMENTOS = ['9602501' => 'Salão de beleza', '9602502' => 'Manicure e estética', '4744099' => 'Material de construção',
@@ -332,6 +336,9 @@ function crm_sincronizar(): void {
 function crm_parecer(array $e, string $p, array $d, string $quem): string {
   $id = (int)$e['id']; $agora = agora();
   $tel = in_array($d['tel'] ?? '', ['1', '2'], true) ? $d['tel'] : null;
+  /* qualquer resultado novo tira o "aguardando / respondeu no WhatsApp" */
+  if ($p !== 'aguardando_zap' && in_array($e['motivo'] ?? null, [CRM_ZAP_ESPERA, CRM_ZAP_RESPONDEU], true))
+    q('UPDATE empresas SET motivo = NULL WHERE id = ? AND motivo IN (?, ?)', [$id, CRM_ZAP_ESPERA, CRM_ZAP_RESPONDEU]);
   switch ($p) {
     case 'agendou':
       $dia = crm_data((string)($d['dia'] ?? '')) ?: date('Y-m-d', strtotime('+1 day'));
@@ -347,6 +354,9 @@ function crm_parecer(array $e, string $p, array $d, string $quem): string {
       if ($n > count(CRM_RETENTATIVAS)) { q("UPDATE empresas SET etapa = 'perdido', motivo = 'Sem resposta', tentativas = ?, proximo_em = NULL, atualizado_em = ? WHERE id = ?", [$n, $agora, $id]); $txt = "Não atendeu ({$n}ª): encerrado sem resposta"; }
       else { q('UPDATE empresas SET tentativas = ?, proximo_em = ?, atualizado_em = ? WHERE id = ?', [$n, date('Y-m-d 09:00:00', strtotime('+' . CRM_RETENTATIVAS[$n - 1] . ' days')), $agora, $id]); $txt = "Não atendeu ({$n}ª tentativa): tenta de novo em " . CRM_RETENTATIVAS[$n - 1] . ' dia(s)'; }
       break;
+    case 'aguardando_zap':
+      q('UPDATE empresas SET motivo = ?, proximo_em = ?, atualizado_em = ? WHERE id = ?', [CRM_ZAP_ESPERA, date('Y-m-d H:i:s', strtotime('+' . CRM_ZAP_DIAS . ' days')), $agora, $id]);
+      $txt = 'Mandou WhatsApp: aguardando resposta (sem resposta, volta para a fila em ' . CRM_ZAP_DIAS . ' dias)'; break;
     case 'nao_quer':
       $m = mb_substr((string)($d['motivo'] ?? ''), 0, 80) ?: 'Não quer';
       q("UPDATE empresas SET etapa = 'perdido', motivo = ?, proximo_em = NULL, tel_ok = COALESCE(?, tel_ok), atualizado_em = ? WHERE id = ?", [$m, $tel, $agora, $id]); $txt = 'Não quer · ' . $m; break;
