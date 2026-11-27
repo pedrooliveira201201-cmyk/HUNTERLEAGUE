@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#050607">
+<title>Conquista Araguari · CRM Hunter League</title>
+<link rel="icon" href="../icons/favicon-64.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<style>
+:root{color-scheme:dark;--bg:#050607;--panel:#0B1013;--p2:#0F171B;--edge:#1E2A30;--ink:#EEF2F4;--mute:#8A959C;--cyan:#19F7FF;--nio:#32E000;--amb:#FFB547;--azul:#5B8CFF;--ouro:#FFD84D;--red:#FF5C7A;--cinza:#6B777D}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 15px/1.45 Montserrat,system-ui,sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{display:flex;align-items:center;gap:12px;padding:10px 14px calc(10px) max(14px,env(safe-area-inset-left));border-bottom:1px solid var(--edge);background:#07090A;flex-wrap:wrap}
+.top a.vol{color:var(--mute);text-decoration:none;font-weight:700;font-size:14px}
+.top h1{margin:0;font:900 26px/1 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;letter-spacing:.01em}
+.top h1 span{color:var(--cyan)}
+.abas{display:flex;gap:4px;margin-left:8px}
+.abas button{min-height:38px;padding:6px 14px;border:1px solid var(--edge);background:var(--panel);color:var(--mute);font-weight:800;font-size:14px;cursor:pointer}
+.abas button[aria-selected=true]{background:var(--cyan);color:#050607;border-color:var(--cyan)}
+.placar{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.placar div{padding:4px 10px;background:var(--panel);border:1px solid var(--edge);text-align:center;min-width:76px}
+.placar b{display:block;font:900 20px/1.05 "Big Shoulders Display",Impact,sans-serif}
+.placar small{color:var(--mute);font-size:11px;font-weight:700}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 420px;height:calc(100vh - 62px);height:calc(100dvh - 62px)}
+#map{position:relative;background:#06090B}
+.leaflet-container{background:#06090B;font:600 13px Montserrat,sans-serif}
+.ferr{position:absolute;z-index:500;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 70px)}
+.ferr button,.ferr select,.ferr input{min-height:36px;padding:5px 11px;border:1px solid var(--edge);background:rgba(11,16,19,.92);color:var(--mute);font-weight:700;font-size:13px;cursor:pointer}
+.ferr input{cursor:text;width:170px;color:var(--ink)}
+.ferr button[aria-pressed=true]{color:var(--ink);border-color:var(--cyan)}
+.ferr .des[aria-pressed=true]{background:var(--amb);color:#050607;border-color:var(--amb)}
+.leg{position:absolute;z-index:500;left:10px;bottom:22px;display:flex;flex-wrap:wrap;gap:4px 12px;max-width:calc(100% - 20px);padding:7px 11px;background:rgba(11,16,19,.92);border:1px solid var(--edge);font-size:12px;font-weight:700}
+.leg button{border:0;background:none;padding:2px 0;color:var(--ink);font-weight:700;font-size:12px;cursor:pointer;opacity:.95}
+.leg button[aria-pressed=false]{opacity:.35;text-decoration:line-through}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.bolha{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:rgba(5,6,7,.86);border:2px solid var(--c,#19F7FF);color:#fff;text-align:center;box-shadow:0 0 18px rgba(25,247,255,.25);cursor:pointer}
+.bolha b{font:900 22px/1 "Big Shoulders Display",Impact,sans-serif}
+.bolha small{display:block;font-size:9.5px;font-weight:800;color:#cfe;max-width:60px;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.lado{background:var(--panel);border-left:1px solid var(--edge);overflow:auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
+.lado h2{margin:0 0 2px;font:900 25px/1.05 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase}
+.sub{color:var(--mute);font-size:13.5px}
+.sec{margin:18px 0 6px;font-size:12px;font-weight:800;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+.tag{display:inline-block;padding:3px 9px;font-size:12px;font-weight:800;color:#050607}
+.lin{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--edge);font-size:14px}
+.lin span:first-child{color:var(--mute)}
+.lin span:last-child{text-align:right;overflow-wrap:anywhere}
+.bt{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 14px;border:1px solid var(--edge);background:var(--p2);color:var(--ink);font-weight:800;font-size:14px;cursor:pointer;text-decoration:none;text-align:center}
+.bt.go{background:var(--cyan);color:#050607;border-color:var(--cyan)}
+.bt.ok{background:var(--nio);color:#050607;border-color:var(--nio)}
+.bt.am{background:var(--amb);color:#050607;border-color:var(--amb)}
+.bt.rd{border-color:#5A2A35;color:#FFB3C1}
+.bt:disabled{opacity:.5}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.big{font:900 22px "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;min-height:56px}
+.box{margin-top:12px;padding:12px;background:#0A1215;border:1px solid var(--edge)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{min-height:36px;padding:5px 11px;border:1px solid var(--edge);background:var(--p2);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--cyan);color:#050607;border-color:var(--cyan)}
+label.f{display:block;margin-top:8px;font-size:13px;font-weight:700;color:var(--mute)}
+label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--edge);background:#070B0D;color:var(--ink);font-size:16px}
+textarea{min-height:70px;resize:vertical}
+.lista{list-style:none;margin:8px 0 0;padding:0}
+.lista li{display:grid;grid-template-columns:12px 1fr auto;gap:10px;align-items:center;padding:9px 6px;border-top:1px solid var(--edge);cursor:pointer}
+.lista li:hover,.lista li:focus-visible{background:#0F1A1E;outline:none}
+.lista li i{width:10px;height:10px;border-radius:50%}
+.lista li small{display:block;color:var(--mute);font-size:12px}
+.lista li em{font-style:normal;font-size:11.5px;font-weight:800;color:var(--amb);white-space:nowrap}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{padding:7px 0;border-top:1px solid var(--edge);font-size:13.5px}
+.hist li span{display:block;color:var(--mute);font-size:12px}
+.barra{height:10px;background:#16222A;margin-top:6px}.barra i{display:block;height:100%;background:var(--cyan);transition:width .4s}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+table.t td,table.t th{border-top:1px solid var(--edge);padding:5px 4px;text-align:left;vertical-align:top}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;max-width:min(92vw,520px);padding:12px 18px;background:#0E2A2E;border:1px solid var(--cyan);font-weight:700;display:none}
+.toast.on{display:block}.toast.err{background:#2A0E15;border-color:var(--red)}
+details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px}
+.vazio{padding:20px 4px;color:var(--mute)}
+.ajuda{margin-top:8px;padding:10px 12px;border-left:3px solid var(--amb);background:#1A140A;font-size:13.5px}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.leaflet-tooltip{background:#0B1013;color:#EEF2F4;border:1px solid #1E2A30;font-weight:700}
+.leaflet-tooltip-top:before{border-top-color:#1E2A30}
+@media(max-width:900px){body{overflow:auto}.wrap{grid-template-columns:1fr;height:auto}#map{height:62vh}.lado{border-left:0;border-top:1px solid var(--edge)}.placar{margin-left:0;width:100%}.placar div{flex:1;min-width:0}.abas{margin-left:0}}
+</style>
+<script>/*__CRM_BOOT__*/</script>
+</head>
+<body>
+<header class="top">
+ <a class="vol" href="./">← Central</a>
+ <h1>Conquista <span>Araguari</span></h1>
+ <nav class="abas" role="tablist" aria-label="Seções">
+  <button type="button" role="tab" data-v="mapa" aria-selected="true">Mapa</button>
+  <button type="button" role="tab" data-v="ligar" aria-selected="false">Ligar</button>
+  <button type="button" role="tab" data-v="agenda" aria-selected="false">Agenda</button>
+  <button type="button" role="tab" data-v="base" aria-selected="false">Base</button>
+ </nav>
+ <div class="placar" id="placar"></div>
+</header>
+<div class="wrap">
+ <div id="map" aria-label="Mapa de Araguari">
+  <div class="ferr">
+   <input id="busca" type="search" placeholder="Buscar empresa, bairro…" aria-label="Buscar">
+   <select id="f-seg" aria-label="Segmento"><option value="">Todos os segmentos</option></select>
+   <button type="button" id="f-cabo" aria-pressed="false">Só dentro do cabo</button>
+   <button type="button" id="f-ligar" aria-pressed="false">Para ligar</button>
+   <button type="button" class="des" id="b-des" aria-pressed="false">Desenhar região</button>
+  </div>
+  <div class="leg" id="leg"></div>
+ </div>
+ <aside class="lado" id="lado" aria-live="polite"></aside>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+{
+const B = window.CRM || {}; const $ = s => document.querySelector(s);
+const h = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
+const toast = (t, err) => { const x = $('#toast'); x.textContent = t; x.className = 'toast on' + (err ? ' err' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => x.className = 'toast', 3800); };
+const api = async (a, dados, q = '') => {
+ const op = dados instanceof FormData ? { method:'POST', headers:{ 'X-CSRF':B.token }, body:dados }
+  : dados ? { method:'POST', headers:{ 'Content-Type':'application/json', 'X-CSRF':B.token }, body:JSON.stringify(dados) } : {};
+ try { const r = await fetch('crm-api.php?a=' + a + q, op); if (r.status === 401) { location.href = './'; return {}; } return await r.json(); }
+ catch (e) { return { erro:'Sem conexão. Tente de novo.' }; }
+};
+const COR = { mapeado:'#6B777D', agendado:'#FFB547', visitado:'#5B8CFF', afiliado:'#19F7FF', conquistado:'#32E000', venda:'#FFD84D', perdido:'#FF5C7A' };
+const ETN = { mapeado:'Mapeado', agendado:'Agendado', visitado:'Visitado', afiliado:'Afiliado', conquistado:'QR ativo', venda:'Com venda', perdido:'Perdido' };
+const CONQ = new Set(['afiliado', 'conquistado', 'venda']);
+let S = { empresas:[], regioes:[], celulas:[], geo:{} }, vis = 'mapa', etapasOn = new Set(Object.keys(COR)), regSel = null, fichaId = null, camadas = { cabo:true, reg:true, hex:true, ind:true };
+/* empresas: [id, nome, seg, bairro, lat, lng, etapa, vencido, noCabo, geo, temTel, leituras, indicados] */
+const E = r => ({ id:r[0], nome:r[1], seg:r[2], bairro:r[3], lat:r[4], lng:r[5], et:r[6], venc:r[7] === 1 ? 1 : 0, fut:r[7] === 2, cabo:r[8], geo:r[9], tel:r[10], leit:r[11], ind:r[12] });
+
+/* ---------- mapa ---------- */
+const map = L.map('map', { preferCanvas:true, zoomControl:true }).setView([-18.6475, -48.1875], 14);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19, subdomains:'abcd', attribution:'&copy; OpenStreetMap &copy; CARTO' }).addTo(map);
+const G = { cabo:L.layerGroup().addTo(map), hex:L.layerGroup().addTo(map), reg:L.layerGroup().addTo(map), emp:L.layerGroup().addTo(map), ind:L.layerGroup().addTo(map), des:L.layerGroup().addTo(map) };
+const rend = L.canvas({ padding:.3 });
+/* empresas mapeadas só pelo bairro ficam espalhadas em volta do centro do bairro (até refinar pela rua) */
+const pos = e => { if (e.lat == null) return null; if (e.geo === 'bairro' || e.geo === 'bairro_ok') { const a = (e.id * 2.39996) % 6.283, d = 0.0006 + ((e.id * 7919) % 100) / 100 * 0.0022; return [e.lat + Math.sin(a) * d, e.lng + Math.cos(a) * d * 1.05]; } return [e.lat, e.lng]; };
+const dentro = (p, poly) => { let o = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [yi, xi] = poly[i], [yj, xj] = poly[j]; if ((yi > p[0]) !== (yj > p[0]) && p[1] < (xj - xi) * (p[0] - yi) / ((yj - yi) || 1e-12) + xi) o = !o; } return o; };
+function filtradas() {
+ const q = $('#busca').value.trim().toLowerCase(), seg = $('#f-seg').value, soCabo = $('#f-cabo').getAttribute('aria-pressed') === 'true', lig = $('#f-ligar').getAttribute('aria-pressed') === 'true';
+ return S.empresas.filter(e => etapasOn.has(e.et) && (!seg || e.seg === seg) && (!soCabo || e.cabo) && (!lig || (e.et === 'mapeado' && e.tel && !e.fut))
+  && (!q || (e.nome + ' ' + e.bairro + ' ' + e.seg).toLowerCase().includes(q)));
+}
+function desenhaCabo() {
+ G.cabo.clearLayers(); if (!camadas.cabo) return;
+ for (const c of S.celulas) for (const p of c.polys) L.polygon(p, { color:'#32E000', weight:1, opacity:.55, dashArray:'4 4', fillColor:'#32E000', fillOpacity:c.status.startsWith('Sem') ? .06 : .02, interactive:true, renderer:rend })
+  .bindTooltip(`Célula ${h(c.nome)} · ${h(c.status)}<br>${c.hpv} domicílios viáveis · ${c.hc} clientes`, { sticky:true }).addTo(G.cabo);
+}
+/* territórios em hexágono (~170 m): acendem com as empresas conquistadas dentro */
+let HEX = null;
+function montaHex() {
+ const R = 170, lat0 = -18.6475, mx = 111320 * Math.cos(lat0 * Math.PI / 180), my = 110540;
+ const toXY = (la, lo) => [(lo + 48.1875) * mx, (la - lat0) * my], toLL = (x, y) => [y / my + lat0, x / mx - 48.1875];
+ const axial = (x, y) => { const q = (Math.sqrt(3) / 3 * x - y / 3) / R, r = (2 / 3 * y) / R; let rq = Math.round(q), rr = Math.round(r), rs = Math.round(-q - r);
+  const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs + q + r); if (dq > dr && dq > ds) rq = -rr - rs; else if (dr > ds) rr = -rq - rs; return rq + ',' + rr; };
+ const centro = k => { const [q, r] = k.split(',').map(Number); return toLL(R * Math.sqrt(3) * (q + r / 2), R * 1.5 * r); };
+ const canto = k => { const [la, lo] = centro(k), [x, y] = toXY(la, lo); return Array.from({ length:6 }, (_, i) => { const a = Math.PI / 180 * (60 * i - 30); return toLL(x + R * Math.cos(a), y + R * Math.sin(a)); }); };
+ const cabo = new Set();
+ for (const c of S.celulas) for (const p of c.polys) { const la = p.map(v => v[0]), lo = p.map(v => v[1]);
+  for (let a = Math.min(...la); a <= Math.max(...la); a += 0.0009) for (let o = Math.min(...lo); o <= Math.max(...lo); o += 0.0009) if (dentro([a, o], p)) cabo.add(axial(...toXY(a, o))); }
+ HEX = { axial, toXY, canto, cabo };
+}
+function desenhaHex(lista) {
+ G.hex.clearLayers(); if (!camadas.hex || !HEX) return;
+ const n = {}; for (const e of lista) { if (!CONQ.has(e.et)) continue; const p = pos(e); if (!p) continue; const k = HEX.axial(...HEX.toXY(...p)); n[k] = (n[k] || 0) + (e.et === 'afiliado' ? .5 : 1); }
+ for (const k of HEX.cabo) { const v = n[k] || 0;
+  L.polygon(HEX.canto(k), { renderer:rend, interactive:false, weight:v ? 1.2 : .5, color:v ? '#19F7FF' : '#1A3036', opacity:v ? .9 : .5, fillColor:'#19F7FF', fillOpacity:v ? Math.min(.15 + v * .15, .55) : .03 }).addTo(G.hex); }
+ return Object.keys(n).length;
+}
+function desenhaRegioes(lista) {
+ G.reg.clearLayers(); if (!camadas.reg) return;
+ for (const r of S.regioes) {
+  const den = lista.filter(e => { const p = pos(e); return p && dentro(p, r.poly); });
+  const conq = den.filter(e => CONQ.has(e.et)).length;
+  L.polygon(r.poly, { color:r.cor, weight:regSel === r.id ? 3 : 1.6, opacity:.95, fillColor:r.cor, fillOpacity:regSel === r.id ? .1 : .04, renderer:rend }).on('click', () => abreRegiao(r.id)).addTo(G.reg);
+  const c = L.polygon(r.poly).getBounds().getCenter();
+  L.marker(c, { icon:L.divIcon({ className:'', iconSize:[64, 64], html:`<div class="bolha" style="--c:${h(r.cor)}"><div><b>${den.length}</b><small>${h(r.nome)}</small></div></div>` }) })
+   .bindTooltip(`${h(r.nome)}: ${den.length} empresas · ${conq} conquistadas`).on('click', () => abreRegiao(r.id)).addTo(G.reg);
+ }
+}
+function desenhaEmpresas(lista) {
+ G.emp.clearLayers(); G.ind.clearLayers();
+ for (const e of lista) { const p = pos(e); if (!p) continue;
+  const sel = e.id === fichaId;
+  L.circleMarker(p, { renderer:rend, radius:sel ? 8 : (CONQ.has(e.et) ? 6 : 4.5), color:sel ? '#fff' : '#050607', weight:sel ? 2.5 : 1, fillColor:COR[e.et], fillOpacity:e.et === 'perdido' ? .45 : .95 })
+   .bindTooltip(`${h(e.nome)}<br><span style="color:#8A959C">${h(e.seg)} · ${ETN[e.et]}</span>`).on('click', () => abreFicha(e.id)).addTo(G.emp);
+  if (camadas.ind && (e.leit || e.ind)) L.circleMarker(p, { renderer:rend, radius:9 + Math.min(e.leit + e.ind * 2, 24) / 2, color:'#32E000', weight:2, opacity:.6, fill:false, interactive:false }).addTo(G.ind)
+   .bindTooltip(`${e.leit} leituras do QR · ${e.ind} indicados`, { permanent:false });
+ }
+}
+function desenha() {
+ const l = filtradas(); desenhaRegioes(l); const t = desenhaHex(l); desenhaEmpresas(l); placar(t);
+ if (vis === 'mapa' && !fichaId && !regSel) painelLista(l);
+}
+function placar(terr) {
+ const c = k => S.empresas.filter(e => e.et === k).length, tot = S.empresas.length, conq = S.empresas.filter(e => CONQ.has(e.et)).length;
+ const pct = HEX && HEX.cabo.size ? Math.round((terr || 0) / HEX.cabo.size * 100) : 0;
+ $('#placar').innerHTML = [[tot, 'mapeadas'], [S.ligadas_hoje || 0, 'ligadas hoje'], [c('agendado'), 'agendadas'], [conq, 'afiliados'], [c('conquistado') + c('venda'), 'QR ativo'], [pct + '%', 'território']]
+  .map(([v, t]) => `<div><b>${v}</b><small>${t}</small></div>`).join('');
+}
+function legenda() {
+ $('#leg').innerHTML = Object.entries(ETN).map(([k, t]) => `<button type="button" data-et="${k}" aria-pressed="${etapasOn.has(k)}"><i style="background:${COR[k]}"></i>${t}</button>`).join('')
+  + [['cabo', 'Cabo Nio'], ['reg', 'Regiões'], ['hex', 'Territórios'], ['ind', 'Leituras e indicados']].map(([k, t]) => `<button type="button" data-cam="${k}" aria-pressed="${camadas[k]}">${t}</button>`).join('');
+}
+$('#leg').addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return;
+ if (b.dataset.et) { etapasOn.has(b.dataset.et) ? etapasOn.delete(b.dataset.et) : etapasOn.add(b.dataset.et); }
+ if (b.dataset.cam) { camadas[b.dataset.cam] = !camadas[b.dataset.cam]; if (b.dataset.cam === 'cabo') desenhaCabo(); }
+ legenda(); desenha(); });
+for (const id of ['#f-cabo', '#f-ligar']) $(id).addEventListener('click', e => { e.currentTarget.setAttribute('aria-pressed', e.currentTarget.getAttribute('aria-pressed') !== 'true'); desenha(); });
+$('#f-seg').addEventListener('change', desenha);
+$('#busca').addEventListener('input', () => { clearTimeout(desenha.t); desenha.t = setTimeout(() => { fichaId = null; regSel = null; desenha(); }, 250); });
+
+/* ---------- painel: lista, região ---------- */
+const lado = $('#lado');
+const itemLista = e => `<li tabindex="0" data-id="${e.id}"><i style="background:${COR[e.et]}"></i><span>${h(e.nome)}<small>${h(e.seg || 'Sem segmento')} · ${h(e.bairro || 'sem bairro')}</small></span>${e.et === 'mapeado' && e.venc ? '<em>retornar</em>' : `<small>${ETN[e.et]}</small>`}</li>`;
+const ordem = l => l.slice().sort((a, b) => (b.venc - a.venc) || ((a.et === 'mapeado' ? 0 : 1) - (b.et === 'mapeado' ? 0 : 1)) || a.nome.localeCompare(b.nome));
+function painelLista(l) {
+ if (!S.empresas.length) { lado.innerHTML = `<h2>Comece pela base</h2><p class="sub">Ainda não tem empresas. Na aba <b>Base</b>, suba a planilha da Casa dos Dados (CSV ou Excel). Depois clique em Mapear endereços.</p><button class="bt go" type="button" data-v2="base" style="margin-top:12px">Ir para a Base</button>`; return; }
+ const semReg = l.length;
+ lado.innerHTML = `<h2>${S.regioes.length ? 'Regiões' : 'Empresas'}</h2><p class="sub">${semReg} empresas no filtro. ${S.regioes.length ? 'Clique numa região (no mapa ou abaixo) para ver a lista.' : 'Desenhe as regiões no mapa: botão "Desenhar região".'}</p>
+  ${S.regioes.length ? `<ul class="lista">${S.regioes.map(r => { const n = l.filter(e => { const p = pos(e); return p && dentro(p, r.poly); }); return `<li tabindex="0" data-reg="${r.id}"><i style="background:${h(r.cor)};border-radius:2px"></i><span>${h(r.nome)}<small>${n.filter(e => CONQ.has(e.et)).length} conquistadas · ${n.filter(e => e.et === 'agendado').length} agendadas</small></span><b>${n.length}</b></li>`; }).join('')}</ul>` : ''}
+  <p class="sec">Lista</p><ul class="lista">${ordem(l).slice(0, 200).map(itemLista).join('')}</ul>${l.length > 200 ? `<p class="sub">Mostrando 200 de ${l.length}. Use a busca ou uma região.</p>` : ''}`;
+}
+function abreRegiao(id) {
+ regSel = id; fichaId = null; const r = S.regioes.find(x => x.id === id); if (!r) return;
+ const l = filtradas().filter(e => { const p = pos(e); return p && dentro(p, r.poly); });
+ map.fitBounds(L.polygon(r.poly).getBounds(), { padding:[30, 30] });
+ const por = k => l.filter(e => e.et === k).length;
+ lado.innerHTML = `<button class="bt" type="button" data-voltar>← Todas</button>
+  <h2 style="margin-top:12px">${h(r.nome)}</h2><p class="sub">${l.length} empresas · ${l.filter(e => e.cabo).length} dentro do cabo</p>
+  <div class="chips" style="margin-top:8px">${Object.keys(ETN).filter(k => por(k)).map(k => `<span class="tag" style="background:${COR[k]}">${ETN[k]} ${por(k)}</span>`).join('')}</div>
+  <div class="g2" style="margin-top:12px"><button class="bt go" type="button" data-ligar-reg="${r.id}">Ligar nesta região</button><button class="bt" type="button" data-edreg="${r.id}">Editar região</button></div>
+  <ul class="lista">${ordem(l).map(itemLista).join('') || '<li><span></span><span class="vazio">Nenhuma empresa com esse filtro.</span></li>'}</ul>`;
+ desenha();
+}
+lado.addEventListener('click', ev => {
+ const li = ev.target.closest('[data-id]'); if (li && li.tagName === 'LI') return abreFicha(+li.dataset.id);
+ const rg = ev.target.closest('[data-reg]'); if (rg) return abreRegiao(+rg.dataset.reg);
+ if (ev.target.closest('[data-voltar]')) { regSel = null; fichaId = null; desenha(); painelLista(filtradas()); return; }
+ const lr = ev.target.closest('[data-ligar-reg]'); if (lr) { regSel = +lr.dataset.ligarReg; return proximo(); }
+ const er = ev.target.closest('[data-edreg]'); if (er) return editarRegiao(+er.dataset.edreg);
+ const v2 = ev.target.closest('[data-v2]'); if (v2) return troca(v2.dataset.v2);
+});
+lado.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.matches('li[tabindex]')) ev.target.click(); });
+
+/* ---------- ficha ---------- */
+const telLink = t => t ? 'tel:+55' + t : '#';
+const telBr = t => !t ? '' : t.length === 11 ? `(${t.slice(0, 2)}) ${t.slice(2, 7)}-${t.slice(7)}` : `(${t.slice(0, 2)}) ${t.slice(2, 6)}-${t.slice(6)}`;
+const anos = d => { if (!d) return ''; const m = (Date.now() - new Date(d + 'T12:00:00')) / (365.25 * 864e5); return m < 1 ? 'menos de 1 ano' : Math.floor(m) + (Math.floor(m) === 1 ? ' ano' : ' anos'); };
+let F = null, modoLigar = false;
+async function abreFicha(id, ligando) {
+ fichaId = id; modoLigar = !!ligando; lado.innerHTML = '<p class="vazio">Abrindo…</p>';
+ const r = await api('empresa', null, '&id=' + id); if (r.erro) return toast(r.erro, true); F = r;
+ const e = r.empresa, nome = e.fantasia || e.razao, p = pos(E([e.id, '', '', '', e.lat !== null ? +e.lat : null, e.lng !== null ? +e.lng : null, e.etapa, 0, 0, e.geo]));
+ if (p) map.setView(p, Math.max(map.getZoom(), 16), { animate:true });
+ const end = [e.logradouro, e.numero].filter(Boolean).join(', ') + (e.complemento ? ' · ' + e.complemento : '');
+ const precisao = { rua:'ponto pela rua', manual:'ponto ajustado à mão', bairro:'ponto aproximado (bairro)', bairro_ok:'ponto aproximado (bairro)', falhou:'endereço não achado' }[e.geo] || 'ainda não mapeado';
+ const prox = e.proximo_em ? new Date(e.proximo_em.replace(' ', 'T')) : null;
+ const a = r.app;
+ lado.innerHTML = `<button class="bt" type="button" data-voltar>← ${regSel ? 'Região' : 'Lista'}</button>
+  <h2 style="margin-top:12px">${h(nome)}</h2>${e.fantasia && e.razao ? `<div class="sub">${h(e.razao)}</div>` : ''}
+  <div style="margin-top:8px"><span class="tag" style="background:${COR[e.etapa]}">${ETN[e.etapa]}${e.motivo ? ' · ' + h(e.motivo) : ''}</span>
+   ${prox ? `<span class="sub"> · próxima ação ${prox.toLocaleDateString('pt-BR')}</span>` : ''}${e.visita_dia ? `<span class="sub"> · visita ${new Date(e.visita_dia + 'T12:00:00').toLocaleDateString('pt-BR')} (${e.visita_turno === 'tarde' ? 'tarde' : 'manhã'})</span>` : ''}</div>
+  <div class="g2" style="margin-top:12px"><a class="bt go big" href="${telLink(e.tel1)}" id="b-lig"${e.tel1 ? '' : ' aria-disabled="true"'}>Ligar</a><button class="bt big" type="button" id="b-msg">Mensagem</button></div>
+  ${e.etapa === 'mapeado' || e.etapa === 'perdido' ? `<div class="box" id="parecer"><b>Parecer da ligação</b><div class="g2" style="margin-top:8px">
+   <button class="bt ok" type="button" data-p="agendou">Agendou</button><button class="bt" type="button" data-p="depois">Interesse, mas não agora</button>
+   <button class="bt am" type="button" data-p="nao_atendeu">Não atendeu</button><button class="bt rd" type="button" data-p="nao_quer">Não quer</button>
+   <button class="bt rd" type="button" data-p="numero_errado">Número errado</button><button class="bt rd" type="button" data-p="fechou">Empresa fechou</button></div><div id="p-extra"></div></div>` : ''}
+  ${e.etapa === 'agendado' ? `<div class="box"><b>Resultado da visita</b><div class="g2" style="margin-top:8px"><button class="bt ok" type="button" data-vis="fechou">Fechou</button><button class="bt" type="button" data-vis="pensar">Vai pensar</button><button class="bt rd" type="button" data-vis="nao_quis">Não quis</button><button class="bt am" type="button" data-vis="nao_estava">Não estava</button></div><p class="sub" style="margin:8px 0 0">Ou reagende: <button class="bt" type="button" data-p="agendou" style="min-height:34px">Mudar dia</button></p><div id="p-extra"></div></div>` : ''}
+  <p class="sec">Quem é</p>
+  ${[['Responsável', e.responsavel], ['Segmento', e.segmento || e.cnae_desc], ['CNPJ', e.cnpj ? e.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5') + (+e.mei ? ' · MEI' : '') : ''], ['Situação', e.situacao], ['Tempo de empresa', anos(e.abertura)]].filter(x => x[1]).map(([k, v]) => `<div class="lin"><span>${k}</span><span>${h(v)}</span></div>`).join('')}
+  <p class="sec">Contato</p>
+  ${[e.tel1 && ['Telefone 1', telBr(e.tel1) + (e.tel_ok === '1' ? ' ✓ atendeu' : '')], e.tel2 && ['Telefone 2', telBr(e.tel2) + (e.tel_ok === '2' ? ' ✓ atendeu' : '')], e.email && ['E-mail', e.email]].filter(Boolean).map(([k, v]) => `<div class="lin"><span>${k}</span><span>${h(v)}</span></div>`).join('') || '<p class="sub">Sem telefone na base.</p>'}
+  <p class="sec">Onde fica</p>
+  <div class="lin"><span>Endereço</span><span>${h(end || '—')}</span></div><div class="lin"><span>Bairro</span><span>${h(e.bairro || '—')}</span></div>
+  <div class="lin"><span>Cobertura</span><span>${r.celula ? `<b style="color:var(--nio)">dentro do cabo Nio</b> · célula ${h(r.celula.nome)}${r.celula.status.startsWith('Semi') ? ' (semibloqueada)' : ''}` : e.lat ? 'fora das células com cabo' : '—'}</span></div>
+  <div class="lin"><span>Mapa</span><span>${precisao} · <button class="bt" type="button" id="b-ponto" style="min-height:30px;padding:2px 8px">Ajustar ponto</button></span></div>
+  ${r.vizinhos.length ? `<div class="lin"><span>Vizinhos afiliados</span><span>${r.vizinhos.map(v => `${h(v.nome)} (${v.m} m)`).join(', ')}</span></div>` : ''}
+  ${a ? `<p class="sec">No app Hunter League</p><div class="lin"><span>Código</span><span>${h(a.codigo || 'sem QR ativado')}</span></div><div class="lin"><span>Cadastro</span><span>${h(a.cadastro)} · ${a.status === 'ativo' ? 'aprovado' : h(a.status)}</span></div>
+   <div class="lin"><span>Leituras do QR</span><span>${a.leituras}${a.ult_leituras.length ? ' · última ' + h(a.ult_leituras[0]) : ''}</span></div>
+   <div class="lin"><span>Indicados</span><span>${a.indicados.length}</span></div>
+   ${a.indicados.length ? `<table class="t"><tr><th>Cliente</th><th>Origem</th><th>Etapa</th></tr>${a.indicados.map(i => `<tr><td>${h(i.nome)}<br><span class="sub">${h(i.tel)} · ${h(i.em)}</span></td><td>${i.origem === 'qr' ? 'QR' : h(i.origem)}</td><td>${h(i.status)}</td></tr>`).join('')}</table>` : ''}` : ''}
+  <p class="sec">Histórico</p>
+  <form id="f-obs" style="display:flex;gap:6px"><input name="texto" placeholder="Anotar uma observação" style="flex:1;padding:10px;border:1px solid var(--edge);background:#070B0D;color:var(--ink);font-size:15px" maxlength="400"><button class="bt" type="submit">Salvar</button></form>
+  <ul class="hist">${r.hist.map(x => `<li>${h(x.texto)}<span>${h(x.em)} · ${h(x.quem)}</span></li>`).join('') || '<li class="sub">Nenhum contato ainda.</li>'}</ul>
+  ${e.extra ? `<details><summary>Dados completos da planilha</summary><table class="t">${Object.entries(e.extra).map(([k, v]) => `<tr><td>${h(k)}</td><td>${h(v)}</td></tr>`).join('')}</table></details>` : ''}`;
+ desenha();
+ $('#b-msg').onclick = () => { const t = (S.msg_wa || '').replace('{nome}', (e.responsavel || '').split(' ')[0] || nome).replace('{eu}', B.nome || '');
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Mensagem copiada. Cole no GoTo, na conversa com ' + telBr(e.tel1) + '.')).catch(() => toast('Não deu para copiar.', true)); };
+ $('#b-ponto').onclick = () => ajustarPonto(e.id);
+ $('#f-obs').onsubmit = async ev => { ev.preventDefault(); const t = ev.target.texto.value.trim(); if (!t) return; const x = await api('obs', { id:e.id, texto:t }); x.erro ? toast(x.erro, true) : abreFicha(e.id, modoLigar); };
+ lado.querySelectorAll('[data-p]').forEach(b => b.onclick = () => parecer(e, b.dataset.p));
+ lado.querySelectorAll('[data-vis]').forEach(b => b.onclick = () => visita(e, b.dataset.vis));
+}
+function telEscolha(e) { return e.tel2 ? `<label class="f">Qual telefone atendeu?<select name="tel"><option value="1">${telBr(e.tel1)}</option><option value="2">${telBr(e.tel2)}</option></select></label>` : '<input type="hidden" name="tel" value="1">'; }
+function parecer(e, p) {
+ const x = $('#p-extra'); const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+ if (p === 'agendou') x.innerHTML = `<form class="box" id="f-p"><div class="g2"><label class="f">Dia<input type="date" name="dia" value="${amanha}" required></label><label class="f">Turno<select name="turno"><option value="manha">Manhã</option><option value="tarde">Tarde</option></select></label></div>
+  <label class="f">Quem vai<select name="quem"><option value="">Dupla de campo</option>${(S.equipe || []).map(n => `<option>${h(n)}</option>`).join('')}</select></label>${telEscolha(e)}<label class="f">Observação<textarea name="obs" maxlength="300"></textarea></label><button class="bt ok" type="submit" style="margin-top:10px;width:100%">Confirmar agendamento</button></form>`;
+ else if (p === 'nao_quer') x.innerHTML = `<form class="box" id="f-p"><div class="chips" id="mot">${['Sem interesse', 'Sem tempo', 'Não confia', 'Já faz parceria parecida', 'Outro'].map(m => `<button type="button" aria-pressed="false">${m}</button>`).join('')}</div><input type="hidden" name="motivo">${telEscolha(e)}<label class="f">Observação<textarea name="obs" maxlength="300"></textarea></label><button class="bt rd" type="submit" style="margin-top:10px;width:100%">Encerrar e ir para o próximo</button></form>`;
+ else return envia(e, p, {});
+ const f = $('#f-p'); const mot = $('#mot');
+ if (mot) mot.onclick = ev => { const b = ev.target.closest('button'); if (!b) return; mot.querySelectorAll('button').forEach(z => z.setAttribute('aria-pressed', z === b)); f.motivo.value = b.textContent; };
+ f.onsubmit = ev => { ev.preventDefault(); envia(e, p, Object.fromEntries(new FormData(f))); };
+ x.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+async function envia(e, p, d) {
+ const r = await api('parecer', Object.assign({ id:e.id, p, regiao:regSel || 0 }, d)); if (r.erro) return toast(r.erro, true);
+ toast(r.msg); if (p === 'nao_atendeu') $('#b-msg').click();
+ await carrega(); if (r.proximo) abreFicha(r.proximo, true); else { fichaId = null; toast('Fila zerada nesta região. 🎯'); regSel ? abreRegiao(regSel) : desenha(); }
+}
+async function visita(e, r) {
+ let motivo = ''; if (r === 'nao_quis') motivo = 'Não quis na visita';
+ const x = await api('visita', { id:e.id, r, motivo }); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); abreFicha(e.id);
+}
+async function proximo() {
+ const r = await api('proximo', null, '&regiao=' + (regSel || 0) + '&exceto=' + (fichaId || 0));
+ if (!r.proximo) { toast('Ninguém para ligar agora' + (regSel ? ' nesta região.' : '.')); return; } abreFicha(r.proximo, true);
+}
+/* ajustar o ponto: clica no mapa */
+let pegaPonto = null;
+function ajustarPonto(id) { pegaPonto = id; toast('Clique no mapa onde fica a empresa.'); map.getContainer().style.cursor = 'crosshair'; }
+
+/* ---------- desenhar região ---------- */
+let pts = [], linha = null;
+$('#b-des').addEventListener('click', () => { const on = $('#b-des').getAttribute('aria-pressed') !== 'true'; $('#b-des').setAttribute('aria-pressed', on); pts = []; G.des.clearLayers();
+ if (on) { map.getContainer().style.cursor = 'crosshair'; lado.innerHTML = `<h2>Nova região</h2><p class="sub">Clique no mapa em volta da área, ponto a ponto. Depois dê o nome e salve.</p><form id="f-reg"><label class="f">Nome<input name="nome" placeholder="Região do Aeroporto" required maxlength="60"></label><label class="f">Cor<input name="cor" type="color" value="#19F7FF"></label><div class="g2" style="margin-top:10px"><button class="bt" type="button" id="r-desf">Desfazer ponto</button><button class="bt go" type="submit">Salvar região</button></div><p class="sub" id="r-n">0 pontos</p></form>`;
+  $('#r-desf').onclick = () => { pts.pop(); redes(); }; $('#f-reg').onsubmit = salvaRegiao(null); }
+ else { map.getContainer().style.cursor = ''; desenha(); } });
+function redes() { G.des.clearLayers(); if (pts.length) L.polygon(pts, { color:'#FFB547', weight:2, dashArray:'5 5', fillOpacity:.08 }).addTo(G.des); pts.forEach(p => L.circleMarker(p, { radius:4, color:'#FFB547' }).addTo(G.des)); const n = $('#r-n'); if (n) n.textContent = pts.length + ' pontos'; }
+const salvaRegiao = id => async ev => { ev.preventDefault(); const f = ev.target; const poly = id && !pts.length ? S.regioes.find(r => r.id === id).poly : pts;
+ const r = await api('regiao', { id:id || 0, nome:f.nome.value, cor:f.cor.value, poly }); if (r.erro) return toast(r.erro, true);
+ toast('Região salva.'); pts = []; G.des.clearLayers(); $('#b-des').setAttribute('aria-pressed', 'false'); map.getContainer().style.cursor = ''; await carrega(); desenha(); };
+function editarRegiao(id) { const r = S.regioes.find(x => x.id === id); pts = [];
+ lado.innerHTML = `<button class="bt" type="button" data-voltar>← Voltar</button><h2 style="margin-top:12px">Editar região</h2><form id="f-reg"><label class="f">Nome<input name="nome" value="${h(r.nome)}" required maxlength="60"></label><label class="f">Cor<input name="cor" type="color" value="${h(r.cor)}"></label>
+  <p class="sub">Para redesenhar o contorno, clique no mapa os pontos novos. Sem pontos novos, mantém o contorno atual.</p><p class="sub" id="r-n">0 pontos</p><div class="g2"><button class="bt rd" type="button" id="r-exc">Excluir região</button><button class="bt go" type="submit">Salvar</button></div></form>`;
+ map.getContainer().style.cursor = 'crosshair'; $('#b-des').setAttribute('aria-pressed', 'true'); $('#f-reg').onsubmit = salvaRegiao(id);
+ $('#r-exc').onclick = async () => { if ($('#r-exc').dataset.c !== '1') { $('#r-exc').dataset.c = '1'; $('#r-exc').textContent = 'Clique de novo para excluir'; return; } await api('regiao', { o:'excluir', id }); regSel = null; $('#b-des').setAttribute('aria-pressed', 'false'); map.getContainer().style.cursor = ''; await carrega(); desenha(); toast('Região excluída.'); };
+}
+map.on('click', async ev => {
+ const ll = [+ev.latlng.lat.toFixed(6), +ev.latlng.lng.toFixed(6)];
+ if (pegaPonto) { const id = pegaPonto; pegaPonto = null; map.getContainer().style.cursor = ''; const r = await api('salvar', { id, lat:ll[0], lng:ll[1] }); if (r.erro) return toast(r.erro, true); toast('Ponto ajustado.'); await carrega(); abreFicha(id); return; }
+ if (novaMarcando && vis === 'base') { novaPonto = ll; G.des.clearLayers(); L.circleMarker(ll, { radius:7, color:'#fff', fillColor:'#19F7FF', fillOpacity:1 }).addTo(G.des); const n = $('#n-pt'); if (n) n.textContent = 'Ponto marcado no mapa ✓'; return; }
+ if ($('#b-des').getAttribute('aria-pressed') === 'true') { pts.push(ll); redes(); }
+});
+
+/* ---------- abas ---------- */
+function troca(v) {
+ vis = v; novaMarcando = false; G.des.clearLayers(); document.querySelectorAll('.abas button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
+ fichaId = null;
+ if (v === 'mapa') { desenha(); regSel ? abreRegiao(regSel) : painelLista(filtradas()); }
+ if (v === 'ligar') { proximo(); }
+ if (v === 'agenda') agenda();
+ if (v === 'base') base();
+}
+document.querySelector('.abas').addEventListener('click', ev => { const b = ev.target.closest('[data-v]'); if (b) troca(b.dataset.v); });
+
+async function agenda(dia) {
+ const r = await api('agenda', null, dia ? '&dia=' + dia : ''); if (r.erro) return toast(r.erro, true);
+ const turno = t => r.itens.filter(i => (i.turno || 'manha') === t);
+ const bloco = (t, nome) => `<p class="sec">${nome} · ${turno(t).length}</p><ul class="lista">${turno(t).map(i => `<li data-id="${i.id}" tabindex="0"><i style="background:${COR[i.etapa]}"></i><span>${h(i.nome)}<small>${h(i.end)}${i.resp ? ' · ' + h(i.resp) : ''}${i.quem ? ' · vai: ' + h(i.quem) : ''}</small></span><a class="bt" href="tel:+55${h(i.tel || '')}" style="min-height:34px" onclick="event.stopPropagation()">Ligar</a></li>`).join('') || '<li><span></span><span class="sub">Nenhuma visita.</span></li>'}</ul>`;
+ lado.innerHTML = `<h2>Agenda de visitas</h2><label class="f">Dia<input type="date" id="ag-dia" value="${r.dia}"></label>
+  <p class="sub" style="margin-top:8px">${r.itens.length} visitas. Clique numa visita para abrir a ficha e marcar o resultado. Na véspera, ligue ou mande mensagem para confirmar.</p>
+  ${bloco('manha', 'Manhã')}${bloco('tarde', 'Tarde')}`;
+ $('#ag-dia').onchange = ev => agenda(ev.target.value);
+ G.des.clearLayers(); r.itens.forEach((i, k) => { if (i.lat) L.marker([+i.lat, +i.lng], { icon:L.divIcon({ className:'', iconSize:[26, 26], html:`<div style="display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#FFB547;color:#050607;font-weight:900;border:2px solid #050607">${k + 1}</div>` }) }).addTo(G.des); });
+}
+
+let novaPonto = null, novaMarcando = false, geoRodando = false;
+async function base() {
+ const g = S.geo || {}, t = g.t || 0, feito = (g.bairro || 0) + (g.rua || 0) + (g.so_bairro || 0) + (g.falhou || 0);
+ const pr = t ? Math.round(((g.rua || 0) + (g.so_bairro || 0) + (g.falhou || 0)) / t * 100) : 0;
+ lado.innerHTML = `<h2>Base de empresas</h2><p class="sub">${t} empresas na base.</p>
+  <p class="sec">1 · Subir a planilha da Casa dos Dados</p>
+  <form id="f-imp" class="box"><input type="file" name="arq" accept=".xlsx,.csv,.txt" required style="width:100%">
+   <label class="f" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" name="so_cidade" value="1" checked style="width:auto;margin:0"> Só empresas de Araguari</label>
+   <label class="f" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" name="so_ativa" value="1" checked style="width:auto;margin:0"> Só situação ativa</label>
+   <button class="bt go" type="submit" style="margin-top:10px;width:100%">Ver prévia</button></form><div id="imp-r"></div>
+  <p class="sec">2 · Mapear endereços</p>
+  <div class="box"><p class="sub" style="margin:0">Primeiro pelo bairro (rápido, já dá a contagem por região). Depois pela rua, aos poucos (1 endereço por segundo). Pode deixar rodando com esta aba aberta.</p>
+   <div class="barra"><i style="width:${pr}%"></i></div>
+   <p class="sub">${g.rua || 0} pela rua · ${(g.bairro || 0) + (g.so_bairro || 0)} pelo bairro · ${g.sem || 0} sem mapear · ${g.falhou || 0} não achados</p>
+   <button class="bt ${geoRodando ? 'am' : 'go'}" type="button" id="b-geo" style="width:100%">${geoRodando ? 'Pausar mapeamento' : 'Mapear endereços'}</button></div>
+  ${g.falhou ? `<p class="sec">Não achados (${g.falhou})</p><p class="sub">Abra a empresa e clique em "Ajustar ponto" para marcar no mapa.</p><ul class="lista">${S.empresas.filter(e => e.geo === 'falhou').slice(0, 60).map(itemLista).join('')}</ul>` : ''}
+  <p class="sec">3 · Cadastrar empresa achada na rua</p>
+  <form id="f-nova" class="box"><label class="f">Nome<input name="fantasia" required maxlength="160"></label><div class="g2"><label class="f">Segmento<input name="segmento" maxlength="60" list="segs"></label><label class="f">Telefone<input name="tel1" inputmode="tel" maxlength="20"></label></div>
+   <label class="f">Responsável<input name="responsavel" maxlength="120"></label><div class="g2"><label class="f">Rua<input name="logradouro" maxlength="160"></label><label class="f">Número<input name="numero" maxlength="20"></label></div><label class="f">Bairro<input name="bairro" maxlength="100"></label>
+   <p class="sub" id="n-pt">Clique no mapa para marcar o ponto (opcional).</p><button class="bt go" type="submit" style="width:100%">Cadastrar</button></form>
+  <datalist id="segs">${[...new Set(S.empresas.map(e => e.seg).filter(Boolean))].map(s => `<option value="${h(s)}">`).join('')}</datalist>`;
+ novaPonto = null; novaMarcando = true;
+ $('#f-nova').onsubmit = async ev => { ev.preventDefault(); const d = Object.fromEntries(new FormData(ev.target)); if (novaPonto) { d.lat = novaPonto[0]; d.lng = novaPonto[1]; }
+  const r = await api('salvar', d); if (r.erro) return toast(r.erro, true); toast('Empresa cadastrada.'); novaPonto = null; novaMarcando = false; G.des.clearLayers(); await carrega(); abreFicha(r.id); };
+ $('#f-imp').onsubmit = async ev => { ev.preventDefault(); const fd = new FormData(ev.target); fd.set('so_cidade', ev.target.so_cidade.checked ? '1' : '0'); fd.set('so_ativa', ev.target.so_ativa.checked ? '1' : '0');
+  $('#imp-r').innerHTML = '<p class="vazio">Lendo a planilha…</p>'; const r = await api('importar', fd); mostraPrevia(r, fd); };
+ $('#b-geo').onclick = () => { geoRodando = !geoRodando; base(); if (geoRodando) rodaGeo(); };
+}
+function mostraPrevia(r, fd) {
+ if (r.erro) { $('#imp-r').innerHTML = `<p class="ajuda">${h(r.erro)}${r.cabecalho ? '<br>Colunas: ' + h(r.cabecalho.join(' | ')) : ''}</p>`; return; }
+ $('#imp-r').innerHTML = `<div class="box"><b>${r.total} empresas para entrar</b><p class="sub">${r.ja} já estão na base (serão atualizadas, sem perder o histórico) · ${r.sem_tel} sem telefone · ${r.fora_cidade} de outras cidades e ${r.inativas} inativas ficaram de fora.</p>
+  ${r.nao_achou.length ? `<p class="ajuda">Não achei estas colunas: ${h(r.nao_achou.join(', '))}. Se existirem com outro nome, me avise.</p>` : ''}
+  <p class="sec">Segmentos</p>${Object.entries(r.segmentos).map(([k, v]) => `<div class="lin"><span>${h(k)}</span><span>${v}</span></div>`).join('')}
+  <p class="sec">Amostra</p><table class="t">${r.amostra.map(a => `<tr><td>${h(a[0])}<br><span class="sub">${h(a[1])}</span></td><td>${h(a[2])}<br><span class="sub">${h(a[3])}</span></td></tr>`).join('')}</table>
+  <button class="bt ok" type="button" id="b-grav" style="margin-top:10px;width:100%">Gravar ${r.total} empresas</button></div>`;
+ $('#b-grav').onclick = async () => { $('#b-grav').disabled = true; $('#b-grav').textContent = 'Gravando…'; const g = new FormData(); g.set('gravar', '1'); g.set('so_cidade', fd.get('so_cidade')); g.set('so_ativa', fd.get('so_ativa'));
+  const x = await api('importar', g); if (x.erro) { $('#b-grav').disabled = false; $('#b-grav').textContent = 'Tentar de novo'; return toast(x.erro, true); } toast(x.msg); await carrega(); base(); };
+}
+async function rodaGeo() {
+ while (geoRodando) { const r = await api('geo', {}); if (r.erro) { toast(r.erro, true); geoRodando = false; break; } S.geo = r.geo;
+  if (vis === 'base') base(); const g = r.geo; if (!g.sem && !g.bairro) { geoRodando = false; toast('Mapeamento concluído.'); await carrega(); if (vis === 'base') base(); break; }
+  if (Math.random() < .3) { await carrega(); } }
+}
+
+/* ---------- carga ---------- */
+async function carrega() {
+ const r = await api('estado'); if (r.erro) { toast(r.erro, true); return; }
+ S = Object.assign(r, { empresas:r.empresas.map(E) });
+ const segs = [...new Set(S.empresas.map(e => e.seg).filter(Boolean))].sort(); const cur = $('#f-seg').value;
+ $('#f-seg').innerHTML = '<option value="">Todos os segmentos</option>' + segs.map(s => `<option${s === cur ? ' selected' : ''}>${h(s)}</option>`).join('');
+ if (!HEX) { montaHex(); desenhaCabo(); }
+ desenha();
+}
+legenda();
+carrega().then(() => painelLista(filtradas()));
+}
+</script>
+</body>
+</html>

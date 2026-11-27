@@ -330,11 +330,12 @@ const I = {
  gift: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 11h16v10H4zM3 7h18v4H3zM12 7v14M12 7c-1.5-3.5-6-3.5-5.5-.8C7 8 12 7 12 7Zm0 0c1.5-3.5 6-3.5 5.5-.8C17 8 12 7 12 7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
  baixar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  clipe: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 11.5 12.3 19.2a5 5 0 0 1-7.1-7.1l8-8a3.4 3.4 0 0 1 4.8 4.8l-8 8a1.7 1.7 0 0 1-2.4-2.4l7.3-7.3" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ mapa: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5V4l-6 2.5L9 4Zm0 0v13m6-10.5v13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
  ok: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
 const MASTER = BOOT.papel === 'master';
-const MENU = MASTER ? [['hoje', 'Hoje', I.hoje], ['indicacoes', 'Indicações', I.ind], ['parceiros', 'Parceiros', I.par], ['pagar', 'Bônus e prêmios', I.pag], ['mais', 'Mais', I.mais]]
- : [['hoje', 'Hoje', I.hoje], ['indicacoes', 'Indicações', I.ind], ['mais', 'Mais', I.mais]];
+const MENU = MASTER ? [['hoje', 'Hoje', I.hoje], ['mapa', 'Mapa e CRM', I.mapa], ['indicacoes', 'Indicações', I.ind], ['parceiros', 'Parceiros', I.par], ['pagar', 'Bônus e prêmios', I.pag], ['mais', 'Mais', I.mais]]
+ : [['hoje', 'Hoje', I.hoje], ['mapa', 'Mapa e CRM', I.mapa], ['indicacoes', 'Indicações', I.ind], ['mais', 'Mais', I.mais]];
 
 /* ---------- dados: servidor de verdade ou demonstração ---------- */
 const api = async (acao, dados, q = '') => {
@@ -375,11 +376,12 @@ const navDraw = () => {
  const t = cache.resumo ? cache.resumo.tarefas : {};
  const ct = { indicacoes: t.novas || 0, parceiros: t.pendentes || 0, pagar: (t.saques ? t.saques.n : 0) + (t.faturas || 0) + (t.premios || 0) };
  $('#nav-side').innerHTML = MENU.map(([k, t, ic]) => `<button class="nv${pagina === k ? ' on' : ''}" type="button" data-ir="${k}">${ic}<span>${t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
- const bot = MASTER ? [MENU[0], MENU[1], ['novo', 'Indicação', I.mais2], MENU[2], MENU[3]] : [MENU[0], MENU[1], ['novo', 'Indicação', I.mais2], MENU[2]];
+ const bot = [MENU[0], MENU[1], ['novo', 'Indicação', I.mais2], MENU[2], MENU[3]];
  $('#nav-bot').innerHTML = bot.map(([k, t, ic]) => k === 'novo' ? `<button class="mais" type="button" data-novo aria-label="Nova indicação">${ic}<span>${t}</span></button>` : `<button type="button" data-ir="${k}" class="${pagina === k ? 'on' : ''}">${ic}<span>${k === 'pagar' ? 'Bônus' : t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
  $('#top-t').textContent = (MENU.find(m => m[0] === pagina) || ['', 'Central'])[1];
 };
 const ir = async (k, extra) => {
+ if (k === 'mapa') { if (BOOT.modo === 'real') location.href = 'crm.php'; else toast('O mapa e CRM funciona só na Central de verdade.'); return; }
  pagina = k; navDraw(); scrollTo(0, 0); $('#main').classList.remove('largo');
  if (location.hash !== '#' + k) history.replaceState(null, '', '#' + k);
  await TELAS[k](extra);
@@ -740,7 +742,7 @@ document.addEventListener('click', async e => {
 let maisAba = 'config';
 TELAS.mais = async () => {
  const r = cache.cfg = await api('config'); const c = r.config;
- const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['integra', 'Integrações'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
+ const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
  if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
  $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
   <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
