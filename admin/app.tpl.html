@@ -471,7 +471,7 @@ const cardInd = i => {
  return `<article class="ci ch" id="ind-${i.id}">
   <div class="l1"><span class="nm">${h(i.nome)}</span>${aberta ? `<span class="idade${velha ? ' velha' : ''}">${idade}</span>` : `<span class="pill ${pclass(i.status)}">${h(i.status)}</span>`}</div>
   ${i.tel || i.cpf ? `<div class="meta">${i.tel ? `<a class="tel" href="https://wa.me/55${h(i.tel_d)}" target="_blank" rel="noopener">${I.wa}${h(i.tel)}</a>` : ''}${i.cpf ? `${i.tel ? ' · ' : ''}CPF ${h(i.cpf)}` : ''}</div>` : ''}
-  <div class="meta"><span class="chip"><span class="cod">${h(i.parceiro.codigo)}</span>${h(i.parceiro.nome)}</span>${i.origem === 'app' ? '<span class="chip app">pelo app</span>' : ''}${i.plano ? `<span class="chip pl">${h(i.plano)}</span>` : ''}</div>
+  <div class="meta"><span class="chip"><span class="cod">${h(i.parceiro.codigo)}</span>${h(i.parceiro.nome)}</span>${i.origem === 'app' ? '<span class="chip app">pelo app</span>' : i.origem === 'lista' ? '<span class="chip app">lista do parceiro</span>' : ''}${i.plano ? `<span class="chip pl">${h(i.plano)}</span>` : ''}</div>
   ${i.email || i.cep ? `<div class="meta">${i.email ? h(i.email) : ''}${i.cep ? ` · CEP ${h(i.cep)}, nº ${h(i.num)}` : ''}</div>` : ''}
   ${i.status === 'Instalado' ? `<div class="meta" style="color:var(--ok)">Instalado em ${h(i.inst)}${i.bonus != null ? ` · bônus ${reais(i.bonus)}` : ''} · ${i.saque === 'pago' ? 'bônus pago' : i.saque === 'pedido' ? 'saque pedido' : i.fatura ? `liberado em ${h(i.fatura)}` : 'aguardando 1ª fatura'}</div>` : i.motivo ? `<div class="meta" style="color:var(--bad)">${h(i.motivo)}</div>` : ''}
   <div class="acoes">${acoes}<button class="ico" type="button" data-ed="${i.id}" aria-label="Editar" title="Editar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg></button></div></article>`;
@@ -604,6 +604,23 @@ const acaoParceiro = async (id, o, extra) => {
  cache.pars = (await api('parceiros')).itens; if (pagina === 'parceiros') parDraw(); atualizaResumo();
  return r;
 };
+/* lista dos 20 contatos que o parceiro passou: colar, conferir e gravar */
+function listaJan(pid, nome) {
+ const j = jan(`<h2 class="bs">Lista de contatos</h2><p class="sub">${h(nome)} · cole os contatos que o parceiro mandou: cartões de contato do WhatsApp ou um por linha, como "Maria Souza – (34) 99999-9999".</p>
+  <label class="f"><textarea id="l-txt" rows="9" style="min-height:180px" placeholder="Maria Souza – (34) 99999-9999&#10;João Lima 34 98888-7777"></textarea></label>
+  <div id="l-prev"></div><div class="rod"><button class="btn g" type="button" data-fecha>Cancelar</button><button class="btn" type="button" id="l-ver">Conferir</button></div>`);
+ const ver = async gravar => {
+  const r = await api('lancar_lista', { parceiro_id:pid, texto:j.querySelector('#l-txt').value, gravar:gravar ? '1' : '' });
+  if (r.erro) return toast(r.erro, true);
+  if (gravar) { fechaJan(); toast(r.msg); if (typeof atualizaResumo === 'function') atualizaResumo(); return; }
+  const cor = { ok:'#32E000', duplicado:'#FFB547', repetido:'#8A959C', invalido:'#FF5C7A' };
+  j.querySelector('#l-prev').innerHTML = `<p class="sub" style="margin-top:10px"><b>${r.ok} de ${r.total}</b> entram como indicações. Os outros ficam de fora.</p>
+   <div style="max-height:240px;overflow:auto;margin-top:6px">${r.itens.map(i => `<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid #1E2A30;font-size:14px"><span>${h(i.nome)}<br><small style="color:#8A959C">${h(i.tel_br || i.tel)}</small></span><small style="color:${cor[i.st]};text-align:right">${i.st === 'ok' ? 'entra' : h(i.obs)}</small></div>`).join('')}</div>`;
+  const b = j.querySelector('#l-ver'); b.textContent = `Lançar ${r.ok} contatos`; b.className = 'btn ok'; b.onclick = () => ver(true); b.disabled = !r.ok;
+ };
+ j.querySelector('#l-ver').onclick = () => ver(false);
+ j.querySelector('#l-txt').addEventListener('input', () => { const b = j.querySelector('#l-ver'); b.textContent = 'Conferir'; b.className = 'btn'; b.disabled = false; b.onclick = () => ver(false); });
+}
 document.addEventListener('click', async e => {
  const g = k => { const b = e.target.closest(`[data-${k}]`); return b ? +b.dataset[k] : null; };
  let id;
@@ -618,6 +635,7 @@ document.addEventListener('click', async e => {
    <dt>Chave PIX</dt><dd>${h(p.pix)} <button class="btn sm g" type="button" data-cp="${h(p.pix)}" style="height:28px;margin-left:6px">Copiar</button></dd>${p.link ? `<dt>Link do QR</dt><dd>${h(p.link)}</dd>` : ''}<dt>Nível</dt><dd>${h(p.nivel)}</dd><dt>Números</dt><dd>${p.leit} leituras · ${p.ind} indicações · ${p.inst} instalações</dd><dt>Cadastro</dt><dd>${h(p.desde)} · termo ${h(p.termo)}</dd>${p.obs ? `<dt>Observações</dt><dd>${h(p.obs)}</dd>` : ''}</dl>
    <div class="rod" style="justify-content:flex-start">
     ${st === 'pendente' || st === 'recusado' ? `<button class="btn ok" type="button" data-o="aprovar">✓ Aprovar</button>` : ''}
+    ${(st === 'ativo' || st === 'pendente') && !DEMO ? `<button class="btn" type="button" data-o="lista">Lançar lista dos 20</button>` : ''}
     ${st === 'ativo' ? `<button class="btn g" type="button" data-o="senha">Senha nova</button><button class="btn g" type="button" data-o="editar">Editar WhatsApp/PIX</button>${p.codigo && !DEMO ? `<a class="btn g" href="qr.php?id=${p.id}" target="_blank">Baixar QR</a>` : ''}<button class="btn bad" type="button" data-o="bloquear">Bloquear</button><button class="btn bad" type="button" data-o="desfiliar">Desfiliar</button>` : ''}
     ${st === 'bloqueado' || st === 'desfiliado' ? `<button class="btn" type="button" data-o="reativar">Reativar</button>` : ''}
    </div>`);
@@ -625,6 +643,7 @@ document.addEventListener('click', async e => {
    const c = ev.target.closest('[data-cp]'); if (c) return copiar(c.dataset.cp, 'Chave PIX copiada');
    const b = ev.target.closest('[data-o]'); if (!b) return;
    const o = b.dataset.o;
+   if (o === 'lista') return listaJan(p.id, p.loja || p.nome);
    if (o === 'editar') {
     const jj = jan(`<h2 class="bs">Editar</h2><p class="sub">${h(p.loja || p.nome)}</p><label class="f">WhatsApp<input id="e-wa" value="${h(p.wa)}"></label><label class="f" style="margin-top:12px">Chave PIX<input id="e-pix" value="${h(p.pix)}"></label><label class="f" style="margin-top:12px">Observações internas<textarea id="e-obs">${h(p.obs)}</textarea></label><div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="e-ok">Salvar</button></div>`);
     jj.querySelector('#e-ok').addEventListener('click', () => acaoParceiro(p.id, 'editar', { wa:jj.querySelector('#e-wa').value, pix:jj.querySelector('#e-pix').value, obs:jj.querySelector('#e-obs').value }));

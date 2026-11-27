@@ -16,7 +16,7 @@ $master = $a['papel'] === 'master';
 hl_migrar_etapas();
 $ABERTAS = ETAPAS_ABERTAS;
 /* Perfis: master faz tudo. Atendimento só mexe em indicações (registra, muda etapa, edita dados básicos). */
-const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'etapa', 'config', 'minha_senha', 'sair'];
+const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'lancar_lista', 'etapa', 'config', 'minha_senha', 'sair'];
 if (!$master && !in_array($acao, ACOES_ATENDIMENTO, true)) json_out(['erro' => 'Seu acesso é de atendimento: só indicações. Peça ao master.'], 403);
 
 switch ($acao) {
@@ -138,6 +138,18 @@ case 'indicar': {
     [$p['id'], $nome, $cpf ?: null, $tel, $plano, 'Nova', 'qr', agora(), $a['usuario'], agora()]);
   auditar($quem, 'registrou indicação', $codigo, primeiro_nome($nome));
   json_out(['ok' => true, 'msg' => "Indicação registrada para {$codigo} (" . ($p['loja'] ?: $p['nome']) . ').']);
+}
+
+case 'lancar_lista': {
+  /* a lista dos 20 contatos que o parceiro passou: prévia e depois gravação (origem "lista") */
+  $p = one('SELECT * FROM parceiros WHERE id = ?', [(int)($e['parceiro_id'] ?? 0)]);
+  if (!$p || !in_array($p['status'], ['ativo', 'pendente'], true)) json_out(['erro' => 'Parceiro não encontrado ou desativado.'], 404);
+  $txt = (string)($e['texto'] ?? ''); if (trim($txt) === '') json_out(['erro' => 'Cole a lista de contatos.'], 422);
+  if (mb_strlen($txt) > 60000) json_out(['erro' => 'Lista grande demais. Mande em partes.'], 422);
+  $r = lancar_lista($p, $txt, ($e['gravar'] ?? '') === '1', $a['usuario']);
+  if (!$r['total']) json_out(['erro' => 'Não achei nenhum telefone na lista. Cole no formato "Nome – (34) 99999-9999", um por linha, ou os cartões de contato.'], 422);
+  if (($e['gravar'] ?? '') === '1') $r['msg'] = $r['ok'] . ' contatos lançados para ' . ($p['loja'] ?: $p['nome']) . '.';
+  json_out($r);
 }
 
 case 'etapa': {

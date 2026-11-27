@@ -102,6 +102,51 @@ table.t td,table.t th{border-top:1px solid var(--edge);padding:5px 4px;text-alig
 .tour-c p{margin:0;color:#C9D1D6}
 .tour-c .pts{display:flex;gap:6px;margin-top:14px}.tour-c .pts i{flex:1;height:5px;background:#1E2A30}.tour-c .pts i.on{background:var(--cyan)}
 .tour-c .pular{margin-top:10px;border:0;background:none;color:var(--mute);font-weight:700;cursor:pointer;padding:6px 0}
+.busca{position:relative}
+.sug{position:absolute;left:0;top:calc(100% + 4px);z-index:600;width:min(320px,80vw);margin:0;padding:4px 0;list-style:none;background:#0B1013;border:1px solid var(--cyan);box-shadow:0 12px 30px rgba(0,0,0,.6)}
+.sug li{padding:10px 12px;cursor:pointer;font-size:14px}.sug li small{display:block;color:var(--mute);font-size:12px}.sug li:hover,.sug li[aria-selected=true]{background:#0F1A1E}
+.fx{display:contents}.so-cel{display:none}
+.b-leg{position:absolute;z-index:510;left:10px;bottom:22px;min-height:36px;padding:6px 12px;border:1px solid var(--edge);background:rgba(11,16,19,.92);color:var(--ink);font-weight:800;font-size:13px;cursor:pointer;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+.b-leg[aria-expanded=true]{bottom:auto;top:auto}
+.leg{bottom:64px!important}
+.alca{display:none}
+.leg[hidden],.segp[hidden],.sug[hidden],.fx[hidden]{display:none!important}
+.placar small{white-space:nowrap}
+.sk{display:block;height:14px;margin:10px 0;background:linear-gradient(90deg,#121A1E 25%,#1B272C 50%,#121A1E 75%);background-size:200% 100%;animation:sk 1.2s infinite linear}
+.sk.t{height:28px;width:70%}.sk.b{height:52px}.sk.s{width:45%}
+@keyframes sk{to{background-position:-200% 0}}
+.vazio2{padding:22px 6px;text-align:center;color:var(--mute)}.vazio2 b{display:block;color:var(--ink);font:900 22px "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase;margin-bottom:4px}
+.pulso{width:70px;height:70px;border-radius:50%;border:3px solid #32E000;animation:puls 1.4s ease-out 4;pointer-events:none}
+@keyframes puls{from{transform:scale(.2);opacity:1}to{transform:scale(1.4);opacity:0}}
+.med{display:inline-block;margin-left:6px;padding:1px 7px;font-size:11px;font-weight:900;color:#050607;border-radius:9px}
+.med.m1{background:#D9925B}.med.m2{background:#C8D3DA}.med.m3{background:#FFD84D}
+.bolha .pct{display:block;font-size:10px;font-weight:900;color:var(--c)}
+.toast .acao{margin-left:14px;padding:6px 12px;border:1px solid var(--cyan);background:var(--cyan);color:#050607;font-weight:900;cursor:pointer}
+.rota{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--edge)}
+.rota .n{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--amb);color:#050607;font-weight:900}
+.rota .acs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.rota .acs .bt{min-height:38px;padding:6px 10px;font-size:13px}
+@media(max-width:900px){
+ body{overflow:hidden}
+ .top{padding:8px 10px;gap:6px 10px}
+ .top h1{font-size:21px}.top a.vol{font-size:13px}
+ .abas{order:3;width:100%;margin:0;overflow-x:auto}.abas button{flex:1;min-height:40px;padding:6px 8px}
+ .placar{order:4;width:100%;margin:0;flex-wrap:nowrap;overflow-x:auto;gap:4px}.placar div{min-width:0;flex:none;padding:3px 13px 5px}.placar b{font-size:17px}.placar small{font-size:10.5px}
+ #b-tour{position:absolute;right:10px;top:8px}
+ .wrap{display:block;height:calc(100dvh - var(--topo,150px))}
+ #map{height:100%}
+ .lado{position:fixed;left:0;right:0;bottom:0;z-index:900;height:var(--fh,46dvh);max-height:calc(100dvh - var(--topo,150px));border:0;border-top:2px solid var(--cyan);border-radius:16px 16px 0 0;padding:0 14px calc(18px + env(safe-area-inset-bottom));transition:height .25s ease;box-shadow:0 -14px 30px rgba(0,0,0,.55)}
+ .lado.f0{--fh:84px}.lado.f1{--fh:46dvh}.lado.f2{--fh:calc(100dvh - var(--topo,150px))}
+ .lado.arrasta{transition:none}
+ .alca{display:block;position:sticky;top:0;z-index:2;width:100%;height:30px;margin:0 0 4px;border:0;background:var(--panel);cursor:grab;touch-action:none}
+ .alca i{display:block;width:48px;height:5px;margin:0 auto;border-radius:3px;background:#3A4A52}
+ .so-cel{display:inline-flex}
+ .fx{display:none}.fx.on{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+ .ferr{max-width:calc(100% - 64px)}.ferr input{width:150px}
+ .b-leg{bottom:calc(var(--fh,46dvh) + 10px)}
+ .leg{bottom:calc(var(--fh,46dvh) + 54px)!important}
+ .bt{min-height:46px}
+ .g2 .bt.big{min-height:54px}
+}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;max-width:min(92vw,520px);padding:12px 18px;background:#0E2A2E;border:1px solid var(--cyan);font-weight:700;display:none}
 .toast.on{display:block}.toast.err{background:#2A0E15;border-color:var(--red)}
 details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px}
@@ -130,16 +175,20 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
 <div class="wrap">
  <div id="map" aria-label="Mapa de Araguari">
   <div class="ferr">
-   <input id="busca" type="search" placeholder="Buscar empresa, bairro…" aria-label="Buscar">
-   <button type="button" id="b-seg" aria-expanded="false">Segmentos</button>
-      <button type="button" id="f-ligar" aria-pressed="false">A agendar</button>
-   <button type="button" class="des" id="b-des" aria-pressed="false">Desenhar região</button>
-   <button type="button" id="b-auto">Regiões automáticas</button>
+   <div class="busca"><input id="busca" type="search" placeholder="Buscar empresa, bairro…" aria-label="Buscar" autocomplete="off"><ul class="sug" id="sug" role="listbox" hidden></ul></div>
+   <button type="button" id="b-filtros" class="so-cel" aria-expanded="false">Filtros</button>
+   <div class="fx" id="fx">
+    <button type="button" id="b-seg" aria-expanded="false">Segmentos</button>
+    <button type="button" id="f-ligar" aria-pressed="false">A agendar</button>
+    <button type="button" class="des" id="b-des" aria-pressed="false">Desenhar região</button>
+    <button type="button" id="b-auto">Regiões automáticas</button>
+   </div>
   </div>
   <div class="segp" id="segp" hidden></div>
-  <div class="leg" id="leg"></div>
+  <button type="button" class="b-leg" id="b-leg" aria-expanded="false">Legenda e camadas</button>
+  <div class="leg" id="leg" hidden></div>
  </div>
- <aside class="lado" id="lado" aria-live="polite"></aside>
+ <aside class="lado f1" id="lado"><button type="button" class="alca" id="alca" aria-label="Aumentar ou diminuir o painel"><i></i></button><div id="lado-c" aria-live="polite"></div></aside>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <div class="tour" id="tour" hidden><div class="tour-luz" id="tour-luz"></div><div class="tour-c" id="tour-c" role="dialog" aria-labelledby="tour-t"></div></div>
@@ -148,7 +197,10 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
 {
 const B = window.CRM || {}; const $ = s => document.querySelector(s);
 const h = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
-const toast = (t, err) => { const x = $('#toast'); x.textContent = t; x.className = 'toast on' + (err ? ' err' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => x.className = 'toast', 3800); };
+const toast = (t, err, acao) => { const x = $('#toast'); x.textContent = t; x.className = 'toast on' + (err ? ' err' : '');
+ if (acao) { const b = document.createElement('button'); b.type = 'button'; b.className = 'acao'; b.textContent = acao[0]; b.onclick = () => { x.className = 'toast'; acao[1](); }; x.appendChild(b); }
+ clearTimeout(toast.t); toast.t = setTimeout(() => x.className = 'toast', acao ? 5500 : 3800); };
+const SK = (n = 5) => '<span class="sk t"></span><span class="sk s"></span>' + '<span class="sk b"></span>'.repeat(2) + '<span class="sk"></span>'.repeat(n);
 const api = async (a, dados, q = '') => {
  const op = dados instanceof FormData ? { method:'POST', headers:{ 'X-CSRF':B.token }, body:dados }
   : dados ? { method:'POST', headers:{ 'Content-Type':'application/json', 'X-CSRF':B.token }, body:JSON.stringify(dados) } : {};
@@ -207,15 +259,24 @@ function desenhaHex(lista) {
   L.polygon(HEX.canto(k), { renderer:rend, interactive:false, weight:v ? 1.2 : .5, color:v ? '#19F7FF' : '#1A3036', opacity:v ? .9 : .5, fillColor:'#19F7FF', fillOpacity:v ? Math.min(.15 + v * .15, .55) : .03 }).addTo(G.hex); }
  return Object.keys(n).length;
 }
+/* placar de guerra: 20% bronze, 50% prata, 100% ouro */
+const medalha = (p, curta) => p >= 100 ? (curta ? '🥇' : '<span class="med m3">ouro</span>') : p >= 50 ? (curta ? '🥈' : '<span class="med m2">prata</span>') : p >= 20 ? (curta ? '🥉' : '<span class="med m1">bronze</span>') : '';
+function comemora() {
+ let antes = {}; try { antes = JSON.parse(localStorage.getItem('crm_med') || '{}'); } catch (e) {}
+ const nivel = p => p >= 100 ? 3 : p >= 50 ? 2 : p >= 20 ? 1 : 0, agora = {};
+ for (const r of S.regioes) { if (r.pct == null) continue; agora[r.id] = nivel(r.pct);
+  if (antes[r.id] != null && agora[r.id] > antes[r.id]) toast(`🏆 ${r.nome} chegou a ${r.pct}% dominada!`); }
+ try { localStorage.setItem('crm_med', JSON.stringify(agora)); } catch (e) {}
+}
 function desenhaRegioes(lista) {
  G.reg.clearLayers(); if (!camadas.reg) return;
  for (const r of S.regioes) {
   const den = lista.filter(e => { const p = pos(e); return p && dentro(p, r.poly); });
-  const conq = den.filter(e => CONQ.has(e.et)).length;
+  const conq = den.filter(e => CONQ.has(e.et)).length, pct = den.length ? Math.round(conq / den.length * 100) : 0; r.pct = pct; r.tot = den.length;
   L.polygon(r.poly, { color:r.cor, weight:regSel === r.id ? 3 : 1.6, opacity:.95, fillColor:r.cor, fillOpacity:regSel === r.id ? .1 : .04, renderer:rend }).on('click', () => abreRegiao(r.id)).addTo(G.reg);
   const c = L.polygon(r.poly).getBounds().getCenter();
-  L.marker(c, { icon:L.divIcon({ className:'', iconSize:[64, 64], html:`<div class="bolha" style="--c:${h(r.cor)}"><div><b>${den.length}</b><small>${h(r.nome)}</small></div></div>` }) })
-   .bindTooltip(`${h(r.nome)}: ${den.length} empresas · ${conq} conquistadas`).on('click', () => abreRegiao(r.id)).addTo(G.reg);
+  L.marker(c, { icon:L.divIcon({ className:'', iconSize:[64, 64], html:`<div class="bolha" style="--c:${h(r.cor)}"><div><b>${den.length}</b><small>${h(r.nome)}</small><span class="pct">${pct}% ${medalha(pct, 1)}</span></div></div>` }) })
+   .bindTooltip(`${h(r.nome)}: ${den.length} empresas · ${conq} conquistadas · ${pct}% dominada`).on('click', () => abreRegiao(r.id)).addTo(G.reg);
  }
 }
 const ORD = { perdido:0, mapeado:1, agendado:2, visitado:3, afiliado:4, conquistado:5, venda:6 };
@@ -241,7 +302,7 @@ function desenhaEmpresas(lista) {
  }
 }
 function abreGrupo(ids, centro) {
- fichaId = null; const l = S.empresas.filter(e => ids.includes(e.id));
+ fichaId = null; const l = S.empresas.filter(e => ids.includes(e.id)); if (cel()) folha(1);
  lado.innerHTML = `<button class="bt" type="button" data-voltar>← ${regSel ? 'Região' : 'Lista'}</button><h2 style="margin-top:12px">${l.length} empresas aqui</h2>
   <p class="sub">${[...new Set(l.map(e => e.bairro).filter(Boolean))].slice(0, 4).map(h).join(', ')}</p>
   <button class="bt go" type="button" id="b-zoom" style="margin-top:10px;width:100%">Aproximar no mapa</button>
@@ -250,7 +311,7 @@ function abreGrupo(ids, centro) {
 }
 map.on('zoomend', () => desenhaEmpresas(filtradas()));
 function desenha() {
- const l = filtradas(); desenhaRegioes(l); const t = desenhaHex(l); desenhaEmpresas(l); placar(t);
+ const l = filtradas(); desenhaRegioes(l); const t = desenhaHex(l); desenhaEmpresas(l); placar(t); if (S.carregado) comemora();
  if (vis === 'mapa' && !fichaId && !regSel) painelLista(l);
 }
 function placar(terr) {
@@ -295,33 +356,62 @@ $('#segp').addEventListener('click', ev => { const b = ev.target.closest('button
  else if (b.hasAttribute('data-gr-tudo')) { for (const e of S.empresas) if (GRUPO(e.cnae) === segGrupo && e.seg) segOn.add(e.seg); }
  else return;
  segPainel(); fichaId = null; desenha(); });
-$('#busca').addEventListener('input', () => { clearTimeout(desenha.t); desenha.t = setTimeout(() => { fichaId = null; regSel = null; desenha(); }, 250); });
+$('#busca').addEventListener('input', () => { clearTimeout(desenha.t); desenha.t = setTimeout(() => { fichaId = null; regSel = null; desenha(); sugere(); }, 200); });
+function sugere() {
+ const q = $('#busca').value.trim().toLowerCase(), ul = $('#sug'); if (q.length < 2) { ul.hidden = true; return; }
+ const emp = S.empresas.filter(e => e.nome.toLowerCase().includes(q)).slice(0, 6);
+ const bai = [...new Set(S.empresas.map(e => e.bairro).filter(b => b && b.toLowerCase().includes(q)))].slice(0, 3);
+ if (!emp.length && !bai.length) { ul.innerHTML = '<li class="sub">Nada encontrado</li>'; ul.hidden = false; return; }
+ ul.innerHTML = emp.map(e => `<li role="option" data-sid="${e.id}">${h(e.nome)}<small>${h(e.seg)} · ${h(e.bairro)}</small></li>`).join('') + bai.map(b => `<li role="option" data-sb="${h(b)}">Bairro ${h(b)}<small>${S.empresas.filter(e => e.bairro === b).length} empresas</small></li>`).join('');
+ ul.hidden = false;
+}
+$('#sug').addEventListener('click', ev => { const li = ev.target.closest('li'); if (!li) return; $('#sug').hidden = true;
+ if (li.dataset.sid) { $('#busca').value = ''; desenha(); abreFicha(+li.dataset.sid); }
+ else if (li.dataset.sb) { $('#busca').value = li.dataset.sb; desenha(); } });
+document.addEventListener('click', ev => { if (!ev.target.closest('.busca')) $('#sug').hidden = true; });
+
+/* ---------- celular: painel que sobe de baixo ---------- */
+const cel = () => matchMedia('(max-width:900px)').matches;
+const topo = () => document.documentElement.style.setProperty('--topo', document.querySelector('.top').offsetHeight + 'px');
+addEventListener('resize', () => { topo(); map.invalidateSize(); }); topo();
+function folha(n) { const a = $('#lado'); a.classList.remove('f0', 'f1', 'f2'); a.style.removeProperty('--fh'); a.classList.add('f' + n); setTimeout(() => map.invalidateSize(), 300); }
+{
+ const a = $('#lado'), al = $('#alca'); let y0 = null, h0 = 0, moveu = false;
+ al.addEventListener('pointerdown', ev => { if (!cel()) return; y0 = ev.clientY; h0 = a.offsetHeight; moveu = false; a.classList.add('arrasta'); al.setPointerCapture(ev.pointerId); });
+ al.addEventListener('pointermove', ev => { if (y0 === null) return; const d = y0 - ev.clientY; if (Math.abs(d) > 6) moveu = true; a.style.setProperty('--fh', Math.max(70, Math.min(innerHeight - 60, h0 + d)) + 'px'); });
+ al.addEventListener('pointerup', () => { if (y0 === null) return; a.classList.remove('arrasta'); y0 = null;
+  if (!moveu) { folha(a.classList.contains('f2') ? 0 : a.classList.contains('f0') ? 1 : 2); return; }
+  const hh = a.offsetHeight / innerHeight; folha(hh < .3 ? 0 : hh < .7 ? 1 : 2); });
+}
+$('#b-filtros').addEventListener('click', () => { const f = $('#fx'), on = !f.classList.contains('on'); f.classList.toggle('on', on); $('#b-filtros').setAttribute('aria-expanded', on); });
+$('#b-leg').addEventListener('click', () => { const l = $('#leg'), on = l.hidden; l.hidden = !on; $('#b-leg').setAttribute('aria-expanded', on); $('#b-leg').textContent = on ? 'Fechar legenda' : 'Legenda e camadas'; });
 
 /* ---------- painel: lista, região ---------- */
-const lado = $('#lado');
+const lado = $('#lado-c');
 const itemLista = e => `<li tabindex="0" data-id="${e.id}"><i style="background:${COR[e.et]}"></i><span>${h(e.nome)}<small>${h(e.seg || 'Sem segmento')} · ${h(e.bairro || 'sem bairro')}</small></span>${e.et === 'mapeado' && e.venc ? '<em>retornar</em>' : `<small>${ETN[e.et]}</small>`}</li>`;
 const ordem = l => l.slice().sort((a, b) => (b.venc - a.venc) || ((a.et === 'mapeado' ? 0 : 1) - (b.et === 'mapeado' ? 0 : 1)) || a.nome.localeCompare(b.nome));
 function painelLista(l) {
- if (!S.empresas.length) { lado.innerHTML = `<h2>Comece pela base</h2><p class="sub">Ainda não tem empresas. Na aba <b>Base</b>, suba a planilha da Casa dos Dados (CSV ou Excel). Depois clique em Mapear endereços.</p><button class="bt go" type="button" data-v2="base" style="margin-top:12px">Ir para a Base</button>`; return; }
+ if (!S.carregado) { lado.innerHTML = SK(); return; }
+ if (!S.empresas.length) { lado.innerHTML = `<div class="vazio2"><b>Comece pela base</b>Ainda não tem empresas no mapa. Na aba Base, suba a planilha da Casa dos Dados (CSV ou Excel) e clique em Mapear endereços.</div><button class="bt go" type="button" data-v2="base" style="width:100%">Ir para a Base</button>`; return; }
  const semReg = l.length;
  lado.innerHTML = `<h2>${S.regioes.length ? 'Regiões' : 'Empresas'}</h2><p class="sub">${semReg} empresas no filtro. ${S.regioes.length ? 'Clique numa região (no mapa ou abaixo) para ver a lista.' : 'Desenhe as regiões no mapa: botão "Desenhar região".'}</p>
-  ${S.regioes.length ? `<ul class="lista">${S.regioes.map(r => { const n = l.filter(e => { const p = pos(e); return p && dentro(p, r.poly); }); return `<li tabindex="0" data-reg="${r.id}"><i style="background:${h(r.cor)};border-radius:2px"></i><span>${h(r.nome)}<small>${n.filter(e => CONQ.has(e.et)).length} conquistadas · ${n.filter(e => e.et === 'agendado').length} agendadas</small></span><b>${n.length}</b></li>`; }).join('')}</ul>` : ''}
+  ${S.regioes.length ? `<ul class="lista">${S.regioes.map(r => { const n = l.filter(e => { const p = pos(e); return p && dentro(p, r.poly); }); return `<li tabindex="0" data-reg="${r.id}"><i style="background:${h(r.cor)};border-radius:2px"></i><span>${h(r.nome)}${medalha(n.length ? Math.round(n.filter(e => CONQ.has(e.et)).length / n.length * 100) : 0)}<small>${n.length ? Math.round(n.filter(e => CONQ.has(e.et)).length / n.length * 100) : 0}% dominada · ${n.filter(e => CONQ.has(e.et)).length} conquistadas · ${n.filter(e => e.et === 'agendado').length} agendadas</small></span><b>${n.length}</b></li>`; }).join('')}</ul>` : ''}
   <p class="sec">Lista</p><ul class="lista">${ordem(l).slice(0, 200).map(itemLista).join('')}</ul>${l.length > 200 ? `<p class="sub">Mostrando 200 de ${l.length}. Use a busca ou uma região.</p>` : ''}`;
 }
 function abreRegiao(id) {
- regSel = id; fichaId = null; const r = S.regioes.find(x => x.id === id); if (!r) return;
+ regSel = id; fichaId = null; const r = S.regioes.find(x => x.id === id); if (!r) return; if (cel()) folha(1);
  const l = filtradas().filter(e => { const p = pos(e); return p && dentro(p, r.poly); });
  map.fitBounds(L.polygon(r.poly).getBounds(), { padding:[30, 30] });
  const por = k => l.filter(e => e.et === k).length;
  lado.innerHTML = `<button class="bt" type="button" data-voltar>← Todas</button>
-  <h2 style="margin-top:12px">${h(r.nome)}</h2><p class="sub">${l.length} empresas · ${l.filter(e => e.cabo).length} dentro do cabo</p>
+  <h2 style="margin-top:12px">${h(r.nome)}</h2><p class="sub">${l.length} empresas · <b style="color:var(--cyan)">${l.length ? Math.round(l.filter(e => CONQ.has(e.et)).length / l.length * 100) : 0}% dominada</b> ${medalha(l.length ? Math.round(l.filter(e => CONQ.has(e.et)).length / l.length * 100) : 0)}</p>
   <div class="chips" style="margin-top:8px">${Object.keys(ETN).filter(k => por(k)).map(k => `<span class="tag" style="background:${COR[k]}">${ETN[k]} ${por(k)}</span>`).join('')}</div>
   <div class="g2" style="margin-top:12px"><button class="bt go" type="button" data-ligar-reg="${r.id}">Ligar nesta região</button><button class="bt" type="button" data-edreg="${r.id}">Editar região</button></div>
-  <ul class="lista">${ordem(l).map(itemLista).join('') || '<li><span></span><span class="vazio">Nenhuma empresa com esse filtro.</span></li>'}</ul>`;
+  <ul class="lista">${ordem(l).map(itemLista).join('') || '<li style="display:block"><div class="vazio2"><b>Nada por aqui</b>Nenhuma empresa nesta região com os filtros de agora. Tire um filtro ou escolha outra região.</div></li>'}</ul>`;
  desenha();
 }
 lado.addEventListener('click', ev => {
- const li = ev.target.closest('[data-id]'); if (li && li.tagName === 'LI') return abreFicha(+li.dataset.id);
+ const li = ev.target.closest('[data-id]'); if (li && !li.closest('#lista-box')) return abreFicha(+li.dataset.id);
  const rg = ev.target.closest('[data-reg]'); if (rg) return abreRegiao(+rg.dataset.reg);
  if (ev.target.closest('[data-voltar]')) { regSel = null; fichaId = null; desenha(); painelLista(filtradas()); return; }
  const lr = ev.target.closest('[data-ligar-reg]'); if (lr) { regSel = +lr.dataset.ligarReg; return proximo(); }
@@ -336,7 +426,7 @@ const telBr = t => !t ? '' : t.length === 11 ? `(${t.slice(0, 2)}) ${t.slice(2, 
 const anos = d => { if (!d) return ''; const m = (Date.now() - new Date(d + 'T12:00:00')) / (365.25 * 864e5); return m < 1 ? 'menos de 1 ano' : Math.floor(m) + (Math.floor(m) === 1 ? ' ano' : ' anos'); };
 let F = null, modoLigar = false;
 async function abreFicha(id, ligando) {
- fichaId = id; modoLigar = !!ligando; lado.innerHTML = '<p class="vazio">Abrindo…</p>';
+ fichaId = id; modoLigar = !!ligando; lado.innerHTML = SK(8); if (cel()) folha(ligando ? 2 : 1);
  const r = await api('empresa', null, '&id=' + id); if (r.erro) return toast(r.erro, true); F = r;
  const e = r.empresa, nome = e.fantasia || e.responsavel || e.razao, p = pos(E([e.id, '', '', '', e.lat !== null ? +e.lat : null, e.lng !== null ? +e.lng : null, e.etapa, 0, 0, e.geo]));
  if (p) map.setView(p, Math.max(map.getZoom(), 16), { animate:true });
@@ -366,15 +456,18 @@ async function abreFicha(id, ligando) {
   ${a ? `<p class="sec">No app Hunter League</p><div class="lin"><span>Código</span><span>${h(a.codigo || 'sem QR ativado')}</span></div><div class="lin"><span>Cadastro</span><span>${h(a.cadastro)} · ${a.status === 'ativo' ? 'aprovado' : h(a.status)}</span></div>
    <div class="lin"><span>Leituras do QR</span><span>${a.leituras}${a.ult_leituras.length ? ' · última ' + h(a.ult_leituras[0]) : ''}</span></div>
    <div class="lin"><span>Indicados</span><span>${a.indicados.length}</span></div>
+   <button class="bt go" type="button" id="b-lista" style="width:100%;margin-top:10px">Lançar lista dos 20 contatos</button><div id="lista-box"></div>
    ${a.indicados.length ? `<table class="t"><tr><th>Cliente</th><th>Origem</th><th>Etapa</th></tr>${a.indicados.map(i => `<tr><td>${h(i.nome)}<br><span class="sub">${h(i.tel)} · ${h(i.em)}</span></td><td>${i.origem === 'qr' ? 'QR' : h(i.origem)}</td><td>${h(i.status)}</td></tr>`).join('')}</table>` : ''}` : ''}
   <p class="sec">Histórico</p>
   <form id="f-obs" style="display:flex;gap:6px"><input name="texto" placeholder="Anotar uma observação" style="flex:1;padding:10px;border:1px solid var(--edge);background:#070B0D;color:var(--ink);font-size:15px" maxlength="400"><button class="bt" type="submit">Salvar</button></form>
   <ul class="hist">${r.hist.map(x => `<li>${h(x.texto)}<span>${h(x.em)} · ${h(x.quem)}</span></li>`).join('') || '<li class="sub">Nenhum contato ainda.</li>'}</ul>
   ${e.extra ? `<details><summary>Dados completos da planilha</summary><table class="t">${Object.entries(e.extra).map(([k, v]) => `<tr><td>${h(k)}</td><td>${h(v)}</td></tr>`).join('')}</table></details>` : ''}`;
  desenha();
- $('#b-msg').onclick = () => { const t = (S.msg_wa || '').replace('{nome}', (e.responsavel || '').split(' ')[0] || nome).replace('{eu}', B.nome || '');
+ F.msgTxt = (S.msg_wa || '').replace('{nome}', (e.responsavel || '').split(' ')[0] || nome).replace('{eu}', B.nome || '');
+ $('#b-msg').onclick = () => { const t = F.msgTxt;
   (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Mensagem copiada. Cole no GoTo, na conversa com ' + telBr(e.tel1) + '.')).catch(() => toast('Não deu para copiar.', true)); };
  $('#b-ponto').onclick = () => ajustarPonto(e.id);
+ const bl = $('#b-lista'); if (bl) bl.onclick = () => listaBox(r.app.id, nome, e.id);
  $('#f-obs').onsubmit = async ev => { ev.preventDefault(); const t = ev.target.texto.value.trim(); if (!t) return; const x = await api('obs', { id:e.id, texto:t }); x.erro ? toast(x.erro, true) : abreFicha(e.id, modoLigar); };
  lado.querySelectorAll('[data-p]').forEach(b => b.onclick = () => parecer(e, b.dataset.p));
  lado.querySelectorAll('[data-vis]').forEach(b => b.onclick = () => visita(e, b.dataset.vis));
@@ -393,7 +486,9 @@ function parecer(e, p) {
 }
 async function envia(e, p, d) {
  const r = await api('parecer', Object.assign({ id:e.id, p, regiao:regSel || 0 }, d)); if (r.erro) return toast(r.erro, true);
- toast(r.msg); if (p === 'nao_atendeu') $('#b-msg').click();
+ let extra = '';
+ if (p === 'nao_atendeu' && F && F.msgTxt) { try { await navigator.clipboard.writeText(F.msgTxt); extra = ' · mensagem do WhatsApp copiada para colar no GoTo'; } catch (x) {} }
+ toast(r.msg + extra, false, ['Desfazer', async () => { const x = await api('desfazer', {}); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); abreFicha(x.id, true); }]);
  await carrega(); if (r.proximo) abreFicha(r.proximo, true); else { fichaId = null; toast('Fila zerada nesta região. 🎯'); regSel ? abreRegiao(regSel) : desenha(); }
 }
 async function visita(e, r) {
@@ -403,6 +498,25 @@ async function visita(e, r) {
 async function proximo() {
  const r = await api('proximo', null, '&regiao=' + (regSel || 0) + '&exceto=' + (fichaId || 0));
  if (!r.proximo) { toast('Ninguém para ligar agora' + (regSel ? ' nesta região.' : '.')); return; } abreFicha(r.proximo, true);
+}
+/* lista dos 20 contatos que o parceiro passou: colar, conferir, lançar (vira indicação dele) */
+function listaBox(pid, nome, eid) {
+ const box = $('#lista-box');
+ box.innerHTML = `<div class="box"><b>Lista de contatos de ${h(nome)}</b><p class="sub" style="margin:4px 0 0">Cole os cartões de contato do WhatsApp ou um por linha: "Maria Souza – (34) 99999-9999".</p>
+  <label class="f"><textarea id="l-txt" rows="7" placeholder="Maria Souza – (34) 99999-9999&#10;João Lima 34 98888-7777"></textarea></label><div id="l-prev"></div>
+  <button class="bt go" type="button" id="l-ver" style="width:100%;margin-top:8px">Conferir</button></div>`;
+ box.scrollIntoView({ behavior:'smooth', block:'center' });
+ const cha = async (gravar) => {
+  const op = { method:'POST', headers:{ 'Content-Type':'application/json', 'X-CSRF':B.token }, body:JSON.stringify({ parceiro_id:pid, texto:$('#l-txt').value, gravar:gravar ? '1' : '' }) };
+  let r; try { r = await (await fetch('api.php?a=lancar_lista', op)).json(); } catch (e) { r = { erro:'Sem conexão.' }; }
+  if (r.erro) return toast(r.erro, true);
+  if (gravar) { toast(r.msg); await api('campo', { id:eid, o:'lista' }); await carrega(); return abreFicha(eid); }
+  const cor = { ok:'#32E000', duplicado:'#FFB547', repetido:'#8A959C', invalido:'#FF5C7A' };
+  $('#l-prev').innerHTML = `<p class="sub"><b>${r.ok} de ${r.total}</b> entram como indicações.</p>` + r.itens.map(i => `<div class="lin"><span>${h(i.nome)}<br><small>${h(i.tel_br || i.tel)}</small></span><span style="color:${cor[i.st]}">${i.st === 'ok' ? 'entra' : h(i.obs)}</span></div>`).join('');
+  const b = $('#l-ver'); b.textContent = `Lançar ${r.ok} contatos`; b.className = 'bt ok'; b.disabled = !r.ok; b.onclick = () => cha(true);
+ };
+ $('#l-ver').onclick = () => cha(false);
+ $('#l-txt').oninput = () => { const b = $('#l-ver'); b.textContent = 'Conferir'; b.className = 'bt go'; b.disabled = false; b.onclick = () => cha(false); };
 }
 /* ajustar o ponto: clica no mapa */
 let pegaPonto = null;
@@ -437,20 +551,43 @@ function troca(v) {
  fichaId = null;
  if (v === 'mapa') { desenha(); regSel ? abreRegiao(regSel) : painelLista(filtradas()); }
  if (v === 'ligar') { proximo(); }
- if (v === 'agenda') agenda();
- if (v === 'base') base();
+ if (v === 'agenda') { agenda(); if (cel()) folha(2); }
+ if (v === 'base') { base(); if (cel()) folha(2); }
+ if (v === 'mapa' && cel()) folha(1);
 }
 document.querySelector('.abas').addEventListener('click', ev => { const b = ev.target.closest('[data-v]'); if (b) troca(b.dataset.v); });
 
+let aqui = null;
+const km = (a, b) => { const r = 6371, dl = (b[0] - a[0]) * Math.PI / 180, dn = (b[1] - a[1]) * Math.PI / 180; const x = Math.sin(dl / 2) ** 2 + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dn / 2) ** 2; return 2 * r * Math.asin(Math.sqrt(x)); };
+/* ordem da rota: manhã antes da tarde; dentro do turno, sempre a mais perto da anterior (começando de onde a dupla está, se o celular deixar) */
+function ordena(itens) {
+ const out = []; let ref = aqui;
+ for (const t of ['manha', 'tarde']) {
+  const resto = itens.filter(i => (i.turno || 'manha') === t);
+  while (resto.length) { let k = 0;
+   if (ref) { let best = Infinity; resto.forEach((i, n) => { if (i.lat == null) return; const d = km(ref, [+i.lat, +i.lng]); if (d < best) { best = d; k = n; } }); }
+   const it = resto.splice(k, 1)[0]; out.push(it); if (it.lat != null) ref = [+it.lat, +it.lng]; }
+ }
+ return out;
+}
 async function agenda(dia) {
+ lado.innerHTML = SK();
  const r = await api('agenda', null, dia ? '&dia=' + dia : ''); if (r.erro) return toast(r.erro, true);
- const turno = t => r.itens.filter(i => (i.turno || 'manha') === t);
- const bloco = (t, nome) => `<p class="sec">${nome} · ${turno(t).length}</p><ul class="lista">${turno(t).map(i => `<li data-id="${i.id}" tabindex="0"><i style="background:${COR[i.etapa]}"></i><span>${h(i.nome)}<small>${h(i.end)}${i.resp ? ' · ' + h(i.resp) : ''}${i.quem ? ' · vai: ' + h(i.quem) : ''}</small></span><a class="bt" href="tel:+55${h(i.tel || '')}" style="min-height:34px" onclick="event.stopPropagation()">Ligar</a></li>`).join('') || '<li><span></span><span class="sub">Nenhuma visita.</span></li>'}</ul>`;
- lado.innerHTML = `<h2>Agenda de visitas</h2><label class="f">Dia<input type="date" id="ag-dia" value="${r.dia}"></label>
-  <p class="sub" style="margin-top:8px">${r.itens.length} visitas. Clique numa visita para abrir a ficha e marcar o resultado. Na véspera, ligue ou mande mensagem para confirmar.</p>
-  ${bloco('manha', 'Manhã')}${bloco('tarde', 'Tarde')}`;
+ const it = ordena(r.itens), pts = it.map(i => i.lat != null ? `${(+i.lat).toFixed(6)},${(+i.lng).toFixed(6)}` : encodeURIComponent(i.end + ', Araguari - MG'));
+ const gmaps = pts.length ? 'https://www.google.com/maps/dir/?api=1&travelmode=driving' + (aqui ? `&origin=${aqui[0]},${aqui[1]}` : '') + `&destination=${pts[pts.length - 1]}` + (pts.length > 1 ? `&waypoints=${pts.slice(0, -1).slice(0, 9).join('%7C')}` : '') : '';
+ let turnoAnt = '';
+ lado.innerHTML = `<h2>Agenda · modo campo</h2><label class="f">Dia<input type="date" id="ag-dia" value="${r.dia}"></label>
+  ${it.length ? `<div class="g2" style="margin-top:10px"><a class="bt go" href="${gmaps}" target="_blank" rel="noopener">Abrir rota no Google Maps</a><button class="bt" type="button" id="b-aqui">${aqui ? 'Ordenado de onde estou ✓' : 'Ordenar de onde estou'}</button></div>
+  <p class="sub" style="margin-top:6px">${it.length} visitas: primeiro as da manhã, depois as da tarde; em cada turno, a mais perto primeiro.</p>` : `<div class="vazio2"><b>Sem visitas neste dia</b>Quando o agendador marcar uma visita, ela aparece aqui em ordem de rota.</div>`}
+  ${it.map((i, k) => { const cab = (i.turno || 'manha') !== turnoAnt ? `<p class="sec">${(turnoAnt = i.turno || 'manha') === 'tarde' ? 'Tarde' : 'Manhã'}</p>` : '';
+   return cab + `<div class="rota"><span class="n">${k + 1}</span><div style="flex:1"><b data-id="${i.id}" style="cursor:pointer">${h(i.nome)}</b><div class="sub">${h(i.end)}${i.resp ? ' · ' + h(i.resp) : ''}${i.quem ? ' · vai: ' + h(i.quem) : ''}</div>
+    <div class="acs"><a class="bt" href="https://www.google.com/maps/dir/?api=1&destination=${i.lat != null ? (+i.lat).toFixed(6) + ',' + (+i.lng).toFixed(6) : encodeURIComponent(i.end + ', Araguari - MG')}" target="_blank" rel="noopener">Ir</a>${i.tel ? `<a class="bt" href="tel:+55${h(i.tel)}">Ligar</a>` : ''}
+     <button class="bt" type="button" data-cp="cadastrou" data-eid="${i.id}">Cadastrei</button><button class="bt" type="button" data-cp="adesivo" data-eid="${i.id}">Colei o adesivo</button><button class="bt" type="button" data-cp="lista" data-eid="${i.id}">Peguei os 20</button><button class="bt" type="button" data-id="${i.id}">Resultado</button></div></div></div>`; }).join('')}`;
  $('#ag-dia').onchange = ev => agenda(ev.target.value);
- G.des.clearLayers(); r.itens.forEach((i, k) => { if (i.lat) L.marker([+i.lat, +i.lng], { icon:L.divIcon({ className:'', iconSize:[26, 26], html:`<div style="display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#FFB547;color:#050607;font-weight:900;border:2px solid #050607">${k + 1}</div>` }) }).addTo(G.des); });
+ const ba = $('#b-aqui'); if (ba) ba.onclick = () => { if (!navigator.geolocation) return toast('Este aparelho não informa a localização.', true);
+  navigator.geolocation.getCurrentPosition(p => { aqui = [p.coords.latitude, p.coords.longitude]; agenda(r.dia); }, () => toast('Sem permissão de localização. A rota segue a ordem do turno.', true), { enableHighAccuracy:true, timeout:8000 }); };
+ lado.querySelectorAll('[data-cp]').forEach(b => b.onclick = async () => { const x = await api('campo', { id:+b.dataset.eid, o:b.dataset.cp }); if (x.erro) return toast(x.erro, true); b.textContent = '✓ ' + b.textContent.replace(/^✓ /, ''); b.disabled = true; toast(x.msg); });
+ G.des.clearLayers(); it.forEach((i, k) => { if (i.lat != null) L.marker([+i.lat, +i.lng], { icon:L.divIcon({ className:'', iconSize:[28, 28], html:`<div style="display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#FFB547;color:#050607;font-weight:900;border:2px solid #050607">${k + 1}</div>` }) }).addTo(G.des); });
 }
 
 let novaPonto = null, novaMarcando = false, geoRodando = false;
@@ -510,11 +647,23 @@ async function rodaGeo() {
 /* ---------- carga ---------- */
 async function carrega() {
  const r = await api('estado'); if (r.erro) { toast(r.erro, true); return; }
- S = Object.assign(r, { empresas:r.empresas.map(E) });
+ S = Object.assign(r, { empresas:r.empresas.map(E), carregado:true });
  if (!$('#segp').hidden) segPainel();
  if (!HEX) { montaHex(); desenhaCabo(); }
  desenha();
 }
+/* ---------- leitura do QR ao vivo: o ponto pisca e aparece o aviso ---------- */
+let desde = -1;
+async function novidades() {
+ const r = await api('novidades', null, '&desde=' + desde);
+ if (r.ultimo != null) { for (const l of r.leituras || []) { const e = S.empresas.find(x => x.id === l.id); const p = e && pos(e);
+   toast(`📍 Alguém leu o QR de ${l.nome} agora`, false, ['Ver', () => abreFicha(l.id)]);
+   if (p) { const m = L.marker(p, { interactive:false, icon:L.divIcon({ className:'', iconSize:[70, 70], html:'<div class="pulso"></div>' }) }).addTo(map); setTimeout(() => map.removeLayer(m), 6000); }
+   if (e) e.leit++; }
+  desde = r.ultimo; }
+}
+setInterval(() => { if (!document.hidden) novidades(); }, 20000);
+
 /* ---------- regiões automáticas pela concentração das empresas ---------- */
 async function regioesAuto(pergunta) {
  const r = await api('regioes_auto', { k:7 }); if (r.erro) { if (pergunta) toast(r.erro, true); return; }
@@ -559,7 +708,7 @@ $('#tour').addEventListener('click', ev => { const b = ev.target.closest('[data-
 document.addEventListener('keydown', ev => { if (!$('#tour').hidden && ev.key === 'Escape') tour(99); });
 $('#b-tour').addEventListener('click', () => tour(0));
 legenda();
-carrega().then(async () => { if (!S.regioes.length && S.empresas.filter(e => e.lat != null).length >= 30) await regioesAuto(false); painelLista(filtradas()); let visto = false; try { visto = localStorage.getItem('crm_tour_v1') === '1'; } catch (e) {} if (!visto) setTimeout(() => tour(0), 600); });
+carrega().then(async () => { novidades(); if (!S.regioes.length && S.empresas.filter(e => e.lat != null).length >= 30) await regioesAuto(false); painelLista(filtradas()); let visto = false; try { visto = localStorage.getItem('crm_tour_v1') === '1'; } catch (e) {} if (!visto) setTimeout(() => tour(0), 600); });
 }
 </script>
 </body>

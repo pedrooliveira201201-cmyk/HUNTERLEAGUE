@@ -30,3 +30,50 @@ function novo_codigo(string $cidade): string {
   return $c;
 }
 function duplicado(string $cpf, string $tel, int $exceto = 0): ?array { return indicacao_valida($cpf, $tel, $exceto); }
+
+/* ---------- lista dos 20 contatos (passada pelo parceiro na visita) ---------- */
+/* lê cartões de contato (vCard) ou linhas "Nome – telefone" (em qualquer ordem) e devolve [nome, tel] */
+function lista_contatos(string $txt): array {
+  $txt = str_replace(["\r\n", "\r"], "\n", $txt);
+  $out = [];
+  /* cartões de contato (vCard); o que sobrar fora deles é lido linha a linha */
+  if (preg_match_all('/BEGIN:VCARD.*?END:VCARD/is', $txt, $cs)) {
+    foreach ($cs[0] as $c) {
+      if (!preg_match('/^TEL[^:]*:(.+)$/mi', $c, $t)) continue;
+      $nome = preg_match('/^FN[^:]*:(.+)$/mi', $c, $n) ? trim($n[1]) : (preg_match('/^N[;:][^:]*?:?([^\n]+)$/mi', $c, $n2) ? trim(str_replace(';', ' ', $n2[1])) : '');
+      $out[] = [$nome, tel_normal($t[1])];
+    }
+    $txt = preg_replace('/BEGIN:VCARD.*?END:VCARD/is', "\n", $txt);
+  }
+  $pend = '';
+  foreach (explode("\n", $txt) as $l) {
+    $l = trim(preg_replace('/^\s*(\d+[\).]|[-•*])\s+/u', '', $l)); if ($l === '') continue;
+    if (preg_match('/(\+?55[\s.-]*)?\(?\d{2}\)?[\s.-]*9?[\s.-]*\d{4}[\s.-]*\d{4}/', $l, $m)) {
+      $nome = trim(preg_replace('/\s+/', ' ', str_replace($m[0], ' ', $l)), " \t-–—:|,;.");
+      $nome = preg_replace('/^(nome|contato|tel(efone)?|cel(ular)?|whats(app)?)\s*:?\s*/iu', '', $nome);
+      if ($nome === '' && $pend !== '') $nome = $pend;
+      $out[] = [$nome, tel_normal($m[0])]; $pend = '';
+    } else $pend = trim(preg_replace('/^(nome|contato)\s*:\s*/iu', '', $l), " \t-–—:|,;.");
+  }
+  return $out;
+}
+/* prévia (gravar = false) ou gravação dos contatos como indicações do parceiro */
+function lancar_lista(array $p, string $txt, bool $gravar, string $quem): array {
+  $itens = []; $vistos = [];
+  foreach (lista_contatos($txt) as [$nome, $tel]) {
+    $nome = mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags($nome))), 0, 120);
+    $st = 'ok'; $obs = '';
+    if (strlen($tel) < 10 || strlen($tel) > 11) { $st = 'invalido'; $obs = 'telefone incompleto'; }
+    elseif (isset($vistos[$tel])) { $st = 'repetido'; $obs = 'repetido na lista'; }
+    elseif ($d = indicacao_valida('', $tel)) { $st = 'duplicado'; $obs = 'já indicado por ' . $d['codigo'] . ' em ' . date('d/m', strtotime($d['criado_em'])); }
+    if ($tel) $vistos[$tel] = 1;
+    $itens[] = ['nome' => $nome !== '' ? $nome : 'Contato sem nome', 'tel' => $tel, 'tel_br' => tel_br($tel), 'st' => $st, 'obs' => $obs];
+  }
+  $ok = array_values(array_filter($itens, fn($i) => $i['st'] === 'ok'));
+  if ($gravar) {
+    foreach ($ok as $i) q('INSERT INTO indicacoes (parceiro_id, cliente_nome, cliente_tel, status, origem, criado_em, criado_por, atualizado_em) VALUES (?,?,?,?,?,?,?,?)',
+      [$p['id'], $i['nome'], $i['tel'], 'Nova', 'lista', agora(), $quem, agora()]);
+    auditar('admin:' . $quem, 'lançou a lista de contatos', (string)($p['codigo'] ?: $p['doc']), count($ok) . ' contatos');
+  }
+  return ['itens' => $itens, 'ok' => count($ok), 'total' => count($itens)];
+}
