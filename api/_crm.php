@@ -7,6 +7,8 @@ const CRM_ETAPAS = ['mapeado' => 'Mapeado', 'agendado' => 'Agendado', 'visitado'
   'conquistado' => 'QR ativo', 'venda' => 'Com venda', 'perdido' => 'Perdido'];
 const CRM_PARECERES = ['agendou' => 'Agendou', 'depois' => 'Interesse, mas não agora', 'nao_atendeu' => 'Não atendeu',
   'nao_quer' => 'Não quer', 'numero_errado' => 'Número errado', 'fechou' => 'Fechou'];
+/* fora do cabo (endereço achado pela rua e fora das células da Nio): guardada, não aparece */
+const CRM_VISIVEL = "NOT (COALESCE(geo, '') = 'rua' AND COALESCE(celula, '') = '-')";
 const CRM_SAFRA_DIAS = 7;          /* "interesse, mas não agora" volta na próxima safra */
 const CRM_RETENTATIVAS = [1, 3, 7]; /* não atendeu: amanhã, em 3 dias, em 7 dias; depois encerra */
 
@@ -48,6 +50,9 @@ function crm_migrar(): void {
             "CREATE INDEX idx_emp_par ON empresas (parceiro_id)", "CREATE INDEX idx_eh ON empresa_hist (empresa_id, em)"] as $s) { try { db()->exec($s); } catch (Throwable $e) {} }
   q("INSERT INTO config (chave, valor) VALUES ('crm_v', '1')");
 }
+
+/* nome que aparece: fantasia; no MEI sem fantasia, o nome do dono */
+function crm_nome(array $e): string { return (string)($e['fantasia'] ?: ($e['responsavel'] ?: ($e['razao'] ?? 'Empresa'))); }
 
 function crm_hist(int $eid, string $quem, string $tipo, string $texto = ''): void {
   q('INSERT INTO empresa_hist (empresa_id, em, quem, tipo, texto) VALUES (?,?,?,?,?)', [$eid, agora(), $quem, $tipo, mb_substr($texto, 0, 400)]);
@@ -97,9 +102,9 @@ function crm_ler_xlsx(string $arq): array {
 function crm_mapear_colunas(array $cab): array {
   $alvo = [
     'cnpj' => ['cnpj'], 'razao' => ['razao social', 'razao'], 'fantasia' => ['nome fantasia', 'fantasia'],
-    'responsavel' => ['socio', 'responsavel', 'nome do socio', 'socios'], 'cnae' => ['cnae principal codigo', 'codigo cnae', 'cnae principal', 'cnae', 'atividade principal codigo', 'codigo atividade principal'],
-    'cnae_desc' => ['cnae principal descricao', 'descricao cnae', 'atividade principal', 'descricao atividade principal', 'atividade principal descricao'],
-    'mei' => ['mei', 'optante mei', 'opcao pelo mei', 'opcao mei'], 'abertura' => ['data de abertura', 'data abertura', 'abertura', 'data inicio atividade', 'inicio atividade'],
+    'responsavel' => ['responsavel', 'nome do socio', 'socio', 'socios'], 'cnae' => ['codigo da atividade principal', 'cnae principal codigo', 'codigo cnae', 'cnae principal', 'cnae', 'atividade principal codigo', 'codigo atividade principal'],
+    'cnae_desc' => ['descricao da atividade principal', 'cnae principal descricao', 'descricao cnae', 'descricao atividade principal', 'atividade principal descricao', 'atividade principal'],
+    'mei' => ['optante mei', 'opcao pelo mei', 'opcao mei', 'mei'], 'abertura' => ['data de abertura', 'data abertura', 'abertura', 'data inicio atividade', 'inicio atividade'],
     'situacao' => ['situacao cadastral', 'situacao'], 'tel1' => ['telefone 1', 'telefone1', 'telefone', 'ddd + telefone 1', 'telefones', 'contato telefonico', 'celular'],
     'tel2' => ['telefone 2', 'telefone2'], 'email' => ['e-mail', 'email', 'correio eletronico'], 'cep' => ['cep'],
     'logradouro' => ['logradouro', 'endereco', 'rua'], 'tipo_log' => ['tipo logradouro', 'tipo de logradouro'], 'numero' => ['numero', 'n'],
@@ -107,8 +112,20 @@ function crm_mapear_colunas(array $cab): array {
   $n = array_map(fn($c) => trim(preg_replace('/[^a-z0-9+ -]/', ' ', crm_sem_acento((string)$c))), $cab);
   $map = [];
   foreach ($alvo as $k => $nomes) foreach ($nomes as $nm) { $i = array_search($nm, $n, true); if ($i !== false && !in_array($i, $map, true)) { $map[$k] = $i; break; } }
-  foreach ($alvo as $k => $nomes) if (!isset($map[$k])) foreach ($n as $i => $c) foreach ($nomes as $nm) if (strlen($nm) > 3 && str_contains($c, $nm) && !in_array($i, $map, true)) { $map[$k] = $i; break 2; }
+  foreach ($alvo as $k => $nomes) if (!isset($map[$k])) foreach ($n as $i => $c) foreach ($nomes as $nm) {
+    if (strlen($nm) <= 3 || !str_contains($c, $nm) || in_array($i, $map, true) || str_contains($c, 'secundaria')) continue;
+    if ($k === 'cnae_desc' && str_contains($c, 'codigo')) continue;
+    if ($k === 'cnae' && str_contains($c, 'descricao')) continue;
+    $map[$k] = $i; break 2; }
   return $map;
+}
+function crm_nome_proprio(string $t): string {
+  $t = mb_convert_case(mb_strtolower(trim($t)), MB_CASE_TITLE);
+  return (string)preg_replace_callback('/ (D[aeo]s?|E) /u', fn($m) => mb_strtolower($m[0]), $t);
+}
+function crm_corta(string $t, int $max): string {
+  $t = trim($t); if (mb_strlen($t) <= $max) return $t;
+  $c = mb_substr($t, 0, $max - 1); $p = mb_strrpos($c, ' '); return rtrim($p > 20 ? mb_substr($c, 0, $p) : $c, ' ,;') . '…';
 }
 function crm_tel(string $t): string {
   $d = preg_replace('/\D/', '', $t);
@@ -137,8 +154,8 @@ function crm_linha(array $r, array $map, array $cab): array {
   if ($resp === '' && preg_match('/^\d{2}\.?\d{3}\.?\d{3}\s+(.+)$/u', $razao, $m)) $resp = $m[1]; /* MEI: "12.345.678 FULANO DE TAL" */
   return [
     'cnpj' => substr(preg_replace('/\D/', '', $g('cnpj')), 0, 14) ?: null, 'razao' => $razao ?: null, 'fantasia' => mb_substr($g('fantasia'), 0, 160) ?: null,
-    'responsavel' => mb_substr(mb_convert_case(mb_strtolower($resp), MB_CASE_TITLE), 0, 120) ?: null,
-    'cnae' => $cnae ?: null, 'cnae_desc' => mb_substr($desc, 0, 200) ?: null, 'segmento' => CRM_SEGMENTOS[$cnae] ?? (mb_substr($desc, 0, 60) ?: null),
+    'responsavel' => mb_substr(crm_nome_proprio($resp), 0, 120) ?: null,
+    'cnae' => $cnae ?: null, 'cnae_desc' => mb_substr($desc, 0, 200) ?: null, 'segmento' => crm_corta($desc, 60) ?: (CRM_SEGMENTOS[$cnae] ?? null),
     'mei' => in_array($mei, ['sim', 's', 'true', '1', 'optante', 'x'], true) || ($mei === '' && str_contains(crm_sem_acento($razao), ' mei')) ? 1 : 0,
     'abertura' => crm_data($g('abertura')), 'situacao' => mb_substr(mb_strtoupper($g('situacao')), 0, 30) ?: null,
     'tel1' => $tels[0] ?? null, 'tel2' => $tels[1] ?? null, 'email' => mb_substr(mb_strtolower($g('email')), 0, 160) ?: null,
@@ -151,11 +168,13 @@ function crm_linha(array $r, array $map, array $cab): array {
 function crm_gravar_empresa(array $e, string $quem): string {
   $ja = null;
   if ($e['cnpj']) $ja = one('SELECT id FROM empresas WHERE cnpj = ?', [$e['cnpj']]);
-  if (!$ja && $e['tel1']) $ja = one('SELECT id FROM empresas WHERE tel1 = ? OR tel2 = ?', [$e['tel1'], $e['tel1']]);
+  /* sem CNPJ, o telefone identifica; com CNPJ, só o CNPJ (dois MEIs podem usar o mesmo telefone) */
+  if (!$ja && !$e['cnpj'] && $e['tel1']) $ja = one('SELECT id FROM empresas WHERE tel1 = ? OR tel2 = ?', [$e['tel1'], $e['tel1']]);
   if ($ja) {
     $set = []; $par = [];
-    foreach (['razao','fantasia','responsavel','cnae','cnae_desc','segmento','abertura','situacao','tel2','email','cep','logradouro','numero','complemento','bairro','cidade','uf','extra'] as $k)
-      if ($e[$k] !== null && $e[$k] !== '') { $set[] = "$k = COALESCE($k, ?)"; $par[] = $e[$k]; }
+    foreach (['razao','fantasia','responsavel','cnae','cnae_desc','segmento','mei','abertura','situacao','email','cep','logradouro','numero','complemento','bairro','cidade','uf','extra'] as $k)
+      if ($e[$k] !== null && $e[$k] !== '') { $set[] = "$k = ?"; $par[] = $e[$k]; }
+    if ($e['tel2']) { $set[] = 'tel2 = COALESCE(tel2, ?)'; $par[] = $e['tel2']; }
     if ($set) q('UPDATE empresas SET ' . implode(', ', $set) . ', atualizado_em = ? WHERE id = ?', array_merge($par, [agora(), $ja['id']]));
     return 'atualizada';
   }
@@ -213,7 +232,7 @@ function crm_geo_lote(int $max = 8, int $prazo = 22): array {
 function crm_geo_status(): array {
   $r = one("SELECT COUNT(*) AS t, SUM(CASE WHEN geo IS NULL THEN 1 ELSE 0 END) AS sem, SUM(CASE WHEN geo = 'bairro' THEN 1 ELSE 0 END) AS bairro,
     SUM(CASE WHEN geo IN ('rua', 'manual') THEN 1 ELSE 0 END) AS rua, SUM(CASE WHEN geo = 'bairro_ok' THEN 1 ELSE 0 END) AS so_bairro,
-    SUM(CASE WHEN geo = 'falhou' THEN 1 ELSE 0 END) AS falhou FROM empresas");
+    SUM(CASE WHEN geo = 'falhou' THEN 1 ELSE 0 END) AS falhou, SUM(CASE WHEN geo = 'rua' AND celula = '-' THEN 1 ELSE 0 END) AS fora FROM empresas");
   return array_map('intval', $r ?: []);
 }
 
@@ -289,7 +308,7 @@ function crm_parecer(array $e, string $p, array $d, string $quem): string {
 }
 /* o próximo da fila: retornos vencidos primeiro, depois quem nunca foi ligado; mesma região quando houver */
 function crm_proximo(?array $regiao, int $exceto = 0): ?array {
-  $base = "SELECT id, lat, lng FROM empresas WHERE etapa = 'mapeado' AND id <> ? AND (tel1 IS NOT NULL) AND (proximo_em IS NULL OR proximo_em <= ?)";
+  $base = "SELECT id, lat, lng FROM empresas WHERE etapa = 'mapeado' AND id <> ? AND (tel1 IS NOT NULL) AND (proximo_em IS NULL OR proximo_em <= ?) AND " . CRM_VISIVEL;
   $rows = all($base . " ORDER BY CASE WHEN proximo_em IS NULL THEN 1 ELSE 0 END, proximo_em, CASE WHEN celula IS NOT NULL AND celula <> '-' THEN 0 ELSE 1 END, id LIMIT 4000", [$exceto, agora()]);
   if ($regiao) foreach ($rows as $r) if ($r['lat'] !== null && crm_dentro((float)$r['lat'], (float)$r['lng'], $regiao)) return $r;
   return $rows[0] ?? null;

@@ -25,12 +25,12 @@ switch ($acao) {
 case 'estado': {
   crm_sincronizar(); crm_marcar_celulas();
   $hoje = date('Y-m-d');
-  $emp = array_map(fn($r) => [(int)$r['id'], (string)($r['fantasia'] ?: $r['razao']), (string)$r['segmento'], (string)$r['bairro'],
+  $emp = array_map(fn($r) => [(int)$r['id'], crm_nome($r), (string)$r['segmento'], (string)$r['bairro'],
       $r['lat'] !== null ? (float)$r['lat'] : null, $r['lng'] !== null ? (float)$r['lng'] : null, $r['etapa'],
       $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds']],
-    all("SELECT e.id, e.fantasia, e.razao, e.segmento, e.bairro, e.lat, e.lng, e.etapa, e.proximo_em, e.celula, e.geo, e.tel1,
+    all("SELECT e.id, e.fantasia, e.razao, e.responsavel, e.segmento, e.bairro, e.lat, e.lng, e.etapa, e.proximo_em, e.celula, e.geo, e.tel1,
       (SELECT COUNT(*) FROM leituras l WHERE l.parceiro_id = e.parceiro_id) AS leit, (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = e.parceiro_id) AS inds
-      FROM empresas e ORDER BY e.id"));
+      FROM empresas e WHERE " . str_replace(['geo', 'celula'], ['e.geo', 'e.celula'], CRM_VISIVEL) . " ORDER BY e.id"));
   $lig = (int)(one("SELECT COUNT(*) AS n FROM empresa_hist WHERE tipo = 'ligacao' AND em >= ?", [$hoje . ' 00:00:00'])['n'] ?? 0);
   json_out(['empresas' => $emp, 'regioes' => array_map(fn($r) => ['id' => (int)$r['id'], 'nome' => $r['nome'], 'cor' => $r['cor'], 'poly' => json_decode($r['poligono'], true)], all('SELECT * FROM regioes ORDER BY nome')),
     'celulas' => array_map(fn($c) => ['nome' => $c['nome'], 'status' => $c['status'], 'hpv' => $c['hpv'], 'hc' => $c['hc'], 'polys' => $c['polys']], crm_celulas()),
@@ -52,8 +52,8 @@ case 'empresa': {
   }
   $viz = [];
   if ($x['lat'] !== null && in_array($x['geo'], ['rua', 'manual', 'bairro', 'bairro_ok'], true))
-    foreach (all("SELECT id, fantasia, razao, lat, lng, etapa FROM empresas WHERE etapa IN ('afiliado','conquistado','venda') AND lat IS NOT NULL AND id <> ?", [$x['id']]) as $v) {
-      $d = crm_dist((float)$x['lat'], (float)$x['lng'], (float)$v['lat'], (float)$v['lng']); if ($d <= 300) $viz[] = ['nome' => $v['fantasia'] ?: $v['razao'], 'm' => (int)round($d)]; }
+    foreach (all("SELECT id, fantasia, razao, responsavel, lat, lng, etapa FROM empresas WHERE etapa IN ('afiliado','conquistado','venda') AND lat IS NOT NULL AND id <> ?", [$x['id']]) as $v) {
+      $d = crm_dist((float)$x['lat'], (float)$x['lng'], (float)$v['lat'], (float)$v['lng']); if ($d <= 300) $viz[] = ['nome' => crm_nome($v), 'm' => (int)round($d)]; }
   usort($viz, fn($p, $q) => $p['m'] <=> $q['m']);
   $cel = null; if ($x['celula'] && $x['celula'] !== '-') foreach (crm_celulas() as $c) if ($c['nome'] === $x['celula']) $cel = ['nome' => $c['nome'], 'status' => $c['status'], 'ocup' => $c['ocup']];
   $x['extra'] = $x['extra'] ? json_decode($x['extra'], true) : null;
@@ -90,7 +90,7 @@ case 'visita': {
 case 'agenda': {
   $dia = crm_data((string)($_GET['dia'] ?? '')) ?: date('Y-m-d', strtotime('+1 day'));
   $itens = all("SELECT id, fantasia, razao, responsavel, segmento, tel1, logradouro, numero, bairro, lat, lng, visita_turno, visita_quem, etapa FROM empresas WHERE visita_dia = ? AND etapa IN ('agendado','visitado') ORDER BY visita_turno, bairro, logradouro", [$dia]);
-  json_out(['dia' => $dia, 'itens' => array_map(fn($r) => ['id' => (int)$r['id'], 'nome' => $r['fantasia'] ?: $r['razao'], 'resp' => $r['responsavel'], 'seg' => $r['segmento'], 'tel' => $r['tel1'], 'tel_br' => tel_br($r['tel1']),
+  json_out(['dia' => $dia, 'itens' => array_map(fn($r) => ['id' => (int)$r['id'], 'nome' => crm_nome($r), 'resp' => $r['responsavel'], 'seg' => $r['segmento'], 'tel' => $r['tel1'], 'tel_br' => tel_br($r['tel1']),
     'end' => trim($r['logradouro'] . ($r['numero'] ? ', ' . $r['numero'] : '') . ($r['bairro'] ? ' · ' . $r['bairro'] : '')), 'lat' => $r['lat'], 'lng' => $r['lng'], 'turno' => $r['visita_turno'], 'quem' => $r['visita_quem'], 'etapa' => $r['etapa']], $itens)]);
 }
 
@@ -161,13 +161,15 @@ case 'importar': {
     if ($soCidade && $x['cidade'] && crm_sem_acento($x['cidade']) !== 'araguari') { $fora++; continue; }
     if ($soAtiva && $x['situacao'] && !str_contains($x['situacao'], 'ATIVA')) { $inat++; continue; }
     $lin[] = $x; }
+  $cont = []; foreach ($lin as $x) if ($x['email']) $cont[$x['email']] = ($cont[$x['email']] ?? 0) + 1;
+  foreach ($lin as &$x) if ($x['email'] && ($cont[$x['email']] >= 3 || preg_match('/^(abertura|contato|contabil|contabilidade)@|maismei/i', $x['email']))) $x['email'] = null; unset($x);
   if (($e['gravar'] ?? '') !== '1') {
     $ja = 0; foreach ($lin as $x) if (($x['cnpj'] && one('SELECT id FROM empresas WHERE cnpj = ?', [$x['cnpj']])) || ($x['tel1'] && one('SELECT id FROM empresas WHERE tel1 = ? OR tel2 = ?', [$x['tel1'], $x['tel1']]))) $ja++;
     $seg = []; foreach ($lin as $x) { $k = $x['segmento'] ?: 'Sem CNAE'; $seg[$k] = ($seg[$k] ?? 0) + 1; } arsort($seg);
     json_out(['previa' => true, 'total' => count($lin), 'ja' => $ja, 'fora_cidade' => $fora, 'inativas' => $inat,
       'sem_tel' => count(array_filter($lin, fn($x) => !$x['tel1'])), 'colunas' => array_map(fn($i) => (string)$cab[$i], $map),
       'nao_achou' => array_values(array_diff(['cnpj','fantasia','razao','cnae','tel1','logradouro','numero','bairro','cep'], array_keys($map))),
-      'segmentos' => array_slice($seg, 0, 15, true), 'amostra' => array_map(fn($x) => [$x['fantasia'] ?: $x['razao'], $x['segmento'], tel_br($x['tel1']), trim($x['logradouro'] . ', ' . $x['numero'] . ' · ' . $x['bairro'])], array_slice($lin, 0, 6))]);
+      'segmentos' => array_slice($seg, 0, 15, true), 'amostra' => array_map(fn($x) => [crm_nome($x), $x['segmento'], tel_br($x['tel1']), trim($x['logradouro'] . ', ' . $x['numero'] . ' · ' . $x['bairro'])], array_slice($lin, 0, 6))]);
   }
   $n = ['nova' => 0, 'atualizada' => 0]; db()->beginTransaction();
   try { foreach ($lin as $x) $n[crm_gravar_empresa($x, $quem)]++; db()->commit(); } catch (Throwable $z) { db()->rollBack(); json_out(['erro' => 'Falhou ao gravar: ' . $z->getMessage()], 500); }
