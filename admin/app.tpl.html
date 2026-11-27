@@ -761,7 +761,7 @@ document.addEventListener('click', async e => {
 let maisAba = 'config';
 TELAS.mais = async () => {
  const r = cache.cfg = await api('config'); const c = r.config;
- const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
+ const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['goto', 'GoTo (WhatsApp)'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['zerar', 'Zerar testes'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
  if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
  $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
   <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
@@ -799,6 +799,28 @@ TELAS.mais = async () => {
   $('#f-mail').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('email', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
   $('#m-teste').addEventListener('click', async () => { toast('Enviando…'); const rr = await api('email', { o:'teste' }); rr.erro ? toast(rr.erro, true) : toast(rr.msg); });
  }
+ if (maisAba === 'goto') {
+  const g = await api('goto', { o:'status' });
+  if (g.erro) { box.innerHTML = `<p class="sub">${h(g.erro)}</p>`; return; }
+  box.innerHTML = `<form class="form ch" id="f-goto" style="max-width:620px">
+   <p class="sub" style="margin:0">Liga o WhatsApp da CallNet (GoTo) ao Hunter League. Quem ler o QR e mandar <b>"Código do parceiro: HL-…"</b> vira indicação daquele parceiro na hora, e cartões de contato mandados do WhatsApp do parceiro viram a lista dos 20 dele. A conversa aparece na ficha do CRM.</p>
+   <div class="ch" style="padding:12px;border:1px solid ${g.ok ? 'var(--ok,#19F7FF)' : 'var(--ln,#333)'}">
+    ${g.ok ? `<b>✓ Conectado</b> desde ${h(g.ok.em)}${g.ok.quem ? ' por ' + h(g.ok.quem) : ''}<br><span class="sub">${g.n} mensagem(ns) recebida(s)${g.ultimo ? ' · última às ' + h(g.ultimo) : ' · nenhuma chegou ainda'}</span>` : '<b>Desconectado</b>'}
+    ${g.erro ? `<p style="color:#FF5C7A;margin:8px 0 0">${h(g.erro)}</p>` : ''}
+   </div>
+   <label class="f">ID do cliente (Client ID)<input name="cid" autocomplete="off" spellcheck="false" value="${h(g.cid)}" placeholder="cole o Client ID"></label>
+   <label class="f">Segredo do cliente (Client secret)<input name="sec" type="password" autocomplete="new-password" spellcheck="false" placeholder="${g.tem_sec ? '•••••••• salvo (deixe vazio para manter)' : 'cole o segredo aqui'}"></label>
+   <label class="f">Conta GoTo (accountKey, opcional)<input name="conta" inputmode="numeric" value="${h(g.conta)}" placeholder="em branco: descobre sozinho"></label>
+   <p class="sub" style="margin:0">No developer.goto.com, o cliente precisa ter este endereço de retorno:<br><code style="user-select:all">${h(g.retorno)}</code><br>Quem clicar em Conectar entra com o login de <b>Super Admin</b> do GoTo.</p>
+   ${g.conflito || g.assumir ? `<label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="assumir" value="1" ${g.assumir ? 'checked' : ''}><span><b>Trazer o WhatsApp para o Hunter League.</b> Outra integração (o painel do contratenio) já recebe as mensagens desta conta. Marcando, o contratenio deixa de receber.</span></label>` : ''}
+   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">${g.ok ? 'Reconectar' : 'Conectar'}</button><button class="btn g" type="button" id="gt-s">Só salvar</button>${g.ok ? '<button class="btn g" type="button" id="gt-x">Desligar</button>' : ''}</div>
+  </form>
+  ${g.msgs.length ? `<h3 style="margin:22px 0 8px">Últimas mensagens</h3><ul class="hist">${g.msgs.map(m => `<li class="ch"><span>${h(m.em)}</span><span>${m.dir === 'in' ? '⬅ ' : '➡ '}${h(m.perfil || m.tel)}</span><div>${h(m.texto)}</div></li>`).join('')}</ul>` : ''}`;
+  const dados = (o) => { const f = Object.fromEntries(new FormData($('#f-goto'))); f.o = o; f.assumir = f.assumir ? '1' : ''; return f; };
+  $('#f-goto').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('goto', dados('conectar')); if (rr.erro) return toast(rr.erro, true); location.href = rr.url; });
+  $('#gt-s').addEventListener('click', async () => { const rr = await api('goto', dados('salvar')); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+  const x = $('#gt-x'); if (x) x.addEventListener('click', async () => { if (!confirm('Desligar? As mensagens do WhatsApp param de entrar no Hunter League.')) return; const rr = await api('goto', { o:'desligar' }); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+ }
  if (maisAba === 'integra') {
   box.innerHTML = `<form class="form ch" id="f-cdd" style="max-width:560px">
    <p class="sub" style="margin:0">Casa dos Dados: puxa as empresas para o mapa de conquista. O token fica só no servidor e não aparece de novo depois de salvo.</p>
@@ -808,6 +830,25 @@ TELAS.mais = async () => {
   $('#f-cdd').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('integracoes', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
   $('#cdd-t').addEventListener('click', async () => { toast('Testando…'); const rr = await api('integracoes', { o:'testar' }); rr.ok ? toast(rr.msg) : toast(rr.msg || rr.erro, true); });
   const x = $('#cdd-x'); if (x) x.addEventListener('click', async () => { const rr = await api('integracoes', { o:'apagar' }); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+ }
+ if (maisAba === 'zerar') {
+  const z = await api('zerar', { o:'previa' });
+  if (z.erro) { box.innerHTML = `<p class="sub">${h(z.erro)}</p>`; return; }
+  const p = z.previa, li = (t) => `<li>${t}</li>`;
+  box.innerHTML = `<form class="form ch" id="f-zr" style="max-width:640px">
+   <p class="sub" style="margin:0">Para começar a produção limpa. <b>Não tem volta.</b></p>
+   <div><b style="color:#FF5C7A">Sai</b><ul style="margin:6px 0 0 18px;padding:0">
+    ${li(`${p.parceiros} parceiro(s), com ${p.indicacoes} indicação(ões), ${p.leituras} leitura(s) do QR, ${p.saques} saque(s) e ${p.premios} prêmio(s)`)}
+    ${li(p.usuarios.length ? `Usuários da Central: ${p.usuarios.map(h).join(', ')}` : 'Nenhum outro usuário da Central')}
+    ${li(p.qr_ativos.length ? `Os QR ativados voltam a ficar livres: ${p.qr_ativos.map(h).join(', ')}` : 'Nenhum QR ativado')}
+    ${li(`${p.lojas_ligadas} loja(s) do CRM ligada(s) a parceiros de teste voltam para "a ligar"`)}</ul></div>
+   <div><b style="color:var(--nio,#19F7FF)">Fica</b><ul style="margin:6px 0 0 18px;padding:0">${li('Sua conta: ' + h(p.fica))}${li('Configurações (WhatsApp, bônus, mensagem, e-mail) e os códigos dos QR')}${li(`A base do CRM: ${p.empresas} empresa(s), mapa e regiões`)}</ul></div>
+   <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="crm" value="1"><span>Também limpar o trabalho do CRM feito nos testes: ${p.crm_trabalhadas} empresa(s) com parecer, agendamento ou tentativa, e ${p.crm_hist} anotação(ões) do histórico. Todas voltam para "a ligar".</span></label>
+   <label class="f">Digite ZERAR para confirmar<input name="confirma" autocomplete="off" spellcheck="false"></label>
+   <button class="btn" type="submit" style="justify-self:start;background:#FF5C7A">Zerar agora</button></form>`;
+  $('#f-zr').addEventListener('submit', async e => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); f.o = 'zerar'; f.crm = f.crm ? '1' : '';
+   if (f.confirma !== 'ZERAR') return toast('Digite ZERAR para confirmar.', true);
+   const rr = await api('zerar', f); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), cache = {}, TELAS.mais()); });
  }
  if (maisAba === 'hist') box.innerHTML = `<ul class="hist">${r.historico.map(x => `<li class="ch"><span>${h(x.em)}</span><span>${h(x.quem)}</span><div><b>${h(x.acao)}</b> ${h(x.alvo)}${x.detalhe ? ` <span>· ${h(x.detalhe)}</span>` : ''}</div></li>`).join('')}</ul>`;
  if (maisAba === 'senha') {

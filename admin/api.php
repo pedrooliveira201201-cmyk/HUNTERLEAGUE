@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 require __DIR__ . '/../api/_casadosdados.php';
+require __DIR__ . '/../api/_goto.php';
 header('X-Robots-Tag: noindex');
 $a = admin_logado();
 if (!$a) json_out(['erro' => 'Sua sessão expirou. Entre de novo.', 'sair' => true], 401);
@@ -113,6 +114,7 @@ case 'config': {
   $c = []; foreach (all('SELECT chave, valor FROM config') as $r) $c[$r['chave']] = $r['valor'];
   $c['smtp_tem_senha'] = ($c['smtp_senha'] ?? '') !== ''; unset($c['smtp_senha']);
   $ck = cdd_chave(); $c['cdd_fim'] = $ck !== '' ? mb_substr($ck, -4) : ''; $c['cdd_no_arquivo'] = (string)(cfg()['casadosdados_key'] ?? '') !== ''; unset($c['casadosdados_key']);
+  foreach (array_keys($c) as $k) if (str_starts_with($k, 'goto_')) unset($c[$k]); /* segredos do GoTo nunca saem do servidor */
   if (!$master) $c = [];
   json_out(['config' => $c, 'master' => $master,
     'equipe' => $master ? array_map(fn($u) => ['id' => (int)$u['id'], 'nome' => $u['nome'], 'usuario' => $u['usuario'], 'papel' => $u['papel'], 'ativo' => (bool)$u['ativo'], 'eu' => (int)$u['id'] === (int)$a['id']], all('SELECT * FROM admins ORDER BY nome')) : [],
@@ -316,6 +318,67 @@ case 'integracoes': {
   auditar($quem, 'salvou o token da Casa dos Dados', '…' . mb_substr($k, -4));
   $r = cdd_testar();
   json_out(['ok' => true, 'msg' => 'Token salvo. ' . $r['msg']]);
+}
+case 'goto': {
+  /* WhatsApp da CallNet pelo GoTo: só o master. O segredo só entra, nunca sai. */
+  if (!$master) json_out(['erro' => 'Só o master mexe na integração do GoTo.'], 403);
+  goto_migrar();
+  $o = $s('o');
+  if ($o === 'status' || !$post) {
+    $ok = json_decode(goto_cfg('goto_ok'), true) ?: null;
+    $ult = all('SELECT tel, dir, perfil, texto, em FROM goto_msgs ORDER BY id DESC LIMIT 8');
+    json_out(['cid' => goto_cfg('goto_cid'), 'tem_sec' => goto_cfg('goto_sec') !== '', 'conta' => goto_cfg('goto_conta'), 'retorno' => goto_url('goto-retorno.php'),
+      'ok' => $ok ? ['em' => dh_br($ok['em']), 'quem' => $ok['quem']] : null, 'erro' => goto_cfg('goto_erro'), 'conflito' => goto_cfg('goto_conflito') !== '', 'assumir' => goto_cfg('goto_assumir') === '1',
+      'ultimo' => dh_br(goto_cfg('goto_ultimo') ?: null), 'n' => (int)goto_cfg('goto_n'),
+      'msgs' => array_map(fn($m) => ['tel' => tel_br($m['tel']), 'dir' => $m['dir'], 'perfil' => $m['perfil'] ?? '', 'texto' => mb_substr($m['texto'], 0, 120), 'em' => dh_br($m['em'])], $ult)]);
+  }
+  if ($o === 'salvar' || $o === 'conectar') {
+    $cid = preg_replace('/\s+/', '', $s('cid', 120)); $sec = preg_replace('/\s+/', '', (string)($e['sec'] ?? '')); $conta = preg_replace('/\D/', '', $s('conta', 30));
+    if ($cid !== '') goto_set('goto_cid', $cid);
+    if ($sec !== '') { if (strlen($sec) < 8 || strlen($sec) > 300) json_out(['erro' => 'Esse segredo não parece completo.'], 422); goto_set('goto_sec', $sec); }
+    goto_set('goto_conta', $conta);
+    goto_set('goto_assumir', ($e['assumir'] ?? '') === '1' ? '1' : '');
+    if ($o === 'salvar') { auditar($quem, 'salvou o GoTo', $cid); json_out(['ok' => true, 'msg' => 'Salvo.']); }
+    if (goto_cfg('goto_cid') === '' || goto_cfg('goto_sec') === '') json_out(['erro' => 'Cole o ID e o segredo do cliente do GoTo.'], 422);
+    $st = bin2hex(random_bytes(16)); goto_set('goto_state', $st . '|' . (time() + 900));
+    auditar($quem, 'abriu a conexão do GoTo', goto_cfg('goto_cid'));
+    json_out(['ok' => true, 'url' => 'https://authentication.logmeininc.com/oauth/authorize?' . http_build_query(['response_type' => 'code', 'client_id' => goto_cfg('goto_cid'), 'redirect_uri' => goto_url('goto-retorno.php'), 'state' => $st])]);
+  }
+  if ($o === 'desligar') {
+    /* para de aceitar avisos (troca a chave do endereço). A assinatura no GoTo fica, mas cai aqui com acesso negado. */
+    goto_set('goto_hook', ''); goto_set('goto_ok', ''); goto_set('goto_rt', '');
+    auditar($quem, 'desligou o GoTo');
+    json_out(['ok' => true, 'msg' => 'Desligado. As mensagens param de entrar no Hunter League.']);
+  }
+  json_out(['erro' => 'Ação desconhecida.'], 400);
+}
+case 'zerar': {
+  /* começo da produção: apaga os dados de teste. Fica a conta de quem está logado, as configurações, os códigos e a base do CRM. */
+  if (!$master) json_out(['erro' => 'Só o master pode zerar.'], 403);
+  require_once __DIR__ . '/../api/_crm.php'; crm_migrar();
+  $crm = ($e['crm'] ?? '') === '1';
+  $n = fn($sql, $p = []) => (int)(one($sql, $p)['n'] ?? 0);
+  $prev = ['parceiros' => $n('SELECT COUNT(*) AS n FROM parceiros'), 'indicacoes' => $n('SELECT COUNT(*) AS n FROM indicacoes'), 'leituras' => $n('SELECT COUNT(*) AS n FROM leituras'),
+    'saques' => $n('SELECT COUNT(*) AS n FROM saques'), 'premios' => $n('SELECT COUNT(*) AS n FROM premios'),
+    'usuarios' => array_map(fn($u) => $u['nome'] . ' (' . $u['usuario'] . ')', all('SELECT nome, usuario FROM admins WHERE id <> ? ORDER BY nome', [$a['id']])),
+    'qr_ativos' => array_column(all("SELECT codigo FROM parceiros WHERE codigo IS NOT NULL AND codigo <> '' ORDER BY codigo"), 'codigo'),
+    'lojas_ligadas' => $n("SELECT COUNT(*) AS n FROM empresas WHERE parceiro_id IS NOT NULL OR etapa IN ('afiliado','conquistado','venda')"),
+    'crm_trabalhadas' => $n("SELECT COUNT(*) AS n FROM empresas WHERE etapa <> 'mapeado' OR proximo_em IS NOT NULL OR tentativas > 0"), 'crm_hist' => $n('SELECT COUNT(*) AS n FROM empresa_hist'),
+    'empresas' => $n('SELECT COUNT(*) AS n FROM empresas'), 'fica' => $a['nome'] . ' (' . $a['usuario'] . ')'];
+  if ($s('o') !== 'zerar') json_out(['previa' => $prev]);
+  if ($s('confirma', 10) !== 'ZERAR') json_out(['erro' => 'Digite ZERAR para confirmar.'], 422);
+  $pdo = db(); $pdo->beginTransaction();
+  try {
+    foreach (['indicacoes', 'saques', 'leituras', 'premios', 'senha_tokens', 'tentativas'] as $t) q("DELETE FROM $t");
+    if ($crm) { q('DELETE FROM empresa_hist');
+      q("UPDATE empresas SET etapa = 'mapeado', parceiro_id = NULL, motivo = NULL, proximo_em = NULL, tentativas = 0, tel_ok = NULL, visita_dia = NULL, visita_turno = NULL, visita_quem = NULL, atualizado_em = ?", [agora()]); }
+    else q("UPDATE empresas SET etapa = CASE WHEN etapa IN ('afiliado','conquistado','venda') THEN 'mapeado' ELSE etapa END, parceiro_id = NULL, atualizado_em = ? WHERE parceiro_id IS NOT NULL OR etapa IN ('afiliado','conquistado','venda')", [agora()]);
+    q('DELETE FROM parceiros');
+    q('DELETE FROM admins WHERE id <> ?', [$a['id']]);
+    $pdo->commit();
+  } catch (Throwable $x) { $pdo->rollBack(); json_out(['erro' => 'Não zerou (nada foi apagado): ' . mb_substr($x->getMessage(), 0, 160)], 500); }
+  auditar($quem, 'zerou os dados de teste', $crm ? 'com o CRM' : 'base do CRM mantida', $prev['parceiros'] . ' parceiros, ' . $prev['indicacoes'] . ' indicações, ' . count($prev['usuarios']) . ' usuários');
+  json_out(['ok' => true, 'msg' => 'Pronto. Começo da produção: só a sua conta ficou, e os ' . count(qr_genericos()) . ' códigos estão livres.']);
 }
 case 'email': {
   if ($s('o') === 'teste') {
