@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 require __DIR__ . '/../api/_crm.php';
+require __DIR__ . '/../api/_goto.php';
 header('Cache-Control: no-store');
 
 $a = admin_logado();
@@ -57,7 +58,12 @@ case 'empresa': {
   usort($viz, fn($p, $q) => $p['m'] <=> $q['m']);
   $cel = null; if ($x['celula'] && $x['celula'] !== '-') foreach (crm_celulas() as $c) if ($c['nome'] === $x['celula']) $cel = ['nome' => $c['nome'], 'status' => $c['status'], 'ocup' => $c['ocup']];
   $x['extra'] = $x['extra'] ? json_decode($x['extra'], true) : null;
-  json_out(['empresa' => $x, 'app' => $app, 'vizinhos' => array_slice($viz, 0, 5), 'celula' => $cel,
+  /* conversa no WhatsApp da CallNet (GoTo) com os telefones da empresa e do parceiro */
+  goto_migrar();
+  $tels = array_values(array_unique(array_filter([goto_tel((string)$x['tel1']), goto_tel((string)$x['tel2']), $par ? goto_tel((string)(one('SELECT whatsapp FROM parceiros WHERE id = ?', [$par['id']])['whatsapp'] ?? '')) : ''], fn($t) => strlen($t) >= 10)));
+  $conversa = $tels ? array_reverse(array_map(fn($m) => ['dir' => $m['dir'], 'texto' => mb_substr($m['texto'], 0, 600), 'em' => dh_br($m['em']), 'tel' => tel_br($m['tel'])],
+    all('SELECT dir, texto, em, tel FROM goto_msgs WHERE tel IN (' . implode(',', array_fill(0, count($tels), '?')) . ') ORDER BY em DESC, id DESC LIMIT 40', $tels))) : [];
+  json_out(['empresa' => $x, 'conversa' => $conversa, 'app' => $app, 'vizinhos' => array_slice($viz, 0, 5), 'celula' => $cel,
     'hist' => array_map(fn($h) => ['em' => dh_br($h['em']), 'quem' => $h['quem'], 'tipo' => $h['tipo'], 'texto' => $h['texto']], all('SELECT * FROM empresa_hist WHERE empresa_id = ? ORDER BY id DESC LIMIT 80', [$x['id']]))]);
 }
 

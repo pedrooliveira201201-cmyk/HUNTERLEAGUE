@@ -156,6 +156,9 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
 .leaflet-tooltip{background:#0B1013;color:#EEF2F4;border:1px solid #1E2A30;font-weight:700}
 .leaflet-tooltip-top:before{border-top-color:#1E2A30}
 @media(max-width:900px){body{overflow:auto}.wrap{grid-template-columns:1fr;height:auto}#map{height:62vh}.lado{border-left:0;border-top:1px solid var(--edge)}.placar{margin-left:0;width:100%}.placar div{flex:1;min-width:0}.abas{margin-left:0}}
+.zap{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto;padding:8px;background:#070B0D;border:1px solid var(--edge)}
+.bal{max-width:85%;padding:8px 10px;font-size:14px;white-space:pre-wrap;word-break:break-word;border:1px solid var(--edge)}.bal span{display:block;font-size:11px;opacity:.6;margin-top:3px}
+.bal.in{align-self:flex-start;background:#0E1519}.bal.out{align-self:flex-end;background:#0A2A2C;border-color:#19F7FF55}
 </style>
 <script>/*__CRM_BOOT__*/</script>
 </head>
@@ -458,6 +461,7 @@ async function abreFicha(id, ligando) {
    <div class="lin"><span>Indicados</span><span>${a.indicados.length}</span></div>
    <button class="bt go" type="button" id="b-lista" style="width:100%;margin-top:10px">Lançar lista dos 20 contatos</button><div id="lista-box"></div>
    ${a.indicados.length ? `<table class="t"><tr><th>Cliente</th><th>Origem</th><th>Etapa</th></tr>${a.indicados.map(i => `<tr><td>${h(i.nome)}<br><span class="sub">${h(i.tel)} · ${h(i.em)}</span></td><td>${i.origem === 'qr' ? 'QR' : h(i.origem)}</td><td>${h(i.status)}</td></tr>`).join('')}</table>` : ''}` : ''}
+  ${r.conversa && r.conversa.length ? `<p class="sec">Conversa no WhatsApp (GoTo)</p><div class="zap">${r.conversa.map(m => `<div class="bal ${m.dir === 'in' ? 'in' : 'out'}">${h(m.texto)}<span>${h(m.em)}${m.dir === 'in' ? ' · ' + h(m.tel) : ''}</span></div>`).join('')}</div>` : ''}
   <p class="sec">Histórico</p>
   <form id="f-obs" style="display:flex;gap:6px"><input name="texto" placeholder="Anotar uma observação" style="flex:1;padding:10px;border:1px solid var(--edge);background:#070B0D;color:var(--ink);font-size:15px" maxlength="400"><button class="bt" type="submit">Salvar</button></form>
   <ul class="hist">${r.hist.map(x => `<li>${h(x.texto)}<span>${h(x.em)} · ${h(x.quem)}</span></li>`).join('') || '<li class="sub">Nenhum contato ainda.</li>'}</ul>

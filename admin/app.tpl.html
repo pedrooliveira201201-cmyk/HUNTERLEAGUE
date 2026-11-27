@@ -761,7 +761,7 @@ document.addEventListener('click', async e => {
 let maisAba = 'config';
 TELAS.mais = async () => {
  const r = cache.cfg = await api('config'); const c = r.config;
- const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
+ const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['goto', 'GoTo (WhatsApp)'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
  if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
  $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
   <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
@@ -798,6 +798,28 @@ TELAS.mais = async () => {
    <p class="sub" style="margin:0">${c.smtp_tem_senha && c.smtp_usuario ? '✓ Recuperação por e-mail ativa.' : 'Enquanto não estiver configurado, o "Esqueci a senha" manda o parceiro para o WhatsApp.'}</p></form>`;
   $('#f-mail').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('email', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
   $('#m-teste').addEventListener('click', async () => { toast('Enviando…'); const rr = await api('email', { o:'teste' }); rr.erro ? toast(rr.erro, true) : toast(rr.msg); });
+ }
+ if (maisAba === 'goto') {
+  const g = await api('goto', { o:'status' });
+  if (g.erro) { box.innerHTML = `<p class="sub">${h(g.erro)}</p>`; return; }
+  box.innerHTML = `<form class="form ch" id="f-goto" style="max-width:620px">
+   <p class="sub" style="margin:0">Liga o WhatsApp da CallNet (GoTo) ao Hunter League. Quem ler o QR e mandar <b>"Código do parceiro: HL-…"</b> vira indicação daquele parceiro na hora, e cartões de contato mandados do WhatsApp do parceiro viram a lista dos 20 dele. A conversa aparece na ficha do CRM.</p>
+   <div class="ch" style="padding:12px;border:1px solid ${g.ok ? 'var(--ok,#19F7FF)' : 'var(--ln,#333)'}">
+    ${g.ok ? `<b>✓ Conectado</b> desde ${h(g.ok.em)}${g.ok.quem ? ' por ' + h(g.ok.quem) : ''}<br><span class="sub">${g.n} mensagem(ns) recebida(s)${g.ultimo ? ' · última às ' + h(g.ultimo) : ' · nenhuma chegou ainda'}</span>` : '<b>Desconectado</b>'}
+    ${g.erro ? `<p style="color:#FF5C7A;margin:8px 0 0">${h(g.erro)}</p>` : ''}
+   </div>
+   <label class="f">ID do cliente (Client ID)<input name="cid" autocomplete="off" spellcheck="false" value="${h(g.cid)}" placeholder="cole o Client ID"></label>
+   <label class="f">Segredo do cliente (Client secret)<input name="sec" type="password" autocomplete="new-password" spellcheck="false" placeholder="${g.tem_sec ? '•••••••• salvo (deixe vazio para manter)' : 'cole o segredo aqui'}"></label>
+   <label class="f">Conta GoTo (accountKey, opcional)<input name="conta" inputmode="numeric" value="${h(g.conta)}" placeholder="em branco: descobre sozinho"></label>
+   <p class="sub" style="margin:0">No developer.goto.com, o cliente precisa ter este endereço de retorno:<br><code style="user-select:all">${h(g.retorno)}</code><br>Quem clicar em Conectar entra com o login de <b>Super Admin</b> do GoTo.</p>
+   ${g.conflito || g.assumir ? `<label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="assumir" value="1" ${g.assumir ? 'checked' : ''}><span><b>Trazer o WhatsApp para o Hunter League.</b> Outra integração (o painel do contratenio) já recebe as mensagens desta conta. Marcando, o contratenio deixa de receber.</span></label>` : ''}
+   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">${g.ok ? 'Reconectar' : 'Conectar'}</button><button class="btn g" type="button" id="gt-s">Só salvar</button>${g.ok ? '<button class="btn g" type="button" id="gt-x">Desligar</button>' : ''}</div>
+  </form>
+  ${g.msgs.length ? `<h3 style="margin:22px 0 8px">Últimas mensagens</h3><ul class="hist">${g.msgs.map(m => `<li class="ch"><span>${h(m.em)}</span><span>${m.dir === 'in' ? '⬅ ' : '➡ '}${h(m.perfil || m.tel)}</span><div>${h(m.texto)}</div></li>`).join('')}</ul>` : ''}`;
+  const dados = (o) => { const f = Object.fromEntries(new FormData($('#f-goto'))); f.o = o; f.assumir = f.assumir ? '1' : ''; return f; };
+  $('#f-goto').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('goto', dados('conectar')); if (rr.erro) return toast(rr.erro, true); location.href = rr.url; });
+  $('#gt-s').addEventListener('click', async () => { const rr = await api('goto', dados('salvar')); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+  const x = $('#gt-x'); if (x) x.addEventListener('click', async () => { if (!confirm('Desligar? As mensagens do WhatsApp param de entrar no Hunter League.')) return; const rr = await api('goto', { o:'desligar' }); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
  }
  if (maisAba === 'integra') {
   box.innerHTML = `<form class="form ch" id="f-cdd" style="max-width:560px">
