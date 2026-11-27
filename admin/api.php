@@ -119,7 +119,7 @@ case 'parceiros': {
     'email' => $p['email'] ?? '', 'cidade' => $p['cidade'], 'pix' => $p['pix'], 'codigo' => $p['codigo'], 'status' => $p['status'], 'nivel' => $p['nivel'],
     'desde' => data_br($p['criado_em']), 'termo' => 'v' . $p['termo_versao'] . ' em ' . data_br($p['termo_aceito_em']), 'obs' => $p['obs'] ?? '',
     'sem_ind' => $p['status'] === 'ativo' ? dias_desde($p['ultima'] ?: $p['aprovado_em']) : null, 'ultima' => data_br($p['ultima']),
-    'sem_qr' => $p['status'] === 'ativo' && !$p['codigo'], 'leit' => (int)$p['nleit'], 'ind' => (int)$p['ninds'], 'inst' => (int)$p['ninst'], 'link' => $p['codigo'] ? link_parceiro($p['codigo']) : '',
+    'sem_qr' => $p['status'] === 'ativo' && !$p['codigo'], 'leit' => (int)$p['nleit'], 'ind' => (int)$p['ninds'], 'inst' => (int)$p['ninst'], 'link' => $p['codigo'] ? link_parceiro($p['codigo']) : '', 'link_contatos' => in_array($p['status'], ['ativo', 'pendente'], true) ? link_contatos((int)$p['id']) : '',
   ], $rows)]);
 }
 
@@ -151,6 +151,7 @@ case 'config': {
   $c = []; foreach (all('SELECT chave, valor FROM config') as $r) $c[$r['chave']] = $r['valor'];
   $c['smtp_tem_senha'] = ($c['smtp_senha'] ?? '') !== ''; unset($c['smtp_senha']);
   $ck = cdd_chave(); $c['cdd_fim'] = $ck !== '' ? mb_substr($ck, -4) : ''; $c['cdd_no_arquivo'] = (string)(cfg()['casadosdados_key'] ?? '') !== ''; unset($c['casadosdados_key']);
+  unset($c['contatos_segredo']);
   foreach (array_keys($c) as $k) if (str_starts_with($k, 'goto_')) unset($c[$k]); /* segredos do GoTo nunca saem do servidor */
   if (!$master) $c = [];
   json_out(['config' => $c, 'master' => $master,

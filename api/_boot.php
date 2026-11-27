@@ -201,6 +201,15 @@ function hl_migrar_etapas(): void {
 const MOTIVOS = ['Restrição de CPF', 'Sem cabeamento', 'Desistiu', 'Sem contato', 'Endereço fora da cobertura', 'Outro'];
 const PLANOS = ['600 Mega', '800 Mega', '1 Giga', 'Ultra Mesh'];
 
+/* link de contatos do parceiro: /contatos/ID-CHAVE (a chave é uma assinatura do ID com um segredo do servidor; não dá para adivinhar) */
+function contatos_segredo(): string {
+  static $s = null; if ($s !== null) return $s;
+  $s = (string)(one("SELECT valor FROM config WHERE chave = 'contatos_segredo'")['valor'] ?? '');
+  if ($s === '') { $s = bin2hex(random_bytes(24)); q("INSERT INTO config (chave, valor) VALUES ('contatos_segredo', ?)", [$s]); }
+  return $s;
+}
+function contatos_chave(int $pid): string { return substr(hash_hmac('sha256', 'contatos:' . $pid, contatos_segredo()), 0, 16); }
+function link_contatos(int $pid): string { return rtrim(conf('site_url', 'https://www.hunterleague.com.br'), '/') . '/contatos/' . $pid . '-' . contatos_chave($pid); }
 function link_parceiro(string $codigo): string { return rtrim(conf('site_url', 'https://www.hunterleague.com.br'), '/') . '/i/' . $codigo; }
 
 /* QR genéricos: os códigos já impressos no adesivo A3 (estabelecimento) e na placa A4 (motorista).
