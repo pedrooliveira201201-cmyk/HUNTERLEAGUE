@@ -106,11 +106,12 @@ case 'indicacoes': {
 }
 
 case 'parceiros': {
-  $rows = all("SELECT p.*, (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = p.id) AS ninds,
-                 (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = p.id AND i.status = 'Instalado') AS ninst,
-                 (SELECT COUNT(*) FROM leituras l WHERE l.parceiro_id = p.id) AS nleit,
-                 (SELECT MAX(i.criado_em) FROM indicacoes i WHERE i.parceiro_id = p.id) AS ultima
-               FROM parceiros p ORDER BY CASE p.status WHEN 'pendente' THEN 0 ELSE 1 END, p.criado_em DESC LIMIT 1000");
+  /* contagens de uma vez (agrupadas), em vez de 4 buscas por parceiro: fica rápido com muitos parceiros */
+  $rows = all("SELECT p.*, COALESCE(i.n, 0) AS ninds, COALESCE(i.inst, 0) AS ninst, COALESCE(l.n, 0) AS nleit, i.ultima
+               FROM parceiros p
+               LEFT JOIN (SELECT parceiro_id, COUNT(*) AS n, SUM(CASE WHEN status = 'Instalado' THEN 1 ELSE 0 END) AS inst, MAX(criado_em) AS ultima FROM indicacoes GROUP BY parceiro_id) i ON i.parceiro_id = p.id
+               LEFT JOIN (SELECT parceiro_id, COUNT(*) AS n FROM leituras GROUP BY parceiro_id) l ON l.parceiro_id = p.id
+               ORDER BY CASE p.status WHEN 'pendente' THEN 0 ELSE 1 END, p.criado_em DESC LIMIT 1000");
   if (!$master) json_out(['itens' => array_values(array_map(fn($p) => ['id' => (int)$p['id'], 'tipo' => $p['tipo'], 'nome' => $p['nome'], 'loja' => $p['loja'], 'codigo' => $p['codigo'],
     'status' => $p['status'], 'cidade' => $p['cidade'], 'sem_ind' => $p['status'] === 'ativo' ? dias_desde($p['ultima'] ?: $p['aprovado_em']) : null], array_filter($rows, fn($p) => $p['codigo'])))]);
   json_out(['itens' => array_map(fn($p) => [

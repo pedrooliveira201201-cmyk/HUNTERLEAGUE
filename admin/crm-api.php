@@ -32,8 +32,11 @@ case 'estado': {
       $r['lat'] !== null ? (float)$r['lat'] : null, $r['lng'] !== null ? (float)$r['lng'] : null, $r['etapa'],
       $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds'], (string)$r['cnae'], $r['celula'] && $r['celula'] !== '-' ? (string)$r['celula'] : ''],
     all("SELECT e.id, e.fantasia, e.razao, e.responsavel, e.segmento, e.cnae, e.bairro, e.lat, e.lng, e.etapa, e.proximo_em, e.celula, e.geo, e.tel1,
-      (SELECT COUNT(*) FROM leituras l WHERE l.parceiro_id = e.parceiro_id) AS leit, (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = e.parceiro_id) AS inds
-      FROM empresas e WHERE " . str_replace(['geo', 'celula'], ['e.geo', 'e.celula'], CRM_VISIVEL) . " ORDER BY e.id"));
+      COALESCE(lc.n, 0) AS leit, COALESCE(ic.n, 0) AS inds
+      FROM empresas e
+      LEFT JOIN (SELECT parceiro_id, COUNT(*) AS n FROM leituras GROUP BY parceiro_id) lc ON lc.parceiro_id = e.parceiro_id
+      LEFT JOIN (SELECT parceiro_id, COUNT(*) AS n FROM indicacoes GROUP BY parceiro_id) ic ON ic.parceiro_id = e.parceiro_id
+      WHERE " . str_replace(['geo', 'celula'], ['e.geo', 'e.celula'], CRM_VISIVEL) . " ORDER BY e.id"));
   $lig = (int)(one("SELECT COUNT(*) AS n FROM empresa_hist WHERE tipo = 'ligacao' AND em >= ?", [$hoje . ' 00:00:00'])['n'] ?? 0);
   json_out(['empresas' => $emp, 'regioes' => array_map(fn($r) => ['id' => (int)$r['id'], 'nome' => $r['nome'], 'cor' => $r['cor'], 'poly' => json_decode($r['poligono'], true)], all('SELECT * FROM regioes ORDER BY nome')),
     'celulas' => array_map(fn($c) => ['nome' => $c['nome'], 'status' => $c['status'], 'hpv' => $c['hpv'], 'hc' => $c['hc'], 'polys' => $c['polys']], crm_celulas()),

@@ -40,6 +40,7 @@ function bonus_tabela_atual(): array {
 function definir_bonus(int $id): void {
   $r = one('SELECT status, plano, saque_id, vendido_em, criado_em FROM indicacoes WHERE id = ?', [$id]);
   if (!$r || $r['saque_id']) return;
+  ranking_cache_limpa();
   q('UPDATE indicacoes SET comissao = ? WHERE id = ?', [$r['status'] === 'Instalado' ? bonus_plano($r['plano'], $r['vendido_em'] ?: $r['criado_em']) : null, $id]);
 }
 function semana_de(string $data): array { $t = strtotime(substr($data, 0, 10)); $seg = date('Y-m-d', strtotime('-' . ((int)date('N', $t) - 1) . ' days', $t)); return [$seg, date('Y-m-d', strtotime($seg . ' +6 days'))]; }
@@ -177,7 +178,15 @@ function ordenar(array $cont): array {          // [id => n] → [id => posiçã
   foreach ($cont as $id => $n) { $k++; if ($n !== $ult) { $p = $k; $ult = $n; } $pos[$id] = $p; }
   return $pos;
 }
-function ranking_liga(int $eu): array {
+/* parte pesada do ranking (igual para todos): contagens, posições e insígnias de todos os parceiros.
+   Fica guardada por 60 s em arquivos/cache (e é apagada quando uma instalação muda), para o app abrir rápido com muita gente. */
+const RANKING_CACHE_S = 60;
+function ranking_cache_arq(): string { return PASTA_ARQ . '/cache/ranking.ser'; }
+function ranking_cache_limpa(): void { $f = ranking_cache_arq(); if (is_file($f)) @unlink($f); }
+function ranking_base(): array {
+  static $mem = null; if ($mem !== null) return $mem;
+  $f = ranking_cache_arq(); $chave = date('Y-m-d');
+  if (is_file($f) && time() - (int)@filemtime($f) < RANKING_CACHE_S) { $c = @unserialize((string)@file_get_contents($f)); if (is_array($c) && ($c['dia'] ?? '') === $chave) return $mem = $c; }
   $ps = [];
   foreach (all("SELECT id, tipo, nome, loja FROM parceiros WHERE status = 'ativo'") as $r) $ps[(int)$r['id']] = $r + ['datas' => []];
   foreach (all("SELECT parceiro_id, instalado_em FROM indicacoes WHERE status = 'Instalado' AND instalado_em IS NOT NULL") as $r)
@@ -191,55 +200,69 @@ function ranking_liga(int $eu): array {
     'temporada' => [[$mes, $hoje], $h7 >= $mes ? [$mes, $h7] : null],
     'geral'     => [['0000-00-00', $hoje], ['0000-00-00', $h7]],
   ];
-  $divs = ['Recruta' => [], 'Hunter' => [], 'Hunter Elite' => []];
-  foreach ($ps as $id => $p) $divs[divisao_de(count($p['datas']))][] = $id;
-  $minhaDiv = divisao_de(count($ps[$eu]['datas'] ?? []));
-  $out = [];
-  foreach ($periodos as $per => [$agora, $antes]) {
-    foreach ($divs as $dv => $ids) {
-      $cn = []; $ca = [];
-      foreach ($ids as $id) {
-        $n = $conta($ps[$id]['datas'], ...$agora); if ($n > 0) $cn[$id] = $n;
-        if ($antes) { $m = $conta($ps[$id]['datas'], ...$antes); if ($m > 0) $ca[$id] = $m; }
-      }
-      $pos = ordenar($cn); $posA = $antes ? ordenar($ca) : [];
-      $lista = [];
-      foreach ($pos as $id => $p) {
-        $lista[] = ['p' => $p, 'n' => nome_ranking($ps[$id]), 'i' => $cn[$id], 'eu' => $id === $eu,
-                    'd' => $antes ? (isset($posA[$id]) ? $posA[$id] - $p : 'novo') : null];
-        if (count($lista) >= 30 && !isset($pos[$eu])) break;
-      }
-      $out[$per][$dv] = ['lista' => array_slice($lista, 0, 30), 'eu' => null, 'cola' => null];
-      if ($dv === $minhaDiv) {
-        $meu = $cn[$eu] ?? 0;
-        $me = $meu ? ['p' => $pos[$eu], 'i' => $meu, 'd' => $antes ? (isset($posA[$eu]) ? $posA[$eu] - $pos[$eu] : 'novo') : null] : ['p' => null, 'i' => 0, 'd' => null];
-        $acima = null; $abaixo = null;
-        foreach ($pos as $id => $p) {
-          if ($id === $eu) continue;
-          if ($cn[$id] > $meu) $acima = ['n' => nome_ranking($ps[$id]), 'i' => $cn[$id]];
-          elseif ($meu && $cn[$id] <= $meu && !$abaixo && $p >= ($pos[$eu] ?? 0)) $abaixo = ['n' => nome_ranking($ps[$id]), 'i' => $cn[$id]];
-        }
-        $out[$per][$dv]['eu'] = $me; $out[$per][$dv]['cola'] = ['acima' => $acima, 'abaixo' => $abaixo];
-      }
+  $divs = ['Recruta' => [], 'Hunter' => [], 'Hunter Elite' => []]; $div = [];
+  foreach ($ps as $id => $p) { $div[$id] = divisao_de(count($p['datas'])); $divs[$div[$id]][] = $id; }
+  $per = [];
+  foreach ($periodos as $pk => [$agora, $antes]) foreach ($divs as $dv => $ids) {
+    $cn = []; $ca = [];
+    foreach ($ids as $id) {
+      $n = $conta($ps[$id]['datas'], ...$agora); if ($n > 0) $cn[$id] = $n;
+      if ($antes) { $m = $conta($ps[$id]['datas'], ...$antes); if ($m > 0) $ca[$id] = $m; }
     }
+    $per[$pk][$dv] = ['cn' => $cn, 'pos' => ordenar($cn), 'posA' => $antes ? ordenar($ca) : [], 'antes' => (bool)$antes];
   }
-  // insígnias das temporadas que já fecharam: Alfa (1º) e Top 3 da divisão
+  /* insígnias das temporadas que já fecharam: posição de cada um na divisão em que estava no fim do mês */
   $ins = [];
   $meses = array_unique(array_map(fn($d) => substr($d, 0, 7), array_merge(...array_values(array_map(fn($p) => $p['datas'], $ps)) ?: [[]])));
   sort($meses);
   foreach ($meses as $cmp) {
     if ($cmp >= date('Y-m')) continue;
     $fim = date('Y-m-t', strtotime($cmp . '-01'));
-    $minhaDivNaEpoca = divisao_de($conta($ps[$eu]['datas'] ?? [], '0000-00-00', $fim));
-    $cn = [];
+    $dEp = []; $cnD = [];
     foreach ($ps as $id => $p) {
-      if (divisao_de($conta($p['datas'], '0000-00-00', $fim)) !== $minhaDivNaEpoca) continue;
-      $n = $conta($p['datas'], $cmp . '-01', $fim); if ($n > 0) $cn[$id] = $n;
+      $tot = $conta($p['datas'], '0000-00-00', $fim); if (!$tot) continue;
+      $dEp[$id] = divisao_de($tot);
+      $n = $conta($p['datas'], $cmp . '-01', $fim); if ($n > 0) $cnD[$dEp[$id]][$id] = $n;
     }
-    $pos = ordenar($cn);
-    if (isset($pos[$eu]) && $pos[$eu] <= 3) $ins[] = ['t' => $pos[$eu] === 1 ? 'Alfa' : 'Top 3', 'p' => $pos[$eu], 'mes' => nome_mes($cmp), 'div' => $minhaDivNaEpoca];
+    $ins[$cmp] = ['div' => $dEp, 'pos' => array_map('ordenar', $cnD)];
   }
-  [$a, $m] = [(int)date('Y'), (int)date('n')];
+  $nomes = []; foreach ($ps as $id => $p) $nomes[$id] = nome_ranking($p);
+  $mem = ['dia' => $chave, 'nomes' => $nomes, 'div' => $div, 'per' => $per, 'ins' => $ins];
+  $dir = dirname($f);
+  if (is_dir($dir) || @mkdir($dir, 0750, true)) { $tmp = $f . '.' . getmypid(); if (@file_put_contents($tmp, serialize($mem)) !== false) @rename($tmp, $f); }
+  return $mem;
+}
+function ranking_liga(int $eu): array {
+  $B = ranking_base();
+  $minhaDiv = $B['div'][$eu] ?? divisao_de(0);
+  $out = [];
+  foreach ($B['per'] as $pk => $dvs) foreach ($dvs as $dv => $R) {
+    $cn = $R['cn']; $pos = $R['pos']; $posA = $R['posA']; $antes = $R['antes'];
+    $lista = [];
+    foreach ($pos as $id => $p) {
+      $lista[] = ['p' => $p, 'n' => $B['nomes'][$id], 'i' => $cn[$id], 'eu' => $id === $eu,
+                  'd' => $antes ? (isset($posA[$id]) ? $posA[$id] - $p : 'novo') : null];
+      if (count($lista) >= 30) break;
+    }
+    $out[$pk][$dv] = ['lista' => $lista, 'eu' => null, 'cola' => null];
+    if ($dv === $minhaDiv) {
+      $meu = $cn[$eu] ?? 0;
+      $me = $meu ? ['p' => $pos[$eu], 'i' => $meu, 'd' => $antes ? (isset($posA[$eu]) ? $posA[$eu] - $pos[$eu] : 'novo') : null] : ['p' => null, 'i' => 0, 'd' => null];
+      $acima = null; $abaixo = null;
+      foreach ($pos as $id => $p) {
+        if ($id === $eu) continue;
+        if ($cn[$id] > $meu) $acima = ['n' => $B['nomes'][$id], 'i' => $cn[$id]];
+        elseif ($meu && $cn[$id] <= $meu && !$abaixo && $p >= ($pos[$eu] ?? 0)) $abaixo = ['n' => $B['nomes'][$id], 'i' => $cn[$id]];
+      }
+      $out[$pk][$dv]['eu'] = $me; $out[$pk][$dv]['cola'] = ['acima' => $acima, 'abaixo' => $abaixo];
+    }
+  }
+  $ins = [];
+  foreach ($B['ins'] as $cmp => $I) {
+    $d = $I['div'][$eu] ?? divisao_de(0); $p = $I['pos'][$d][$eu] ?? null;
+    if ($p !== null && $p <= 3) $ins[] = ['t' => $p === 1 ? 'Alfa' : 'Top 3', 'p' => $p, 'mes' => nome_mes($cmp), 'div' => $d];
+  }
+  $m = (int)date('n');
   return [
     'temporada' => ['nome' => ucfirst(MESES[$m]), 'fim' => date('t/m'), 'dias' => (int)date('t') - (int)date('j'), 'pct' => round((int)date('j') / (int)date('t'), 3)],
     'semana' => ['fim' => date('d/m', strtotime('sunday this week')), 'dias' => 7 - (int)date('N')],

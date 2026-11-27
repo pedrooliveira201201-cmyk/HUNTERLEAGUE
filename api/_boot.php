@@ -165,9 +165,23 @@ function parceiros_parados(): array {
 function dias_desde(?string $dt): ?int { return $dt ? (int)floor((time() - strtotime($dt)) / 86400) : null; }
 
 /* migração única: as etapas antigas viram as novas (26/11/2026) */
+/* rapidez com muita gente: índices para o que mais cresce (leituras do QR, indicações por etapa, histórico do CRM). Roda uma vez. */
+function hl_indices(): void {
+  static $feito = false; if ($feito) return; $feito = true;
+  if (conf('idx_v') !== '2') {
+    foreach (['CREATE INDEX idx_leit_em ON leituras (em)', 'CREATE INDEX idx_ind_st ON indicacoes (status, instalado_em)', 'CREATE INDEX idx_par_wa ON parceiros (whatsapp)',
+              'CREATE INDEX idx_emp_tel2 ON empresas (tel2)', 'CREATE INDEX idx_eh_tipo ON empresa_hist (tipo, em)', 'CREATE INDEX idx_ind_par_st ON indicacoes (parceiro_id, status)'] as $sql) { try { db()->exec($sql); } catch (Throwable $e) { /* já existe ou a tabela ainda não foi criada */ } }
+    try { if (one("SELECT chave FROM config WHERE chave = 'idx_v'")) q("UPDATE config SET valor = '2' WHERE chave = 'idx_v'"); else q("INSERT INTO config (chave, valor) VALUES ('idx_v', '2')"); } catch (Throwable $e) {}
+  }
+  if (conf('limpeza_dia') !== date('Y-m-d')) {
+    try { q('DELETE FROM tentativas WHERE em < ?', [date('Y-m-d H:i:s', strtotime('-3 days'))]);
+      if (one("SELECT chave FROM config WHERE chave = 'limpeza_dia'")) q("UPDATE config SET valor = ? WHERE chave = 'limpeza_dia'", [date('Y-m-d')]); else q("INSERT INTO config (chave, valor) VALUES ('limpeza_dia', ?)", [date('Y-m-d')]); } catch (Throwable $e) {}
+  }
+}
 function hl_migrar_etapas(): void {
   static $feito = false;
   if ($feito) return; $feito = true;
+  hl_indices();
   try {
     /* 27/11/2026: a equipe toda com o mesmo acesso (todos master), uma vez só */
     if (conf('equipe_master') !== '1') { q("UPDATE admins SET papel = 'master'"); q("INSERT INTO config (chave, valor) VALUES ('equipe_master', '1')"); }
