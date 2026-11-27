@@ -213,6 +213,9 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
 /* pino com ícone da etapa (de perto) */
 .pin{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--c);color:#050607;border:2px solid #050607;box-shadow:0 0 0 1.5px color-mix(in srgb,var(--c) 60%,#fff),0 4px 12px rgba(0,0,0,.5);transition:transform .15s}
 .pin:hover{transform:scale(1.12)}
+.zb{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#25D366;color:#04140A;border:1.5px solid #050607;box-shadow:0 2px 6px rgba(0,0,0,.5)}.zb svg{width:9px;height:9px;fill:none;stroke:currentColor;stroke-width:2.4}.zb.resp{background:#19F7FF;animation:zbp 1.4s ease-in-out infinite}@keyframes zbp{50%{transform:scale(1.25)}}
+.bt.zp{border-color:#25D366;color:#25D366}#f-zap{display:inline-flex;align-items:center;gap:6px}#f-zap svg{width:14px;height:14px;fill:none;stroke:#25D366;stroke-width:2}#f-zap b{color:#25D366}#f-zap em{font-style:normal;color:#050607;background:#19F7FF;padding:0 6px;border-radius:9px;font-size:12px}
+.lista em.za{color:#25D366;border-color:#25D366}.lista em.zr{color:#050607;background:#19F7FF;border-color:#19F7FF}
 .pin svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .pin.sel{transform:scale(1.25);box-shadow:0 0 0 3px #fff,0 0 22px var(--c)}
 .parada{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#FFB547;color:#050607;font-weight:900;border:2px solid #050607;box-shadow:0 0 0 2px #FFB547,0 6px 16px rgba(0,0,0,.5)}
@@ -355,6 +358,7 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
    <div class="fx" id="fx">
     <button type="button" id="b-seg" aria-expanded="false">Segmentos</button>
     <button type="button" id="f-ligar" aria-pressed="false">A agendar</button>
+    <button type="button" id="f-zap" aria-pressed="false">Aguardando WhatsApp</button>
     <button type="button" class="des" id="b-des" aria-pressed="false">Desenhar região</button>
     <button type="button" id="b-auto">Regiões automáticas</button>
    </div>
@@ -389,7 +393,7 @@ const ETN = { mapeado:'Mapeado', agendado:'Agendado', visitado:'Visitado', afili
 const CONQ = new Set(['afiliado', 'conquistado', 'venda']);
 let segOn = new Set(), S = { empresas:[], regioes:[], celulas:[], geo:{} }, vis = 'mapa', etapasOn = new Set(Object.keys(COR)), regSel = null, fichaId = null, camadas = { cabo:true, cel:false, reg:true, conq:true, ind:true };
 /* empresas: [id, nome, seg, bairro, lat, lng, etapa, vencido, noCabo, geo, temTel, leituras, indicados] */
-const E = r => ({ id:r[0], nome:r[1], seg:r[2], bairro:r[3], lat:r[4], lng:r[5], et:r[6], venc:r[7] === 1 ? 1 : 0, fut:r[7] === 2, cabo:r[8], geo:r[9], tel:r[10], leit:r[11], ind:r[12], cnae:r[13] || '', cel:r[14] || '' });
+const E = r => ({ id:r[0], nome:r[1], seg:r[2], bairro:r[3], lat:r[4], lng:r[5], et:r[6], venc:r[7] === 1 ? 1 : 0, fut:r[7] === 2, cabo:r[8], geo:r[9], tel:r[10], leit:r[11], ind:r[12], cnae:r[13] || '', cel:r[14] || '', zap:r[15] || 0 });
 /*GEO*/
 /* Contorno único de um conjunto de polígonos (as células da Nio): rasteriza numa grade de ~11 m, fecha as frestas
    entre células vizinhas e segue a borda. Devolve [[contorno, buraco, ...], ...] pronto para o L.polygon. */
@@ -486,8 +490,8 @@ const G = { cabo:L.layerGroup().addTo(map), conq:L.layerGroup().addTo(map), reg:
 const pos = e => { if (e.lat == null) return null; if (e.geo === 'bairro' || e.geo === 'bairro_ok') { const a = (e.id * 2.39996) % 6.283, d = 0.0006 + ((e.id * 7919) % 100) / 100 * 0.0022; return [e.lat + Math.sin(a) * d, e.lng + Math.cos(a) * d * 1.05]; } return [e.lat, e.lng]; };
 const dentro = (p, poly) => { let o = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [yi, xi] = poly[i], [yj, xj] = poly[j]; if ((yi > p[0]) !== (yj > p[0]) && p[1] < (xj - xi) * (p[0] - yi) / ((yj - yi) || 1e-12) + xi) o = !o; } return o; };
 function filtradas(semEtapa) {
- const q = $('#busca').value.trim().toLowerCase(), lig = $('#f-ligar').getAttribute('aria-pressed') === 'true';
- return S.empresas.filter(e => (semEtapa || etapasOn.has(e.et)) && (!segOn.size || segOn.has(e.seg)) && (!lig || (e.et === 'mapeado' && e.tel && !e.fut))
+ const q = $('#busca').value.trim().toLowerCase(), lig = $('#f-ligar').getAttribute('aria-pressed') === 'true', zap = $('#f-zap').getAttribute('aria-pressed') === 'true';
+ return S.empresas.filter(e => (semEtapa || etapasOn.has(e.et)) && (!segOn.size || segOn.has(e.seg)) && (!lig || (e.et === 'mapeado' && e.tel && !e.fut)) && (!zap || e.zap)
   && (!q || (e.nome + ' ' + e.bairro + ' ' + e.seg).toLowerCase().includes(q)));
 }
 /* cobertura: um contorno só para o cabo inteiro (as 105 partes das células juntas), com brilho */
@@ -585,6 +589,7 @@ function desenhaEmpresas(lista) {
   if (icones || sel) L.marker(p, { icon:pinIcon(e, sel), zIndexOffset:sel ? 1000 : ORD[e.et] * 10 }).bindTooltip(tip, { direction:'top', offset:[0, -12] }).on('click', () => abreFicha(e.id)).addTo(G.emp);
   else L.circleMarker(p, { renderer:rend, radius:CONQ.has(e.et) ? 6.5 : 5, color:CONQ.has(e.et) ? '#E9FFFF' : '#050607', weight:CONQ.has(e.et) ? 1.6 : 1.2, fillColor:COR[e.et], fillOpacity:e.et === 'perdido' ? .5 : .95 })
    .bindTooltip(tip, { direction:'top' }).on('click', () => abreFicha(e.id)).addTo(G.emp);
+  if (e.zap) L.marker(p, { interactive:false, zIndexOffset:2500, icon:L.divIcon({ className:'', iconSize:[16, 16], iconAnchor:icones || sel ? [-4, 22] : [-1, 15], html:`<div class="zb${e.zap === 2 ? ' resp' : ''}" title="${e.zap === 2 ? 'Respondeu no WhatsApp' : 'Aguardando WhatsApp'}">${IC.msg}</div>` }) }).addTo(G.emp);
   if (camadas.ind && (e.leit || e.ind)) L.circleMarker(p, { renderer:rend, radius:10 + Math.min(e.leit + e.ind * 2, 24) / 2, color:'#32E000', weight:2, opacity:.65, fill:false, interactive:false }).addTo(G.ind);
  };
  for (const e of lista) { const p = pos(e); if (!p) continue;
@@ -628,6 +633,8 @@ function placar(t) {
 /* etapas: as fichas coloridas são a legenda e o filtro ao mesmo tempo */
 function chips() {
  const base = filtradas(true), n = {}; for (const e of base) n[e.et] = (n[e.et] || 0) + 1;
+ const za = S.empresas.filter(e => e.zap === 1).length, zr = S.empresas.filter(e => e.zap === 2).length;
+ $('#f-zap').innerHTML = `${IC.msg}Aguardando WhatsApp <b>${za}</b>${zr ? ` <em>${zr} ${zr === 1 ? 'respondeu' : 'responderam'}</em>` : ''}`;
  $('#chips').innerHTML = Object.entries(ETN).map(([k, t]) => `<button type="button" data-et="${k}" aria-pressed="${etapasOn.has(k)}" style="--c:${COR[k]}"><i></i>${t}<b>${n[k] || 0}</b></button>`).join('');
 }
 $('#chips').addEventListener('click', ev => { const b = ev.target.closest('[data-et]'); if (!b) return; const k = b.dataset.et;
@@ -641,7 +648,7 @@ function camPainel() {
 $('#camp').addEventListener('change', ev => { const x = ev.target.closest('[data-cam]'); if (!x) return; camadas[x.dataset.cam] = x.checked; if (x.dataset.cam === 'cabo' || x.dataset.cam === 'cel') desenhaCabo(); desenha(); });
 $('#b-cam').addEventListener('click', () => { const p = $('#camp'); p.hidden = !p.hidden; $('#b-cam').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) camPainel(); });
 document.addEventListener('click', ev => { if (!ev.target.closest('#camp,#b-cam')) { $('#camp').hidden = true; $('#b-cam').setAttribute('aria-expanded', 'false'); } });
-for (const id of ['#f-ligar']) $(id).addEventListener('click', e => { e.currentTarget.setAttribute('aria-pressed', e.currentTarget.getAttribute('aria-pressed') !== 'true'); desenha(); });
+for (const id of ['#f-ligar', '#f-zap']) $(id).addEventListener('click', e => { e.currentTarget.setAttribute('aria-pressed', e.currentTarget.getAttribute('aria-pressed') !== 'true'); desenha(); });
 /* minha posição (para quem está na rua) */
 $('#b-eu').addEventListener('click', () => {
  if (!navigator.geolocation) return toast('Este aparelho não informa a localização.', true);
@@ -717,8 +724,8 @@ $('#b-placar').addEventListener('click', () => { const on = !document.body.class
 
 /* ---------- painel: lista, região ---------- */
 const lado = $('#lado-c');
-const itemLista = e => `<li tabindex="0" data-id="${e.id}"><i style="background:${COR[e.et]}"></i><span>${h(e.nome)}<small>${h(e.seg || 'Sem segmento')} · ${h(e.bairro || 'sem bairro')}</small></span>${e.et === 'mapeado' && e.venc ? '<em>retornar</em>' : `<small>${ETN[e.et]}</small>`}</li>`;
-const ordem = l => l.slice().sort((a, b) => (b.venc - a.venc) || ((a.et === 'mapeado' ? 0 : 1) - (b.et === 'mapeado' ? 0 : 1)) || a.nome.localeCompare(b.nome));
+const itemLista = e => `<li tabindex="0" data-id="${e.id}"><i style="background:${COR[e.et]}"></i><span>${h(e.nome)}<small>${h(e.seg || 'Sem segmento')} · ${h(e.bairro || 'sem bairro')}</small></span>${e.zap === 2 ? '<em class="zr">respondeu</em>' : e.zap === 1 ? '<em class="za">aguardando</em>' : e.et === 'mapeado' && e.venc ? '<em>retornar</em>' : `<small>${ETN[e.et]}</small>`}</li>`;
+const ordem = l => l.slice().sort((a, b) => ((b.zap === 2) - (a.zap === 2)) || (b.venc - a.venc) || ((a.et === 'mapeado' ? 0 : 1) - (b.et === 'mapeado' ? 0 : 1)) || a.nome.localeCompare(b.nome));
 function painelLista(l) {
  if (!S.carregado) { lado.innerHTML = SK(); return; }
  if (!S.empresas.length) { lado.innerHTML = `<div class="vazio2"><b>Comece pela base</b>Ainda não tem empresas no mapa. Na aba Base, suba a planilha da Casa dos Dados (CSV ou Excel) e clique em Mapear endereços.</div><button class="bt go" type="button" data-v2="base" style="width:100%">Ir para a Base</button>`; return; }
@@ -793,8 +800,8 @@ async function abreFicha(id, ligando) {
    ${prox ? `<span class="sub"> · próxima ação ${prox.toLocaleDateString('pt-BR')}</span>` : ''}${e.visita_dia ? `<span class="sub"> · visita ${new Date(e.visita_dia + 'T12:00:00').toLocaleDateString('pt-BR')} (${e.visita_turno === 'tarde' ? 'tarde' : 'manhã'})</span>` : ''}</div>
   ${e.etapa === 'mapeado' || e.etapa === 'perdido' ? `<div class="box" id="parecer"><b>Parecer da ligação</b><div class="g2" style="margin-top:8px">
    <button class="bt ok" type="button" data-p="agendou">Agendou</button><button class="bt" type="button" data-p="depois">Interesse, mas não agora</button>
-   <button class="bt am" type="button" data-p="nao_atendeu">Não atendeu</button><button class="bt rd" type="button" data-p="nao_quer">Não quer</button>
-   <button class="bt rd" type="button" data-p="numero_errado">Número errado</button><button class="bt rd" type="button" data-p="fechou">Empresa fechou</button></div><div id="p-extra"></div></div>` : ''}
+   <button class="bt am" type="button" data-p="nao_atendeu">Não atendeu</button><button class="bt zp" type="button" data-p="aguardando_zap">Mandei WhatsApp</button>
+   <button class="bt rd" type="button" data-p="nao_quer">Não quer</button><button class="bt rd" type="button" data-p="numero_errado">Número errado</button><button class="bt rd" type="button" data-p="fechou">Empresa fechou</button></div><div id="p-extra"></div></div>` : ''}
   ${e.etapa === 'agendado' ? `<div class="box"><b>Resultado da visita</b><div class="g2" style="margin-top:8px"><button class="bt ok" type="button" data-vis="fechou">Fechou</button><button class="bt" type="button" data-vis="pensar">Vai pensar</button><button class="bt rd" type="button" data-vis="nao_quis">Não quis</button><button class="bt am" type="button" data-vis="nao_estava">Não estava</button></div><p class="sub" style="margin:8px 0 0">Ou reagende: <button class="bt" type="button" data-p="agendou" style="min-height:34px">Mudar dia</button> <button class="bt rd" type="button" id="b-cancag" style="min-height:34px">Cancelar agendamento</button></p><div id="p-extra"></div></div>` : ''}
   <p class="sec">Quem é</p>
   ${[['Responsável', e.responsavel], ['Segmento', e.segmento || e.cnae_desc], ['CNPJ', e.cnpj ? e.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5') + (+e.mei ? ' · MEI' : '') : ''], ['Situação', e.situacao], ['Tempo de empresa', anos(e.abertura)]].filter(x => x[1]).map(([k, v]) => `<div class="lin"><span>${k}</span><span>${h(v)}</span></div>`).join('')}
@@ -826,7 +833,8 @@ async function abreFicha(id, ligando) {
  F.msgTxt = (S.msg_wa || '').replace('{nome}', (e.responsavel || '').split(' ')[0] || nome).replace('{eu}', B.nome || '');
  /* número do WhatsApp: o que atendeu; senão o celular (11 dígitos); senão o primeiro */
  F.zap = e.tel_ok === '2' && e.tel2 ? e.tel2 : e.tel_ok === '1' && e.tel1 ? e.tel1 : [e.tel1, e.tel2].find(t => t && t.length === 11) || e.tel1 || e.tel2 || '';
- $('#b-msg').onclick = () => { if (!abreZap(F.zap, F.msgTxt)) toast('Esta empresa está sem telefone.', true); };
+ $('#b-msg').onclick = () => { if (!abreZap(F.zap, F.msgTxt)) return toast('Esta empresa está sem telefone.', true);
+  if (e.etapa === 'mapeado' && e.motivo !== 'Aguardando WhatsApp') setTimeout(() => toast('Mandou a mensagem?', false, ['Marcar aguardando resposta', () => marcaZap(e.id)]), 800); };
  $('#b-ponto').onclick = () => ajustarPonto(e.id);
  $('#b-res').onclick = () => { const x = $('#parecer') || lado.querySelector('[data-vis]'); if (x) x.closest('.box').scrollIntoView({ behavior:'smooth', block:'center' }); };
  /* (1) tocou em Ligar: quando a pessoa voltar para a Central, pergunta o resultado */
@@ -853,9 +861,15 @@ async function envia(e, p, d) {
  const r = await api('parecer', Object.assign({ id:e.id, p, regiao:regSel || 0, cels:celsSel() }, d)); if (r.erro) return toast(r.erro, true);
  let extra = '';
  /* não atendeu: oferece mandar a mensagem no WhatsApp da pessoa */
- if (p === 'nao_atendeu' && F && F.zap) { const zap = F.zap, txt = F.msgTxt; toast(r.msg, false, [['Mandar WhatsApp', () => abreZap(zap, txt)], ['Desfazer', async () => { const x = await api('desfazer', {}); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); abreFicha(x.id, true); }]]); await carrega(); if (r.proximo) abreFicha(r.proximo, true); else { fichaId = null; toast('Fila zerada nesta região. 🎯'); regSel ? abreRegiao(regSel) : desenha(); } return; }
+ if (p === 'nao_atendeu' && F && F.zap) { const zap = F.zap, txt = F.msgTxt; const eid = e.id; toast(r.msg, false, [['Mandar WhatsApp', () => { abreZap(zap, txt); marcaZap(eid, true); }], ['Desfazer', async () => { const x = await api('desfazer', {}); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); abreFicha(x.id, true); }]]); await carrega(); if (r.proximo) abreFicha(r.proximo, true); else { fichaId = null; toast('Fila zerada nesta região. 🎯'); regSel ? abreRegiao(regSel) : desenha(); } return; }
  toast(r.msg + extra, false, ['Desfazer', async () => { const x = await api('desfazer', {}); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); abreFicha(x.id, true); }]);
  await carrega(); if (r.proximo) abreFicha(r.proximo, true); else { fichaId = null; toast('Fila zerada nesta região. 🎯'); regSel ? abreRegiao(regSel) : desenha(); }
+}
+/* mandou mensagem no WhatsApp: fica "aguardando resposta" (fora da fila por alguns dias) sem sair de onde está */
+async function marcaZap(id, junto) {
+ const r = await api('parecer', { id, p:'aguardando_zap', junto:junto ? 1 : 0 }); if (r.erro) return toast(r.erro, true);
+ toast('Aguardando resposta no WhatsApp. Sem resposta, volta para a fila em 2 dias.', false, ['Desfazer', async () => { const x = await api('desfazer', {}); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); if (fichaId) abreFicha(fichaId, true); }]);
+ await carrega(); if (fichaId === id) abreFicha(id, true);
 }
 async function visita(e, r) {
  let motivo = ''; if (r === 'nao_quis') motivo = 'Não quis na visita';
@@ -1045,8 +1059,8 @@ async function voltouDaLigacao() {
  const w = document.createElement('div'); w.id = 'pos-lig'; w.className = 'poslig'; w.setAttribute('role', 'dialog');
  w.innerHTML = `<div class="pl-c"><small>Ligação</small><b>Como foi com ${h(Lg.nome)}?</b>
   <div class="g2"><button class="bt ok" type="button" data-pl="agendou">Agendou</button><button class="bt" type="button" data-pl="depois">Interesse, mas não agora</button>
-  <button class="bt am" type="button" data-pl="nao_atendeu">Não atendeu</button><button class="bt rd" type="button" data-pl="nao_quer">Não quer</button>
-  <button class="bt rd" type="button" data-pl="numero_errado">Número errado</button><button class="bt rd" type="button" data-pl="fechou">Empresa fechou</button></div>
+  <button class="bt am" type="button" data-pl="nao_atendeu">Não atendeu</button><button class="bt zp" type="button" data-pl="aguardando_zap">Mandei WhatsApp</button>
+  <button class="bt rd" type="button" data-pl="nao_quer">Não quer</button><button class="bt rd" type="button" data-pl="numero_errado">Número errado</button><button class="bt rd" type="button" data-pl="fechou">Empresa fechou</button></div>
   <button class="pl-x" type="button" data-pl="">Ainda não liguei</button></div>`;
  document.body.appendChild(w);
  w.addEventListener('click', async ev => { const b = ev.target.closest('[data-pl]'); if (!b && ev.target !== w) return; w.remove(); const p = b ? b.dataset.pl : '';

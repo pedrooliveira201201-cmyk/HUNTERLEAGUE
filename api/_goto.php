@@ -134,6 +134,14 @@ function goto_evento(array $e): void {
   if (!$in) return;
   goto_set('goto_n', (string)((int)goto_cfg('goto_n') + 1));
 
+  /* 0) empresa do CRM que estava "Aguardando WhatsApp" respondeu: marca e volta para o topo da fila */
+  try {
+    foreach (all("SELECT id FROM empresas WHERE etapa = 'mapeado' AND motivo = 'Aguardando WhatsApp' AND (tel1 = ? OR tel2 = ?)", [$tel, $tel]) as $emp) {
+      q("UPDATE empresas SET motivo = 'Respondeu no WhatsApp', proximo_em = ?, atualizado_em = ? WHERE id = ?", [agora(), agora(), $emp['id']]);
+      q('INSERT INTO empresa_hist (empresa_id, em, quem, tipo, texto) VALUES (?,?,?,?,?)', [$emp['id'], agora(), 'WhatsApp', 'whatsapp', mb_substr('Respondeu no WhatsApp: ' . $texto, 0, 400)]);
+    }
+  } catch (Throwable $z) { /* CRM ainda não instalado */ }
+
   /* 1) quem leu o QR: "Código do parceiro: HL-ARG-9016" → indicação do parceiro */
   if (preg_match('/\bHL-(?:UBR-)?(?:[A-Z]{3}-\d{4}|TESTE-\d{2})\b/i', $corpo, $m)) {
     $par = parceiro_por_codigo(strtoupper($m[0]));
