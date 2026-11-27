@@ -121,6 +121,9 @@ case 'visita': {
   elseif ($r === 'pensar') { q("UPDATE empresas SET etapa = 'visitado', proximo_em = ?, atualizado_em = ? WHERE id = ?", [date('Y-m-d 09:00:00', strtotime('+' . CRM_SAFRA_DIAS . ' days')), agora(), $x['id']]); $t = 'Visita: vai pensar (retorno em ' . CRM_SAFRA_DIAS . ' dias)'; }
   elseif ($r === 'nao_quis') { $m = $s('motivo', 80) ?: 'Não quis na visita'; q("UPDATE empresas SET etapa = 'perdido', motivo = ?, proximo_em = NULL, atualizado_em = ? WHERE id = ?", [$m, agora(), $x['id']]); $t = 'Visita: não quis · ' . $m; }
   elseif ($r === 'nao_estava') { q("UPDATE empresas SET etapa = 'mapeado', visita_dia = NULL, visita_turno = NULL, proximo_em = ?, atualizado_em = ? WHERE id = ?", [date('Y-m-d 09:00:00'), agora(), $x['id']]); $t = 'Visita: não estava, ligar para reagendar'; }
+  elseif ($r === 'cancelar') { /* desmarcou (ou foi teste): volta para "a agendar", sem resultado de visita */
+    if ($x['etapa'] !== 'agendado') json_out(['erro' => 'Esta empresa não está agendada.'], 422);
+    q("UPDATE empresas SET etapa = 'mapeado', visita_dia = NULL, visita_turno = NULL, visita_quem = NULL, proximo_em = NULL, motivo = NULL, atualizado_em = ? WHERE id = ?", [agora(), $x['id']]); $t = 'Agendamento cancelado'; }
   else json_out(['erro' => 'Resultado inválido.'], 422);
   crm_hist((int)$x['id'], $quem, 'visita', $t . ($s('obs', 300) !== '' ? ' · ' . $s('obs', 300) : ''));
   json_out(['ok' => true, 'msg' => $t]);

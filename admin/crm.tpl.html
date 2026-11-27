@@ -719,7 +719,7 @@ async function abreFicha(id, ligando) {
    <button class="bt ok" type="button" data-p="agendou">Agendou</button><button class="bt" type="button" data-p="depois">Interesse, mas não agora</button>
    <button class="bt am" type="button" data-p="nao_atendeu">Não atendeu</button><button class="bt rd" type="button" data-p="nao_quer">Não quer</button>
    <button class="bt rd" type="button" data-p="numero_errado">Número errado</button><button class="bt rd" type="button" data-p="fechou">Empresa fechou</button></div><div id="p-extra"></div></div>` : ''}
-  ${e.etapa === 'agendado' ? `<div class="box"><b>Resultado da visita</b><div class="g2" style="margin-top:8px"><button class="bt ok" type="button" data-vis="fechou">Fechou</button><button class="bt" type="button" data-vis="pensar">Vai pensar</button><button class="bt rd" type="button" data-vis="nao_quis">Não quis</button><button class="bt am" type="button" data-vis="nao_estava">Não estava</button></div><p class="sub" style="margin:8px 0 0">Ou reagende: <button class="bt" type="button" data-p="agendou" style="min-height:34px">Mudar dia</button></p><div id="p-extra"></div></div>` : ''}
+  ${e.etapa === 'agendado' ? `<div class="box"><b>Resultado da visita</b><div class="g2" style="margin-top:8px"><button class="bt ok" type="button" data-vis="fechou">Fechou</button><button class="bt" type="button" data-vis="pensar">Vai pensar</button><button class="bt rd" type="button" data-vis="nao_quis">Não quis</button><button class="bt am" type="button" data-vis="nao_estava">Não estava</button></div><p class="sub" style="margin:8px 0 0">Ou reagende: <button class="bt" type="button" data-p="agendou" style="min-height:34px">Mudar dia</button> <button class="bt rd" type="button" id="b-cancag" style="min-height:34px">Cancelar agendamento</button></p><div id="p-extra"></div></div>` : ''}
   <p class="sec">Quem é</p>
   ${[['Responsável', e.responsavel], ['Segmento', e.segmento || e.cnae_desc], ['CNPJ', e.cnpj ? e.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5') + (+e.mei ? ' · MEI' : '') : ''], ['Situação', e.situacao], ['Tempo de empresa', anos(e.abertura)]].filter(x => x[1]).map(([k, v]) => `<div class="lin"><span>${k}</span><span>${h(v)}</span></div>`).join('')}
   <p class="sec">Contato</p>
@@ -748,6 +748,7 @@ async function abreFicha(id, ligando) {
  $('#f-obs').onsubmit = async ev => { ev.preventDefault(); const t = ev.target.texto.value.trim(); if (!t) return; const x = await api('obs', { id:e.id, texto:t }); x.erro ? toast(x.erro, true) : abreFicha(e.id, modoLigar); };
  lado.querySelectorAll('[data-p]').forEach(b => b.onclick = () => parecer(e, b.dataset.p));
  lado.querySelectorAll('[data-vis]').forEach(b => b.onclick = () => visita(e, b.dataset.vis));
+ const bc = $('#b-cancag'); if (bc) bc.onclick = () => { if (bc.dataset.c !== '1') { bc.dataset.c = '1'; bc.textContent = 'Toque de novo para cancelar'; setTimeout(() => { bc.dataset.c = ''; bc.textContent = 'Cancelar agendamento'; }, 4000); return; } visita(e, 'cancelar'); };
 }
 function telEscolha(e) { return e.tel2 ? `<label class="f">Qual telefone atendeu?<select name="tel"><option value="1">${telBr(e.tel1)}</option><option value="2">${telBr(e.tel2)}</option></select></label>` : '<input type="hidden" name="tel" value="1">'; }
 function parecer(e, p) {
