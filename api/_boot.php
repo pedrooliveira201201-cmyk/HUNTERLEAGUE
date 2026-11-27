@@ -180,6 +180,12 @@ function hl_indices(): void {
       if (one("SELECT chave FROM config WHERE chave = 'limpeza_dia'")) q("UPDATE config SET valor = ? WHERE chave = 'limpeza_dia'", [date('Y-m-d')]); else q("INSERT INTO config (chave, valor) VALUES ('limpeza_dia', ?)", [date('Y-m-d')]); } catch (Throwable $e) {}
   }
 }
+/* mensagem do WhatsApp de cada pessoa da equipe (Meu perfil); vazia = usa a padrão do CRM */
+function conf_set(string $k, string $v): void {
+  if (one('SELECT chave FROM config WHERE chave = ?', [$k])) q('UPDATE config SET valor = ? WHERE chave = ?', [$v, $k]);
+  else q('INSERT INTO config (chave, valor) VALUES (?, ?)', [$k, $v]);
+}
+function msg_wa_de(int $admin): string { return (string)(one('SELECT valor FROM config WHERE chave = ?', ['msg_wa_a' . $admin])['valor'] ?? ''); }
 function hl_migrar_etapas(): void {
   static $feito = false;
   if ($feito) return; $feito = true;
@@ -187,6 +193,12 @@ function hl_migrar_etapas(): void {
   try {
     /* 27/11/2026: a equipe toda com o mesmo acesso (todos master), uma vez só */
     if (conf('equipe_master') !== '1') { q("UPDATE admins SET papel = 'master'"); q("INSERT INTO config (chave, valor) VALUES ('equipe_master', '1')"); }
+    /* 27/11/2026: a mensagem de agendamento do Erick no perfil dele, uma vez só */
+    if (conf('msg_erick') !== '1') {
+      $er = one("SELECT id FROM admins WHERE nome LIKE 'Erick%' ORDER BY id LIMIT 1");
+      if ($er && msg_wa_de((int)$er['id']) === '') conf_set('msg_wa_a' . $er['id'], "Oi, {nome}! Aqui é o Erick, da CALLNET!\n\nEstamos selecionando alguns negócios em Araguari para participar de um programa de parceria que pode gerar uma renda extra significativa, chegando a ajudar com custos como aluguel ou salário de funcionários.\n\nAmanhã estaremos na cidade e gostaríamos de fazer uma visita rápida ao seu negócio para apresentar a oportunidade.\n\nVocê consegue nos receber de manhã ou à tarde?");
+      conf_set('msg_erick', '1');
+    }
     $v = (string)conf('etapas_v', '');
     if ($v === '3') return;
     if ($v !== '2') {

@@ -1068,7 +1068,17 @@ TELAS.mais = async () => {
     <div><b class="bs" style="font-size:26px">${h(BOOT.nome)}</b><small>${MASTER ? 'Master' : 'Atendimento'}</small></div></div>
    <p class="sub" style="margin:0">Sua foto aparece no canto de cima da Central.</p>
    <input type="file" id="pf-arq" accept="image/*" hidden>
-   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="pf-esc">${BOOT.foto ? 'Trocar foto' : 'Colocar foto'}</button>${BOOT.foto ? '<button class="btn g" type="button" id="pf-tira">Tirar foto</button>' : ''}</div></div>`;
+   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="pf-esc">${BOOT.foto ? 'Trocar foto' : 'Colocar foto'}</button>${BOOT.foto ? '<button class="btn g" type="button" id="pf-tira">Tirar foto</button>' : ''}</div></div>
+   <form class="form ch perfil" id="f-msg" style="max-width:520px;margin-top:14px">
+    <b class="bs" style="font-size:20px">Minha mensagem do WhatsApp</b>
+    <p class="sub" style="margin:0">É a mensagem que vai pronta quando você toca em <b>Mensagem</b> ou <b>Mandar WhatsApp</b> no CRM para agendar. Escreva <b>{nome}</b> onde entra o nome do responsável da empresa.${r.minha_msg ? '' : ' Agora você está usando a mensagem padrão.'}</p>
+    <textarea name="texto" rows="10" maxlength="1200" style="width:100%;font:inherit;padding:12px;background:#070B0D;color:var(--ink);border:1px solid var(--edge)">${h(r.minha_msg || r.msg_padrao || '')}</textarea>
+    <p class="sub" style="margin:0" id="msg-prev"></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Salvar mensagem</button>${r.minha_msg ? '<button class="btn g" type="button" id="msg-pad">Voltar para a padrão</button>' : ''}</div></form>`;
+  const fm = $('#f-msg'), prev = () => { const t = fm.texto.value.split('{nome}').join('Yuri'); $('#msg-prev').innerHTML = `<b>Como chega:</b><br>${h(t).replace(/\n/g, '<br>')}`; };
+  fm.texto.addEventListener('input', prev); prev();
+  fm.addEventListener('submit', async ev => { ev.preventDefault(); const t = fm.texto.value.trim(); if (!t) return toast('Escreva a mensagem.', true); const rr = await api('minha_msg', { texto:t }); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+  const mp = $('#msg-pad'); if (mp) mp.addEventListener('click', async () => { const rr = await api('minha_msg', { texto:'' }); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
   $('#pf-esc').addEventListener('click', () => $('#pf-arq').click());
   $('#pf-arq').addEventListener('change', async ev => {
    const f = ev.target.files[0]; if (!f) return; toast('Enviando a foto…');

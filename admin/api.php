@@ -17,7 +17,7 @@ $master = $a['papel'] === 'master';
 hl_migrar_etapas();
 $ABERTAS = ETAPAS_ABERTAS;
 /* Perfis: master faz tudo. Atendimento só mexe em indicações (registra, muda etapa, edita dados básicos). */
-const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'lancar_lista', 'etapa', 'config', 'minha_senha', 'minha_foto', 'sair'];
+const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'lancar_lista', 'etapa', 'config', 'minha_senha', 'minha_foto', 'minha_msg', 'sair'];
 if (!$master && !in_array($acao, ACOES_ATENDIMENTO, true)) json_out(['erro' => 'Seu acesso é de atendimento: só indicações. Peça ao master.'], 403);
 
 /* ---------- painel do dia (tela Hoje) ---------- */
@@ -152,9 +152,11 @@ case 'config': {
   $c['smtp_tem_senha'] = ($c['smtp_senha'] ?? '') !== ''; unset($c['smtp_senha']);
   $ck = cdd_chave(); $c['cdd_fim'] = $ck !== '' ? mb_substr($ck, -4) : ''; $c['cdd_no_arquivo'] = (string)(cfg()['casadosdados_key'] ?? '') !== ''; unset($c['casadosdados_key']);
   unset($c['contatos_segredo']);
+  foreach (array_keys($c) as $k) if (str_starts_with($k, 'msg_wa_a')) unset($c[$k]);
   foreach (array_keys($c) as $k) if (str_starts_with($k, 'goto_')) unset($c[$k]); /* segredos do GoTo nunca saem do servidor */
   if (!$master) $c = [];
-  json_out(['config' => $c, 'master' => $master,
+  require_once __DIR__ . '/../api/_crm.php';
+  json_out(['config' => $c, 'master' => $master, 'minha_msg' => msg_wa_de((int)$a['id']), 'msg_padrao' => crm_msg_padrao(),
     'equipe' => $master ? array_map(fn($u) => ['id' => (int)$u['id'], 'nome' => $u['nome'], 'usuario' => $u['usuario'], 'papel' => $u['papel'], 'ativo' => (bool)$u['ativo'], 'eu' => (int)$u['id'] === (int)$a['id']], all('SELECT * FROM admins ORDER BY nome')) : [],
     'historico' => $master ? array_map(fn($r) => ['em' => dh_br($r['em']), 'quem' => $r['quem'], 'acao' => $r['acao'], 'alvo' => $r['alvo'], 'detalhe' => $r['detalhe']], all('SELECT * FROM auditoria ORDER BY id DESC LIMIT 200')) : []]);
 }
@@ -473,6 +475,13 @@ case 'zerar': {
   } catch (Throwable $x) { $pdo->rollBack(); json_out(['erro' => 'Não zerou (nada foi apagado): ' . mb_substr($x->getMessage(), 0, 160)], 500); }
   auditar($quem, 'zerou os dados de teste', $crm ? 'com o CRM' : 'base do CRM mantida', $prev['parceiros'] . ' parceiros, ' . $prev['indicacoes'] . ' indicações, ' . count($prev['usuarios']) . ' usuários');
   json_out(['ok' => true, 'msg' => 'Pronto. Começo da produção: só a sua conta ficou, e os ' . count(qr_genericos()) . ' códigos estão livres.']);
+}
+case 'minha_msg': {
+  /* mensagem do WhatsApp de agendamento da própria pessoa; {nome} vira o nome do responsável da empresa */
+  if (!$post) json_out(['erro' => 'Use POST.'], 405);
+  $t = trim(str_replace("\r", '', mb_substr((string)($e['texto'] ?? ''), 0, 1200)));
+  conf_set('msg_wa_a' . (int)$a['id'], $t); auditar($quem, $t === '' ? 'voltou para a mensagem padrão do WhatsApp' : 'mudou a própria mensagem do WhatsApp');
+  json_out(['ok' => true, 'msg' => $t === '' ? 'Voltou para a mensagem padrão.' : 'Mensagem salva. É ela que vai no botão Mensagem do CRM.']);
 }
 case 'minha_foto': {
   /* foto de perfil: o navegador já manda quadrada e pequena (JPEG); aqui confere e grava de novo (tira metadados) */
