@@ -44,7 +44,7 @@ case 'empresa': {
   $par = $x['parceiro_id'] ? one('SELECT id, codigo, status, nome, loja, aprovado_em, criado_em FROM parceiros WHERE id = ?', [$x['parceiro_id']]) : null;
   $app = null;
   if ($par) {
-    $app = ['codigo' => $par['codigo'], 'status' => $par['status'], 'cadastro' => data_br($par['criado_em']),
+    $app = ['id' => (int)$par['id'], 'codigo' => $par['codigo'], 'status' => $par['status'], 'cadastro' => data_br($par['criado_em']),
       'leituras' => (int)(one('SELECT COUNT(*) AS n FROM leituras WHERE parceiro_id = ?', [$par['id']])['n'] ?? 0),
       'ult_leituras' => array_map(fn($l) => dh_br($l['em']), all('SELECT em FROM leituras WHERE parceiro_id = ? ORDER BY em DESC LIMIT 8', [$par['id']])),
       'indicados' => array_map(fn($i) => ['nome' => $i['cliente_nome'], 'tel' => tel_br($i['cliente_tel']), 'origem' => $i['origem'], 'status' => $i['status'], 'em' => data_br($i['criado_em'])],
@@ -64,9 +64,40 @@ case 'empresa': {
 case 'parecer': {
   if (!$post) json_out(['erro' => 'Use POST.'], 405);
   $x = crm_empresa_ou_404((int)($e['id'] ?? 0));
+  $antes = array_intersect_key($x, array_flip(['etapa','motivo','proximo_em','tentativas','visita_dia','visita_turno','visita_quem','tel_ok','tel1','tel2']));
   try { $txt = crm_parecer($x, $s('p', 20), $e, $quem); } catch (InvalidArgumentException $z) { json_out(['erro' => $z->getMessage()], 422); }
   $prox = crm_proximo(crm_regiao_poli((int)($e['regiao'] ?? 0) ?: null), (int)$x['id']);
-  json_out(['ok' => true, 'msg' => $txt, 'proximo' => $prox ? (int)$prox['id'] : null]);
+  $_SESSION['crm_desfazer'] = ['id' => (int)$x['id'], 'antes' => $antes, 'hist' => (int)(one('SELECT MAX(id) AS m FROM empresa_hist WHERE empresa_id = ?', [$x['id']])['m'] ?? 0), 'em' => time()];
+  json_out(['ok' => true, 'msg' => $txt, 'proximo' => $prox ? (int)$prox['id'] : null, 'desfazer' => true]);
+}
+
+case 'desfazer': {
+  if (!$post) json_out(['erro' => 'Use POST.'], 405);
+  $u = $_SESSION['crm_desfazer'] ?? null;
+  if (!$u || time() - $u['em'] > 60) json_out(['erro' => 'Não dá mais para desfazer.'], 409);
+  $set = []; $par = []; foreach ($u['antes'] as $k => $v) { $set[] = "$k = ?"; $par[] = $v; }
+  q('UPDATE empresas SET ' . implode(', ', $set) . ', atualizado_em = ? WHERE id = ?', array_merge($par, [agora(), $u['id']]));
+  q('DELETE FROM empresa_hist WHERE id = ? AND empresa_id = ?', [$u['hist'], $u['id']]);
+  unset($_SESSION['crm_desfazer']);
+  json_out(['ok' => true, 'id' => $u['id'], 'msg' => 'Parecer desfeito.']);
+}
+
+case 'novidades': {
+  /* leituras do QR depois da última que a tela já viu (pelo número da leitura): o ponto da empresa pisca no mapa */
+  $ult = (int)($_GET['desde'] ?? -1);
+  $max = (int)(one('SELECT MAX(id) AS m FROM leituras')['m'] ?? 0);
+  if ($ult < 0) json_out(['ultimo' => $max, 'leituras' => []]);
+  $r = all('SELECT l.id AS lid, l.em, e.id, e.fantasia, e.razao, e.responsavel FROM leituras l JOIN empresas e ON e.parceiro_id = l.parceiro_id WHERE l.id > ? ORDER BY l.id LIMIT 30', [$ult]);
+  json_out(['ultimo' => $max, 'leituras' => array_map(fn($x) => ['id' => (int)$x['id'], 'nome' => crm_nome($x), 'em' => dh_br($x['em'])], $r)]);
+}
+
+case 'campo': {
+  /* toques do pessoal de campo na visita */
+  if (!$post) json_out(['erro' => 'Use POST.'], 405);
+  $x = crm_empresa_ou_404((int)($e['id'] ?? 0));
+  $t = ['cadastrou' => 'Campo: cadastrou no app', 'adesivo' => 'Campo: colou o adesivo/entregou a placa', 'lista' => 'Campo: pegou os 20 contatos'][$s('o', 20)] ?? null;
+  if (!$t) json_out(['erro' => 'Ação inválida.'], 422);
+  crm_hist((int)$x['id'], $quem, 'campo', $t); json_out(['ok' => true, 'msg' => $t]);
 }
 
 case 'proximo': {
