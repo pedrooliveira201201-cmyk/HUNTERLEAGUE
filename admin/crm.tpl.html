@@ -41,11 +41,18 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ferr .des[aria-pressed=true]{background:var(--amb);color:#050607;border-color:var(--amb)}
 .segp{position:absolute;z-index:520;left:10px;top:56px;width:min(440px,calc(100% - 20px));max-height:60%;overflow:auto;padding:12px;background:rgba(11,16,19,.97);border:1px solid var(--edge)}
 .segp .chips button{text-align:left}
+.seglist{list-style:none;margin:10px 0 0;padding:0;max-height:min(46vh,380px);overflow:auto;border-top:1px solid var(--edge)}
+.seglist li{border-bottom:1px solid var(--edge)}
+.seglist label{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:9px 4px;cursor:pointer;font-size:14px}
+.seglist input{width:18px;height:18px;accent-color:var(--cyan)}
+.seglist b{color:var(--cyan)}
 .segp .chips b{margin-left:6px;color:var(--cyan)}
+.segp .chips button[aria-pressed=true] b{color:#050607}
 .leg{position:absolute;z-index:500;left:10px;bottom:22px;display:flex;flex-wrap:wrap;gap:4px 12px;max-width:calc(100% - 20px);padding:7px 11px;background:rgba(11,16,19,.92);border:1px solid var(--edge);font-size:12px;font-weight:700}
 .leg button{border:0;background:none;padding:2px 0;color:var(--ink);font-weight:700;font-size:12px;cursor:pointer;opacity:.95}
 .leg button[aria-pressed=false]{opacity:.35;text-decoration:line-through}
 .leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.clu{display:grid;place-items:center;border-radius:50%;background:rgba(5,6,7,.88);border:2px solid var(--c,#19F7FF);color:#fff;font:900 16px/1 "Big Shoulders Display",Impact,sans-serif;box-shadow:0 0 14px rgba(25,247,255,.25);cursor:pointer}
 .bolha{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:rgba(5,6,7,.86);border:2px solid var(--c,#19F7FF);color:#fff;text-align:center;box-shadow:0 0 18px rgba(25,247,255,.25);cursor:pointer}
 .bolha b{font:900 22px/1 "Big Shoulders Display",Impact,sans-serif}
 .bolha small{display:block;font-size:9.5px;font-weight:800;color:#cfe;max-width:60px;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -127,6 +134,7 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
    <button type="button" id="b-seg" aria-expanded="false">Segmentos</button>
       <button type="button" id="f-ligar" aria-pressed="false">A agendar</button>
    <button type="button" class="des" id="b-des" aria-pressed="false">Desenhar região</button>
+   <button type="button" id="b-auto">Regiões automáticas</button>
   </div>
   <div class="segp" id="segp" hidden></div>
   <div class="leg" id="leg"></div>
@@ -150,9 +158,9 @@ const api = async (a, dados, q = '') => {
 const COR = { mapeado:'#6B777D', agendado:'#FFB547', visitado:'#5B8CFF', afiliado:'#19F7FF', conquistado:'#32E000', venda:'#FFD84D', perdido:'#FF5C7A' };
 const ETN = { mapeado:'Mapeado', agendado:'Agendado', visitado:'Visitado', afiliado:'Afiliado', conquistado:'QR ativo', venda:'Com venda', perdido:'Perdido' };
 const CONQ = new Set(['afiliado', 'conquistado', 'venda']);
-let segOn = new Set(), S = { empresas:[], regioes:[], celulas:[], geo:{} }, vis = 'mapa', etapasOn = new Set(Object.keys(COR)), regSel = null, fichaId = null, camadas = { cabo:true, reg:true, hex:true, ind:true };
+let segOn = new Set(), S = { empresas:[], regioes:[], celulas:[], geo:{} }, vis = 'mapa', etapasOn = new Set(Object.keys(COR)), regSel = null, fichaId = null, camadas = { cabo:true, cel:false, reg:true, hex:true, ind:true };
 /* empresas: [id, nome, seg, bairro, lat, lng, etapa, vencido, noCabo, geo, temTel, leituras, indicados] */
-const E = r => ({ id:r[0], nome:r[1], seg:r[2], bairro:r[3], lat:r[4], lng:r[5], et:r[6], venc:r[7] === 1 ? 1 : 0, fut:r[7] === 2, cabo:r[8], geo:r[9], tel:r[10], leit:r[11], ind:r[12] });
+const E = r => ({ id:r[0], nome:r[1], seg:r[2], bairro:r[3], lat:r[4], lng:r[5], et:r[6], venc:r[7] === 1 ? 1 : 0, fut:r[7] === 2, cabo:r[8], geo:r[9], tel:r[10], leit:r[11], ind:r[12], cnae:r[13] || '' });
 
 /* ---------- mapa ---------- */
 const map = L.map('map', { preferCanvas:true, zoomControl:false }).setView([-18.6475, -48.1875], 14);
@@ -170,9 +178,13 @@ function filtradas() {
   && (!q || (e.nome + ' ' + e.bairro + ' ' + e.seg).toLowerCase().includes(q)));
 }
 function desenhaCabo() {
+ /* a mancha do cabo fica de fundo, sem as divisões; "Contorno das células" mostra cada célula da Nio */
  G.cabo.clearLayers(); if (!camadas.cabo) return;
- for (const c of S.celulas) for (const p of c.polys) L.polygon(p, { color:'#32E000', weight:1, opacity:.55, dashArray:'4 4', fillColor:'#32E000', fillOpacity:c.status.startsWith('Sem') ? .06 : .02, interactive:true, renderer:rend })
-  .bindTooltip(`Célula ${h(c.nome)} · ${h(c.status)}<br>${c.hpv} domicílios viáveis · ${c.hc} clientes`, { sticky:true }).addTo(G.cabo);
+ for (const c of S.celulas) for (const p of c.polys) {
+  const l = L.polygon(p, camadas.cel ? { color:'#32E000', weight:1, opacity:.55, dashArray:'4 4', fillColor:'#32E000', fillOpacity:.05, interactive:true, renderer:rend }
+   : { stroke:false, fillColor:'#32E000', fillOpacity:c.status.startsWith('Sem') ? .1 : .05, interactive:false, renderer:rend }).addTo(G.cabo);
+  if (camadas.cel) l.bindTooltip(`Célula ${h(c.nome)} · ${h(c.status)}<br>${c.hpv} domicílios viáveis · ${c.hc} clientes`, { sticky:true });
+ }
 }
 /* territórios em hexágono (~170 m): acendem com as empresas conquistadas dentro */
 let HEX = null;
@@ -191,7 +203,7 @@ function montaHex() {
 function desenhaHex(lista) {
  G.hex.clearLayers(); if (!camadas.hex || !HEX) return;
  const n = {}; for (const e of lista) { if (!CONQ.has(e.et)) continue; const p = pos(e); if (!p) continue; const k = HEX.axial(...HEX.toXY(...p)); n[k] = (n[k] || 0) + (e.et === 'afiliado' ? .5 : 1); }
- for (const k of HEX.cabo) { const v = n[k] || 0;
+ for (const k of HEX.cabo) { const v = n[k] || 0; if (!v) continue;
   L.polygon(HEX.canto(k), { renderer:rend, interactive:false, weight:v ? 1.2 : .5, color:v ? '#19F7FF' : '#1A3036', opacity:v ? .9 : .5, fillColor:'#19F7FF', fillOpacity:v ? Math.min(.15 + v * .15, .55) : .03 }).addTo(G.hex); }
  return Object.keys(n).length;
 }
@@ -206,16 +218,37 @@ function desenhaRegioes(lista) {
    .bindTooltip(`${h(r.nome)}: ${den.length} empresas · ${conq} conquistadas`).on('click', () => abreRegiao(r.id)).addTo(G.reg);
  }
 }
+const ORD = { perdido:0, mapeado:1, agendado:2, visitado:3, afiliado:4, conquistado:5, venda:6 };
 function desenhaEmpresas(lista) {
  G.emp.clearLayers(); G.ind.clearLayers();
- for (const e of lista) { const p = pos(e); if (!p) continue;
+ const z = map.getZoom(), juntar = z < 16, cel = 54, grupos = new Map();
+ const ponto = (e, p) => {
   const sel = e.id === fichaId;
   L.circleMarker(p, { renderer:rend, radius:sel ? 8 : (CONQ.has(e.et) ? 6 : 4.5), color:sel ? '#fff' : '#050607', weight:sel ? 2.5 : 1, fillColor:COR[e.et], fillOpacity:e.et === 'perdido' ? .45 : .95 })
    .bindTooltip(`${h(e.nome)}<br><span style="color:#8A959C">${h(e.seg)} · ${ETN[e.et]}</span>`).on('click', () => abreFicha(e.id)).addTo(G.emp);
-  if (camadas.ind && (e.leit || e.ind)) L.circleMarker(p, { renderer:rend, radius:9 + Math.min(e.leit + e.ind * 2, 24) / 2, color:'#32E000', weight:2, opacity:.6, fill:false, interactive:false }).addTo(G.ind)
-   .bindTooltip(`${e.leit} leituras do QR · ${e.ind} indicados`, { permanent:false });
+  if (camadas.ind && (e.leit || e.ind)) L.circleMarker(p, { renderer:rend, radius:9 + Math.min(e.leit + e.ind * 2, 24) / 2, color:'#32E000', weight:2, opacity:.6, fill:false, interactive:false }).addTo(G.ind);
+ };
+ for (const e of lista) { const p = pos(e); if (!p) continue;
+  if (!juntar || e.id === fichaId) { ponto(e, p); continue; }
+  const pt = map.project(p, z), k = Math.floor(pt.x / cel) + ':' + Math.floor(pt.y / cel);
+  if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push([e, p]); }
+ for (const g of grupos.values()) {
+  if (g.length === 1) { ponto(g[0][0], g[0][1]); continue; }
+  const la = g.reduce((s, x) => s + x[1][0], 0) / g.length, lo = g.reduce((s, x) => s + x[1][1], 0) / g.length;
+  const topo = g.reduce((m, x) => ORD[x[0].et] > ORD[m] ? x[0].et : m, 'perdido'), tam = Math.min(30 + Math.sqrt(g.length) * 5, 62);
+  L.marker([la, lo], { icon:L.divIcon({ className:'', iconSize:[tam, tam], html:`<div class="clu" style="--c:${COR[topo]};width:${tam}px;height:${tam}px">+${g.length}</div>` }) })
+   .bindTooltip(`${g.length} empresas aqui · clique para ver`).on('click', () => abreGrupo(g.map(x => x[0].id), [la, lo])).addTo(G.emp);
  }
 }
+function abreGrupo(ids, centro) {
+ fichaId = null; const l = S.empresas.filter(e => ids.includes(e.id));
+ lado.innerHTML = `<button class="bt" type="button" data-voltar>← ${regSel ? 'Região' : 'Lista'}</button><h2 style="margin-top:12px">${l.length} empresas aqui</h2>
+  <p class="sub">${[...new Set(l.map(e => e.bairro).filter(Boolean))].slice(0, 4).map(h).join(', ')}</p>
+  <button class="bt go" type="button" id="b-zoom" style="margin-top:10px;width:100%">Aproximar no mapa</button>
+  <ul class="lista">${ordem(l).map(itemLista).join('')}</ul>`;
+ $('#b-zoom').onclick = () => map.setView(centro, Math.min(map.getZoom() + 2, 18));
+}
+map.on('zoomend', () => desenhaEmpresas(filtradas()));
 function desenha() {
  const l = filtradas(); desenhaRegioes(l); const t = desenhaHex(l); desenhaEmpresas(l); placar(t);
  if (vis === 'mapa' && !fichaId && !regSel) painelLista(l);
@@ -228,23 +261,39 @@ function placar(terr) {
 }
 function legenda() {
  $('#leg').innerHTML = Object.entries(ETN).map(([k, t]) => `<button type="button" data-et="${k}" aria-pressed="${etapasOn.has(k)}"><i style="background:${COR[k]}"></i>${t}</button>`).join('')
-  + [['cabo', 'Cabo Nio'], ['reg', 'Regiões'], ['hex', 'Territórios'], ['ind', 'Leituras e indicados']].map(([k, t]) => `<button type="button" data-cam="${k}" aria-pressed="${camadas[k]}">${t}</button>`).join('');
+  + [['cabo', 'Cabo Nio'], ['cel', 'Contorno das células'], ['reg', 'Regiões'], ['hex', 'Territórios'], ['ind', 'Leituras e indicados']].map(([k, t]) => `<button type="button" data-cam="${k}" aria-pressed="${camadas[k]}">${t}</button>`).join('');
 }
 $('#leg').addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return;
  if (b.dataset.et) { etapasOn.has(b.dataset.et) ? etapasOn.delete(b.dataset.et) : etapasOn.add(b.dataset.et); }
- if (b.dataset.cam) { camadas[b.dataset.cam] = !camadas[b.dataset.cam]; if (b.dataset.cam === 'cabo') desenhaCabo(); }
+ if (b.dataset.cam) { camadas[b.dataset.cam] = !camadas[b.dataset.cam]; if (b.dataset.cam === 'cabo' || b.dataset.cam === 'cel') desenhaCabo(); }
  legenda(); desenha(); });
 for (const id of ['#f-ligar']) $(id).addEventListener('click', e => { e.currentTarget.setAttribute('aria-pressed', e.currentTarget.getAttribute('aria-pressed') !== 'true'); desenha(); });
+const GRUPO = c => !c ? 'Outros' : c.startsWith('9602') ? 'Beleza' : /^45[234]/.test(c) ? 'Automotivo' : /^(474|4679|433|432|4399|4330)/.test(c) ? 'Construção e reforma'
+ : /^(951|952|4751|4752|4753|4757)/.test(c) ? 'Tecnologia e eletrônicos' : /^56/.test(c) ? 'Alimentação' : /^47/.test(c) ? 'Comércio' : 'Serviços e outros';
+let segBusca = '', segGrupo = '';
 function segPainel() {
- const c = {}; for (const e of S.empresas) { const k = e.seg || 'Sem segmento'; c[k] = (c[k] || 0) + 1; }
- const l = Object.entries(c).sort((a, b) => b[1] - a[1]);
- $('#segp').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>Segmentos da planilha</b><button class="bt" type="button" data-seg-limpa style="min-height:32px">Todos</button></div>
-  <div class="chips">${l.map(([k, n]) => `<button type="button" data-seg="${h(k)}" aria-pressed="${segOn.has(k)}" title="${h(k)}">${h(k.length > 46 ? k.slice(0, 44) + '…' : k)}<b>${n}</b></button>`).join('')}</div>`;
+ const c = {}, gr = {}, segGr = {};
+ for (const e of S.empresas) { const k = e.seg || 'Sem segmento', g = GRUPO(e.cnae); c[k] = (c[k] || 0) + 1; gr[g] = (gr[g] || 0) + 1; segGr[k] = g; }
+ const q = segBusca.toLowerCase();
+ const l = Object.entries(c).filter(([k]) => (!segGrupo || segGr[k] === segGrupo) && (!q || k.toLowerCase().includes(q))).sort((a, b) => b[1] - a[1]);
+ const n = S.empresas.filter(e => !segOn.size || segOn.has(e.seg)).length;
+ $('#segp').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>Segmentos</b><button class="bt" type="button" data-seg-fecha style="min-height:32px">Fechar</button></div>
+  <input type="search" id="seg-q" placeholder="Buscar segmento…" value="${h(segBusca)}" style="width:100%;margin-top:8px;padding:9px 10px;border:1px solid var(--edge);background:#070B0D;color:var(--ink);font-size:15px">
+  <div class="chips" style="margin-top:8px"><button type="button" data-gr="" aria-pressed="${!segGrupo}">Todos <b>${S.empresas.length}</b></button>${Object.entries(gr).sort((a, b) => b[1] - a[1]).map(([g, v]) => `<button type="button" data-gr="${h(g)}" aria-pressed="${segGrupo === g}">${h(g)} <b>${v}</b></button>`).join('')}</div>
+  ${segGrupo ? `<button class="bt" type="button" data-gr-tudo style="margin-top:8px;width:100%;min-height:36px">Selecionar todo o grupo ${h(segGrupo)}</button>` : ''}
+  <ul class="seglist">${l.map(([k, v]) => `<li><label><input type="checkbox" data-seg="${h(k)}"${segOn.has(k) ? ' checked' : ''}><span>${h(k)}</span><b>${v}</b></label></li>`).join('') || '<li class="sub">Nenhum segmento com essa busca.</li>'}</ul>
+  <div class="g2" style="margin-top:10px"><button class="bt" type="button" data-seg-limpa>Limpar</button><button class="bt go" type="button" data-seg-fecha>Ver ${n} empresas</button></div>`;
  $('#b-seg').textContent = segOn.size ? `Segmentos (${segOn.size})` : 'Segmentos';
+ const qi = $('#seg-q'); qi.oninput = () => { segBusca = qi.value; const pos0 = qi.selectionStart; segPainel(); const q2 = $('#seg-q'); q2.focus(); q2.setSelectionRange(pos0, pos0); };
 }
+$('#segp').addEventListener('change', ev => { const x = ev.target.closest('[data-seg]'); if (!x) return; x.checked ? segOn.add(x.dataset.seg) : segOn.delete(x.dataset.seg); fichaId = null; desenha(); segPainel(); });
 $('#b-seg').addEventListener('click', () => { const p = $('#segp'); p.hidden = !p.hidden; $('#b-seg').setAttribute('aria-expanded', !p.hidden); if (!p.hidden) segPainel(); });
 $('#segp').addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return;
- if (b.hasAttribute('data-seg-limpa')) segOn.clear(); else { const k = b.dataset.seg; segOn.has(k) ? segOn.delete(k) : segOn.add(k); }
+ if (b.hasAttribute('data-seg-fecha')) { $('#segp').hidden = true; $('#b-seg').setAttribute('aria-expanded', 'false'); return; }
+ if (b.hasAttribute('data-seg-limpa')) segOn.clear();
+ else if (b.hasAttribute('data-gr')) segGrupo = b.dataset.gr;
+ else if (b.hasAttribute('data-gr-tudo')) { for (const e of S.empresas) if (GRUPO(e.cnae) === segGrupo && e.seg) segOn.add(e.seg); }
+ else return;
  segPainel(); fichaId = null; desenha(); });
 $('#busca').addEventListener('input', () => { clearTimeout(desenha.t); desenha.t = setTimeout(() => { fichaId = null; regSel = null; desenha(); }, 250); });
 
@@ -415,10 +464,10 @@ async function base() {
    <label class="f" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" name="so_ativa" value="1" checked style="width:auto;margin:0"> Só situação ativa</label>
    <button class="bt go" type="submit" style="margin-top:10px;width:100%">Ver prévia</button></form><div id="imp-r"></div>
   <p class="sec">2 · Mapear endereços</p>
-  <div class="box"><p class="sub" style="margin:0">Primeiro pelo bairro (rápido, já dá a contagem por região). Depois pela rua, aos poucos (1 endereço por segundo). Pode deixar rodando com esta aba aberta.</p>
+  <div class="box"><p class="sub" style="margin:0">Primeiro pelo bairro (rápido, já dá a contagem por região). Depois pela rua: pelo CEP e, se não der, pelo endereço. Pode deixar rodando com esta aba aberta; se parar, continua de onde parou.</p>
    <div class="barra"><i style="width:${pr}%"></i></div>
    <p class="sub">${g.rua || 0} pela rua · ${(g.bairro || 0) + (g.so_bairro || 0)} pelo bairro · ${g.sem || 0} sem mapear · ${g.falhou || 0} não achados${g.fora ? ` · <b>${g.fora} fora do cabo, guardadas</b>` : ''}</p>
-   <button class="bt ${geoRodando ? 'am' : 'go'}" type="button" id="b-geo" style="width:100%">${geoRodando ? 'Pausar mapeamento' : 'Mapear endereços'}</button></div>
+   ${geoErro ? `<p class="ajuda" style="margin:8px 0">${h(geoErro)}</p>` : ''}<button class="bt ${geoRodando ? 'am' : 'go'}" type="button" id="b-geo" style="width:100%">${geoRodando ? 'Pausar mapeamento' : 'Mapear endereços'}</button></div>
   ${g.falhou ? `<p class="sec">Não achados (${g.falhou})</p><p class="sub">Abra a empresa e clique em "Ajustar ponto" para marcar no mapa.</p><ul class="lista">${S.empresas.filter(e => e.geo === 'falhou').slice(0, 60).map(itemLista).join('')}</ul>` : ''}
   <p class="sec">3 · Cadastrar empresa achada na rua</p>
   <form id="f-nova" class="box"><label class="f">Nome<input name="fantasia" required maxlength="160"></label><div class="g2"><label class="f">Segmento<input name="segmento" maxlength="60" list="segs"></label><label class="f">Telefone<input name="tel1" inputmode="tel" maxlength="20"></label></div>
@@ -442,10 +491,20 @@ function mostraPrevia(r, fd) {
  $('#b-grav').onclick = async () => { $('#b-grav').disabled = true; $('#b-grav').textContent = 'Gravando…'; const g = new FormData(); g.set('gravar', '1'); g.set('so_cidade', fd.get('so_cidade')); g.set('so_ativa', fd.get('so_ativa'));
   const x = await api('importar', g); if (x.erro) { $('#b-grav').disabled = false; $('#b-grav').textContent = 'Tentar de novo'; return toast(x.erro, true); } toast(x.msg); await carrega(); base(); };
 }
+let geoErro = '';
 async function rodaGeo() {
- while (geoRodando) { const r = await api('geo', {}); if (r.erro) { toast(r.erro, true); geoRodando = false; break; } S.geo = r.geo;
-  if (vis === 'base') base(); const g = r.geo; if (!g.sem && !g.bairro) { geoRodando = false; toast('Mapeamento concluído.'); await carrega(); if (vis === 'base') base(); break; }
-  if (Math.random() < .3) { await carrega(); } }
+ let falhas = 0, voltas = 0;
+ while (geoRodando) {
+  const r = await api('geo', {});
+  if (r.geo) S.geo = r.geo;
+  if (r.erro) { falhas++; geoErro = r.erro + (falhas < 8 ? ` Nova tentativa em ${falhas * 10} s.` : ''); if (vis === 'base') base();
+   if (falhas >= 8) { geoRodando = false; geoErro = 'Os serviços de mapa não estão respondendo. Clique em Mapear endereços mais tarde: continua de onde parou.'; if (vis === 'base') base(); break; }
+   await new Promise(ok => setTimeout(ok, falhas * 10000)); continue; }
+  falhas = 0; geoErro = ''; voltas++;
+  if (vis === 'base') base();
+  const g = r.geo; if (!g.sem && !g.bairro) { geoRodando = false; toast('Mapeamento concluído.'); await carrega(); if (vis === 'base') base(); break; }
+  if (voltas % 6 === 0) await carrega();
+ }
 }
 
 /* ---------- carga ---------- */
@@ -456,6 +515,16 @@ async function carrega() {
  if (!HEX) { montaHex(); desenhaCabo(); }
  desenha();
 }
+/* ---------- regiões automáticas pela concentração das empresas ---------- */
+async function regioesAuto(pergunta) {
+ const r = await api('regioes_auto', { k:7 }); if (r.erro) { if (pergunta) toast(r.erro, true); return; }
+ toast(r.msg); regSel = null; await carrega(); painelLista(filtradas());
+}
+$('#b-auto').addEventListener('click', () => {
+ const b = $('#b-auto'); if (b.dataset.c !== '1') { b.dataset.c = '1'; b.textContent = 'Refazer as automáticas? Clique de novo'; setTimeout(() => { b.dataset.c = ''; b.textContent = 'Regiões automáticas'; }, 4000); return; }
+ b.dataset.c = ''; b.textContent = 'Regiões automáticas'; regioesAuto(true);
+});
+
 /* ---------- tour de uso (5 passos) ---------- */
 const PASSOS = [
  ['#map', 'O mapa de Araguari', 'A mancha verde é o cabo da Nio. Cada bolinha grande é uma região com o total de empresas. Os pontos são as empresas, na cor da etapa.'],
@@ -490,7 +559,7 @@ $('#tour').addEventListener('click', ev => { const b = ev.target.closest('[data-
 document.addEventListener('keydown', ev => { if (!$('#tour').hidden && ev.key === 'Escape') tour(99); });
 $('#b-tour').addEventListener('click', () => tour(0));
 legenda();
-carrega().then(() => { painelLista(filtradas()); let visto = false; try { visto = localStorage.getItem('crm_tour_v1') === '1'; } catch (e) {} if (!visto) setTimeout(() => tour(0), 600); });
+carrega().then(async () => { if (!S.regioes.length && S.empresas.filter(e => e.lat != null).length >= 30) await regioesAuto(false); painelLista(filtradas()); let visto = false; try { visto = localStorage.getItem('crm_tour_v1') === '1'; } catch (e) {} if (!visto) setTimeout(() => tour(0), 600); });
 }
 </script>
 </body>

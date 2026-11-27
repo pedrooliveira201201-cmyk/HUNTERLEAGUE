@@ -185,47 +185,73 @@ function crm_gravar_empresa(array $e, string $quem): string {
 }
 
 /* ---------- mapa: endereço → ponto (OpenStreetMap/Nominatim, 1 por segundo, com cache) ---------- */
-function crm_pausa(): void { if (empty(cfg()['geo_teste'])) usleep(1100000); }
-/* devolve [lat, lng], null (endereço não achado) ou false (sem conexão com o serviço: tenta depois) */
-function crm_geocodificar(string $consulta): array|false|null {
-  $ch = mb_substr(crm_sem_acento($consulta), 0, 190);
-  if (!empty(cfg()['geo_teste'])) { $hsh = crc32($consulta); return [round(-18.635 - ($hsh % 300) / 10000, 6), round(-48.165 - (intdiv($hsh, 300) % 450) / 10000, 6)]; } /* só no teste local */
-  if (!function_exists('curl_init')) return false;
-  $c = one('SELECT lat, lng FROM geocache WHERE chave = ?', [$ch]);
-  if ($c) return $c['lat'] !== null ? [(float)$c['lat'], (float)$c['lng']] : null;
-  $u = 'https://nominatim.openstreetmap.org/search?' . http_build_query(['q' => $consulta, 'format' => 'json', 'limit' => 1, 'countrycodes' => 'br',
-    'viewbox' => '-48.30,-18.56,-48.08,-18.74', 'bounded' => 1]);
-  $h = curl_init($u);
-  curl_setopt_array($h, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 12, CURLOPT_HTTPHEADER => ['User-Agent: HunterLeague-CRM/1.0 (ti@callnetbrasil.com.br)', 'Accept-Language: pt-BR']]);
+function crm_pausa(float $seg = 1.1): void { if (empty(cfg()['geo_teste'])) usleep((int)($seg * 1000000)); }
+const CRM_BBOX = [-18.76, -18.54, -48.33, -48.04]; /* Araguari e arredores: resultado fora disso é descartado */
+function crm_no_bbox(?array $ll): ?array { return $ll && $ll[0] >= CRM_BBOX[0] && $ll[0] <= CRM_BBOX[1] && $ll[1] >= CRM_BBOX[2] && $ll[1] <= CRM_BBOX[3] ? [round($ll[0], 6), round($ll[1], 6)] : null; }
+/* GET com tempo curto (a Hostinger encerra a requisição em ~30 s) */
+function crm_http_json(string $url, int $t = 5): array {
+  if (!function_exists('curl_init')) return [0, null];
+  $h = curl_init($url);
+  curl_setopt_array($h, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => $t, CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_HTTPHEADER => ['User-Agent: HunterLeague-CRM/1.1 (ti@callnetbrasil.com.br)', 'Accept-Language: pt-BR', 'Referer: https://www.hunterleague.com.br/']]);
   $txt = curl_exec($h); $cod = (int)curl_getinfo($h, CURLINFO_RESPONSE_CODE); curl_close($h);
-  if ($txt === false || $cod !== 200) return false; /* falha de rede: não grava no cache, tenta de novo depois */
-  $j = json_decode((string)$txt, true); $p = $j[0] ?? null;
-  $ll = $p ? [round((float)$p['lat'], 6), round((float)$p['lon'], 6)] : null;
-  q('INSERT INTO geocache (chave, lat, lng, em) VALUES (?,?,?,?)', [$ch, $ll[0] ?? null, $ll[1] ?? null, agora()]);
-  return $ll;
+  return [$txt === false ? 0 : $cod, $txt === false ? null : json_decode((string)$txt, true)];
 }
-/* um lote: primeiro os bairros (rápido, já dá a contagem por região), depois as ruas */
-function crm_geo_lote(int $max = 8, int $prazo = 22): array {
-  $ini = time(); $feitas = 0; $cidade = 'Araguari, MG';
+function crm_cache(string $ch): ?array { $c = one('SELECT lat, lng FROM geocache WHERE chave = ?', [$ch]); return $c ? ['ll' => $c['lat'] !== null ? [(float)$c['lat'], (float)$c['lng']] : null] : null; }
+function crm_cache_grava(string $ch, ?array $ll): void { try { q('INSERT INTO geocache (chave, lat, lng, em) VALUES (?,?,?,?)', [$ch, $ll[0] ?? null, $ll[1] ?? null, agora()]); } catch (Throwable $e) {} }
+/* endereço em texto → [lat, lng] | null (não achou) | false (serviços fora do ar). Tenta o OpenStreetMap (Nominatim) e, se ele recusar, o Photon. */
+function crm_geocodificar(string $consulta): array|false|null {
+  if (!empty(cfg()['geo_teste'])) { $hsh = crc32($consulta); return [round(-18.635 - ($hsh % 300) / 10000, 6), round(-48.165 - (intdiv($hsh, 300) % 450) / 10000, 6)]; } /* só no teste local */
+  $ch = mb_substr('t:' . crm_sem_acento($consulta), 0, 190);
+  if ($c = crm_cache($ch)) return $c['ll'];
+  static $nominatimOff = false; $falhas = 0;
+  if (!$nominatimOff) {
+    [$cod, $j] = crm_http_json('https://nominatim.openstreetmap.org/search?' . http_build_query(['q' => $consulta, 'format' => 'json', 'limit' => 1, 'countrycodes' => 'br',
+      'viewbox' => '-48.33,-18.54,-48.04,-18.76', 'bounded' => 1]));
+    crm_pausa();
+    if ($cod === 200 && is_array($j)) { $ll = isset($j[0]) ? crm_no_bbox([(float)$j[0]['lat'], (float)$j[0]['lon']]) : null; if ($ll) { crm_cache_grava($ch, $ll); return $ll; } }
+    else { $falhas++; if (in_array($cod, [0, 403, 429], true)) $nominatimOff = true; }
+  }
+  [$cod, $j] = crm_http_json('https://photon.komoot.io/api/?' . http_build_query(['q' => $consulta, 'limit' => 1, 'lat' => -18.6475, 'lon' => -48.1875]));
+  crm_pausa(.25);
+  if ($cod === 200 && is_array($j)) {
+    $f = $j['features'][0] ?? null; $ll = $f ? crm_no_bbox([(float)$f['geometry']['coordinates'][1], (float)$f['geometry']['coordinates'][0]]) : null;
+    crm_cache_grava($ch, $ll); return $ll;
+  }
+  return $falhas ? false : null;
+}
+/* CEP → ponto (BrasilAPI). Em Araguari o CEP é por rua; o CEP geral da cidade (terminado em 000) não serve. */
+function crm_geo_cep(?string $cep): array|false|null {
+  if (!$cep || strlen($cep) !== 8 || str_ends_with($cep, '000')) return null;
+  if (!empty(cfg()['geo_teste'])) return null;
+  $ch = 'cep:' . $cep; if ($c = crm_cache($ch)) return $c['ll'];
+  [$cod, $j] = crm_http_json('https://brasilapi.com.br/api/cep/v2/' . $cep); crm_pausa(.2);
+  if ($cod === 0 || $cod >= 500) return false;
+  $co = $j['location']['coordinates'] ?? null;
+  $ll = $cod === 200 && is_array($co) && isset($co['latitude'], $co['longitude']) && $co['latitude'] !== '' ? crm_no_bbox([(float)$co['latitude'], (float)$co['longitude']]) : null;
+  crm_cache_grava($ch, $ll); return $ll;
+}
+/* um lote curto (cabe no limite de tempo da hospedagem): primeiro os bairros, depois cada rua (pelo CEP e, se não der, pelo endereço) */
+function crm_geo_lote(int $max = 6, int $prazo = 10): array {
+  $ini = time(); $feitas = 0; $cidade = 'Araguari, MG'; $off = 0;
   while ($feitas < $max && time() - $ini < $prazo) {
     $e = one("SELECT id, logradouro, bairro, cep, geo FROM empresas WHERE (geo IS NULL OR geo = 'bairro') AND (logradouro IS NOT NULL OR bairro IS NOT NULL OR cep IS NOT NULL) ORDER BY CASE WHEN geo IS NULL THEN 0 ELSE 1 END, id LIMIT 1");
     if (!$e) break;
     if ($e['geo'] === null) {
-      /* etapa 1: centro do bairro (ou do CEP) para todas as empresas daquele bairro */
-      $alvo = $e['bairro'] ? $e['bairro'] . ', ' . $cidade : null;
-      $ll = $alvo ? crm_geocodificar($alvo) : null; crm_pausa(); $feitas++;
-      if ($ll === false) return crm_geo_status() + ['erro' => 'O serviço de mapas não respondeu. Tente de novo em alguns minutos.'];
-      if (!$ll && $e['cep']) { $ll = crm_geocodificar(substr($e['cep'], 0, 5) . '-' . substr($e['cep'], 5) . ', ' . $cidade); crm_pausa(); $feitas++; if ($ll === false) return crm_geo_status() + ['erro' => 'O serviço de mapas não respondeu. Tente de novo em alguns minutos.']; }
-      if ($ll) q("UPDATE empresas SET lat = ?, lng = ?, geo = 'bairro', celula = NULL WHERE geo IS NULL AND " . ($e['bairro'] ? 'bairro = ?' : 'id = ?'), [$ll[0] + 0, $ll[1] + 0, $e['bairro'] ?: $e['id']]);
+      $ll = $e['bairro'] ? crm_geocodificar($e['bairro'] . ', ' . $cidade) : null; $feitas++;
+      if ($ll === null && $e['cep']) { $ll = crm_geo_cep($e['cep']); $feitas++; }
+      if ($ll === false) { if (++$off >= 2) return crm_geo_status() + ['erro' => 'Os serviços de mapa não responderam agora. Vou tentar de novo sozinho.']; continue; }
+      if ($ll) q("UPDATE empresas SET lat = ?, lng = ?, geo = 'bairro', celula = NULL WHERE geo IS NULL AND " . ($e['bairro'] ? 'bairro = ?' : 'id = ?'), [$ll[0], $ll[1], $e['bairro'] ?: $e['id']]);
       else q("UPDATE empresas SET geo = 'falhou' WHERE id = ?", [$e['id']]);
       continue;
     }
-    /* etapa 2: a rua (todas da mesma rua e bairro de uma vez) */
-    if (!$e['logradouro']) { q("UPDATE empresas SET geo = 'bairro_ok' WHERE id = ?", [$e['id']]); continue; }
-    $ll = crm_geocodificar($e['logradouro'] . ', ' . ($e['bairro'] ? $e['bairro'] . ', ' : '') . $cidade); crm_pausa(); $feitas++;
-    if ($ll === false) return crm_geo_status() + ['erro' => 'O serviço de mapas não respondeu. Tente de novo em alguns minutos.'];
-    if ($ll) q("UPDATE empresas SET lat = ?, lng = ?, geo = 'rua', celula = NULL WHERE geo = 'bairro' AND logradouro = ? AND COALESCE(bairro, '') = ?", [$ll[0], $ll[1], $e['logradouro'], (string)$e['bairro']]);
-    else q("UPDATE empresas SET geo = 'bairro_ok' WHERE geo = 'bairro' AND logradouro = ? AND COALESCE(bairro, '') = ?", [$e['logradouro'], (string)$e['bairro']]);
+    if (!$e['logradouro'] && !$e['cep']) { q("UPDATE empresas SET geo = 'bairro_ok' WHERE id = ?", [$e['id']]); continue; }
+    $ll = crm_geo_cep($e['cep']); $feitas++;
+    if ($ll) { q("UPDATE empresas SET lat = ?, lng = ?, geo = 'rua', celula = NULL WHERE geo = 'bairro' AND cep = ?", [$ll[0], $ll[1], $e['cep']]); continue; }
+    if ($e['logradouro']) { $ll = crm_geocodificar($e['logradouro'] . ', ' . ($e['bairro'] ? $e['bairro'] . ', ' : '') . $cidade); $feitas++; }
+    if ($ll === false) { if (++$off >= 2) return crm_geo_status() + ['erro' => 'Os serviços de mapa não responderam agora. Vou tentar de novo sozinho.']; continue; }
+    if ($ll) q("UPDATE empresas SET lat = ?, lng = ?, geo = 'rua', celula = NULL WHERE geo = 'bairro' AND COALESCE(logradouro, '') = ? AND COALESCE(bairro, '') = ?", [$ll[0], $ll[1], (string)$e['logradouro'], (string)$e['bairro']]);
+    else q("UPDATE empresas SET geo = 'bairro_ok' WHERE geo = 'bairro' AND COALESCE(logradouro, '') = ? AND COALESCE(bairro, '') = ?", [(string)$e['logradouro'], (string)$e['bairro']]);
   }
   return crm_geo_status();
 }

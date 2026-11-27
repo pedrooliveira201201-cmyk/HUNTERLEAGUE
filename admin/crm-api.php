@@ -27,8 +27,8 @@ case 'estado': {
   $hoje = date('Y-m-d');
   $emp = array_map(fn($r) => [(int)$r['id'], crm_nome($r), (string)$r['segmento'], (string)$r['bairro'],
       $r['lat'] !== null ? (float)$r['lat'] : null, $r['lng'] !== null ? (float)$r['lng'] : null, $r['etapa'],
-      $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds']],
-    all("SELECT e.id, e.fantasia, e.razao, e.responsavel, e.segmento, e.bairro, e.lat, e.lng, e.etapa, e.proximo_em, e.celula, e.geo, e.tel1,
+      $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds'], (string)$r['cnae']],
+    all("SELECT e.id, e.fantasia, e.razao, e.responsavel, e.segmento, e.cnae, e.bairro, e.lat, e.lng, e.etapa, e.proximo_em, e.celula, e.geo, e.tel1,
       (SELECT COUNT(*) FROM leituras l WHERE l.parceiro_id = e.parceiro_id) AS leit, (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = e.parceiro_id) AS inds
       FROM empresas e WHERE " . str_replace(['geo', 'celula'], ['e.geo', 'e.celula'], CRM_VISIVEL) . " ORDER BY e.id"));
   $lig = (int)(one("SELECT COUNT(*) AS n FROM empresa_hist WHERE tipo = 'ligacao' AND em >= ?", [$hoje . ' 00:00:00'])['n'] ?? 0);
@@ -133,9 +133,66 @@ case 'regiao': {
   if (!is_array($poly) || count($poly) < 3) json_out(['erro' => 'Desenhe pelo menos 3 pontos.'], 422);
   $poly = array_map(fn($p) => [round((float)$p[0], 6), round((float)$p[1], 6)], array_slice($poly, 0, 400));
   $cor = preg_match('/^#[0-9A-Fa-f]{6}$/', $s('cor', 7)) ? $s('cor', 7) : '#19F7FF';
-  if ((int)($e['id'] ?? 0)) q('UPDATE regioes SET nome = ?, cor = ?, poligono = ? WHERE id = ?', [$nome, $cor, json_encode($poly), (int)$e['id']]);
+  if ((int)($e['id'] ?? 0)) {
+    q('UPDATE regioes SET nome = ?, cor = ?, poligono = ? WHERE id = ?', [$nome, $cor, json_encode($poly), (int)$e['id']]);
+    /* região automática editada à mão vira manual: não é apagada quando refizerem as automáticas */
+    $au = array_diff(array_filter(array_map('intval', explode(',', (string)conf('crm_reg_auto', '')))), [(int)$e['id']]);
+    q("UPDATE config SET valor = ? WHERE chave = 'crm_reg_auto'", [implode(',', $au)]);
+  }
   else q('INSERT INTO regioes (nome, cor, poligono, criado_em) VALUES (?,?,?,?)', [$nome, $cor, json_encode($poly), agora()]);
   auditar('admin:' . $quem, 'salvou região', $nome); json_out(['ok' => true]);
+}
+
+case 'regioes_auto': {
+  if (!$post) json_out(['erro' => 'Use POST.'], 405);
+  $k = max(3, min(12, (int)($e['k'] ?? 7)));
+  $pts = all("SELECT lat, lng, bairro FROM empresas WHERE lat IS NOT NULL AND etapa <> 'perdido' AND " . CRM_VISIVEL);
+  if (count($pts) < 12) json_out(['erro' => 'Mapeie mais empresas antes (pelo menos 12 no mapa).'], 422);
+  $k = min($k, max(3, intdiv(count($pts), 12)));
+  $P = array_map(fn($r) => [(float)$r['lat'], (float)$r['lng'], (string)$r['bairro']], $pts);
+  /* sementes espalhadas: a 1ª é o ponto mais denso; as próximas, as mais distantes das já escolhidas */
+  $d2 = fn($a, $b) => ($a[0] - $b[0]) ** 2 + (($a[1] - $b[1]) * 0.95) ** 2;
+  $c = [$P[0]]; $best = -1;
+  foreach ($P as $p) { $n = 0; foreach ($P as $q2) if ($d2($p, $q2) < 0.00004) $n++; if ($n > $best) { $best = $n; $c[0] = $p; } }
+  while (count($c) < $k) { $far = null; $fd = -1; foreach ($P as $p) { $m = INF; foreach ($c as $cc) $m = min($m, $d2($p, $cc)); if ($m > $fd) { $fd = $m; $far = $p; } } $c[] = $far; }
+  $grupo = [];
+  for ($it = 0; $it < 30; $it++) {
+    $grupo = array_fill(0, $k, []);
+    foreach ($P as $p) { $bi = 0; $bd = INF; foreach ($c as $i => $cc) { $d = $d2($p, $cc); if ($d < $bd) { $bd = $d; $bi = $i; } } $grupo[$bi][] = $p; }
+    $mov = 0; foreach ($grupo as $i => $g) if ($g) { $nc = [array_sum(array_column($g, 0)) / count($g), array_sum(array_column($g, 1)) / count($g)]; $mov += $d2($nc, $c[$i]); $c[$i] = $nc; }
+    if ($mov < 1e-12) break;
+  }
+  /* contorno: fecho convexo do grupo, aberto ~250 m para fora */
+  $hull = function (array $pts): array {
+    $pts = array_values(array_unique(array_map(fn($p) => round($p[0], 5) . ',' . round($p[1], 5), $pts)));
+    $pts = array_map(fn($s) => array_map('floatval', explode(',', $s)), $pts);
+    usort($pts, fn($a, $b) => $a[1] <=> $b[1] ?: $a[0] <=> $b[0]);
+    if (count($pts) < 3) return $pts;
+    $cr = fn($o, $a, $b) => ($a[1] - $o[1]) * ($b[0] - $o[0]) - ($a[0] - $o[0]) * ($b[1] - $o[1]);
+    $lo = []; foreach ($pts as $p) { while (count($lo) >= 2 && $cr($lo[count($lo) - 2], $lo[count($lo) - 1], $p) <= 0) array_pop($lo); $lo[] = $p; }
+    $up = []; foreach (array_reverse($pts) as $p) { while (count($up) >= 2 && $cr($up[count($up) - 2], $up[count($up) - 1], $p) <= 0) array_pop($up); $up[] = $p; }
+    array_pop($lo); array_pop($up); return array_merge($lo, $up);
+  };
+  $cores = ['#19F7FF', '#FFB547', '#B47CFF', '#32E000', '#FF5C7A', '#5B8CFF', '#FFD84D', '#FF8A3D', '#3DFFB4', '#F06BFF', '#9BE15D', '#7FD4FF'];
+  $velhas = array_filter(array_map('intval', explode(',', (string)conf('crm_reg_auto', ''))));
+  if ($velhas) q('DELETE FROM regioes WHERE id IN (' . implode(',', $velhas) . ')');
+  $novas = []; $ordem = 0;
+  usort($grupo, fn($a, $b) => count($b) <=> count($a));
+  foreach ($grupo as $g) {
+    if (count($g) < 3) continue;
+    $cx = array_sum(array_column($g, 0)) / count($g); $cy = array_sum(array_column($g, 1)) / count($g);
+    $h = $hull($g);
+    if (count($h) < 3) { $h = []; for ($a = 0; $a < 8; $a++) $h[] = [$cx + 0.003 * sin($a * M_PI / 4), $cy + 0.0032 * cos($a * M_PI / 4)]; }
+    $h = array_map(function ($p) use ($cx, $cy) { $dy = $p[0] - $cx; $dx = $p[1] - $cy; $n = sqrt($dy * $dy + $dx * $dx) ?: 1; return [round($p[0] + $dy / $n * 0.0023, 6), round($p[1] + $dx / $n * 0.0024, 6)]; }, $h);
+    $b = []; foreach ($g as $p) if ($p[2] !== '') $b[$p[2]] = ($b[$p[2]] ?? 0) + 1; arsort($b);
+    $nome = 'Região ' . ($b ? crm_nome_proprio((string)array_key_first($b)) : (string)($ordem + 1));
+    q('INSERT INTO regioes (nome, cor, poligono, criado_em) VALUES (?,?,?,?)', [mb_substr($nome, 0, 60), $cores[$ordem % count($cores)], json_encode($h), agora()]);
+    $novas[] = (int)db()->lastInsertId(); $ordem++;
+  }
+  if (one("SELECT chave FROM config WHERE chave = 'crm_reg_auto'")) q("UPDATE config SET valor = ? WHERE chave = 'crm_reg_auto'", [implode(',', $novas)]);
+  else q("INSERT INTO config (chave, valor) VALUES ('crm_reg_auto', ?)", [implode(',', $novas)]);
+  auditar('admin:' . $quem, 'gerou regiões automáticas', count($novas) . ' regiões');
+  json_out(['ok' => true, 'msg' => count($novas) . ' regiões criadas pela concentração das empresas. As que vocês desenharam à mão continuam.']);
 }
 
 case 'importar': {
@@ -181,7 +238,7 @@ case 'importar': {
 case 'geo': {
   if (!$post) json_out(['erro' => 'Use POST.'], 405);
   @set_time_limit(60);
-  $st = crm_geo_lote(10, 22); crm_marcar_celulas(); if (isset($st['erro'])) json_out(['erro' => $st['erro'], 'geo' => $st], 503); json_out(['ok' => true, 'geo' => $st]);
+  $st = crm_geo_lote(); crm_marcar_celulas(); if (isset($st['erro'])) json_out(['erro' => $st['erro'], 'geo' => $st], 503); json_out(['ok' => true, 'geo' => $st]);
 }
 
 default: json_out(['erro' => 'Ação desconhecida.'], 404);
