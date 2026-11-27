@@ -32,7 +32,7 @@ if ($a) {
 }
 ?><!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#050607">
-<title>Entrar | Central Hunter League</title><link rel="icon" href="../icons/favicon-64.png">
+<title>Entrar | Central Hunter League</title><link rel="icon" href="../icons/favicon-64.png"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="../icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Central HL"><meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -54,5 +54,7 @@ button{width:100%;height:56px;margin-top:20px;border:0;background:#19F7FF;color:
  <label>Usuário<input name="usuario" autocomplete="username" required autofocus></label>
  <label>Senha<input name="senha" type="password" autocomplete="current-password" required></label>
  <button>Entrar</button>
+ <div style="margin-top:14px"><button type="button" data-instalar style="all:unset;box-sizing:border-box;display:none;align-items:center;gap:6px;margin-top:0;padding:6px 10px;color:#8A959C;font:700 13px Montserrat,system-ui,sans-serif;cursor:pointer;border-bottom:1px dashed #33434A"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M12 7v7m-3-3 3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Instalar app no celular</button></div>
 </form>
+<script src="../assets/instalar.js" defer></script>
 </body></html>

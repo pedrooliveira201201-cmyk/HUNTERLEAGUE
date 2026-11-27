@@ -247,6 +247,8 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
  .chips-et{left:8px;right:8px;top:50px}
  .chips-et button{min-height:30px;font-size:12px;padding:3px 9px 3px 8px}
 }
+
+@media(min-width:901px) and (max-width:1280px){.wrap{grid-template-columns:minmax(0,1fr) 360px}.placar div{min-width:66px;padding:4px 8px}}
 </style>
 <script>/*__CRM_BOOT__*/</script>
 </head>
@@ -612,7 +614,9 @@ document.addEventListener('click', ev => { if (!ev.target.closest('.busca')) $('
 /* ---------- celular: painel que sobe de baixo ---------- */
 const cel = () => matchMedia('(max-width:900px)').matches;
 const topo = () => document.documentElement.style.setProperty('--topo', document.querySelector('.top').offsetHeight + 'px');
-addEventListener('resize', () => { topo(); map.invalidateSize(); }); topo();
+/* as fichas de etapa e o menu de camadas ficam logo abaixo da barra de ferramentas (que pode quebrar em 2 linhas no iPad) */
+const encaixa = () => { const f = document.querySelector('.ferr'); if (!f) return; const y = f.offsetTop + f.offsetHeight + 6; $('#chips').style.top = y + 'px'; $('#camp').style.top = (y + 40) + 'px'; };
+addEventListener('resize', () => { topo(); encaixa(); map.invalidateSize(); }); topo(); setTimeout(encaixa, 0);
 function folha(n) { const a = $('#lado'); a.classList.remove('f0', 'f1', 'f2'); a.style.removeProperty('--fh'); a.classList.add('f' + n); setTimeout(() => map.invalidateSize(), 300); }
 {
  const a = $('#lado'), al = $('#alca'); let y0 = null, h0 = 0, moveu = false;

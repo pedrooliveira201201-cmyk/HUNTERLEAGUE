@@ -6,6 +6,11 @@
 <meta name="theme-color" content="#050607">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/png" href="__BASE__icons/favicon-64.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="__BASE__icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Central HL">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Central | Hunter League</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -323,6 +328,13 @@ body.ehdemo main{padding-top:24px}
 .bal{max-width:85%;padding:8px 10px;font-size:13.5px;white-space:pre-wrap;word-break:break-word;border:1px solid var(--ln)}.bal span{display:block;font-size:11px;opacity:.6;margin-top:3px}
 .bal.in{align-self:flex-start;background:#0E1519}.bal.out{align-self:flex-end;background:#0A2A2C;border-color:rgba(25,247,255,.35)}
 @media (max-width:600px){.pf-g{grid-template-columns:1fr}}
+
+/* iPad em pé (601 a 900 px): aproveita a largura */
+@media (min-width:601px) and (max-width:900px){
+ main{padding-left:24px;padding-right:24px}
+ .dia{grid-template-columns:1fr 1fr}.dia .pn:last-child{grid-column:1/-1}
+ .pf-g{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -478,14 +490,14 @@ TELAS.hoje = async () => {
  const par = r.parados || [];
  if (par.length) cards.push(['#FF9F43', par.length, par.length === 1 ? `parceiro sem indicar há ${r.dias_alerta}+ dias` : `parceiros sem indicar há ${r.dias_alerta}+ dias`, 'Mande um recado no WhatsApp para animar. A lista está logo abaixo.', 'Ver lista', '#parados']);
  const s = r.stats;
- $('#main').innerHTML = `<div class="ola"><h1 class="bs">${sauda}, <span>${h(r.me.nome)}</span></h1><p>${h(dt)}</p></div>
+ $('#main').innerHTML = `<div class="ola"><h1 class="bs">${sauda}, <span>${h(r.me.nome)}</span></h1><p>${h(dt)}</p><button type="button" data-instalar style="all:unset;box-sizing:border-box;display:none;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;color:#8A959C;font:700 13px Montserrat,system-ui,sans-serif;cursor:pointer;border-bottom:1px dashed #33434A"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M12 7v7m-3-3 3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Instalar app no celular</button></div>
   ${cards.length ? `<div class="tarefas">${cards.map(c => `<div class="tf ch" style="--a:${c[0]}"><span class="n bs">${h(c[1])}</span><b>${h(c[2])}</b><small>${h(c[3])}</small><button class="btn sm" type="button" ${c[5][0] === '#' ? `data-rolar="${c[5].slice(1)}"` : `data-ir="${c[5]}"`}>${h(c[4])} ▸</button></div>`).join('')}</div>`
    : `<div class="emdia ch"><span class="ok2">${I.ok}</span><div><b class="bs">Tudo em dia</b><p>Nenhuma tarefa pendente agora. Quando chegar indicação ou cadastro, aparece aqui.</p></div></div>`}
   ${par.length ? `<p class="sec" id="parados">Parceiros parados (${r.dias_alerta}+ dias sem indicar)</p><div class="parados">${par.map(p => `<div class="pd"><div><b>${h(p.nome)} <span class="cod">${h(p.codigo)}</span></b><small>${p.nunca ? `Ainda não indicou ninguém · aprovado há ${p.dias} dias` : `Última indicação há ${p.dias} dias`}</small></div><a class="btn sm" href="https://wa.me/55${h(p.wa_d)}?text=${encodeURIComponent(`Oi, ${p.resp}! Tudo bem? Aqui é da CallNet. Faz uns dias que não chega indicação pelo seu QR. Lembra de mostrar a plaquinha para os clientes e de mandar o seu link para quem precisa de internet. Qualquer dúvida, é só chamar!`)}" target="_blank" rel="noopener">${I.wa}Chamar</a></div>`).join('')}</div>` : ''}
   ${painelDia(r)}
   <p class="sec">Números</p>
   <div class="stats"><div class="st ch"><b class="bs">${s.ind_hoje}</b><span>indicações hoje</span></div><div class="st ch"><b class="bs">${s.ind_mes}</b><span>indicações no mês</span></div><div class="st ch"><b class="bs" style="color:var(--ok)">${s.inst_mes}</b><span>instalações no mês</span></div><div class="st ch"><b class="bs">${s.leit_hoje}</b><span>leituras de QR hoje</span></div><div class="st ch"><b class="bs">${s.ativos}</b><span>parceiros ativos</span></div></div>
-  ${r.atividade.length ? `<p class="sec">Últimas ações</p><ul class="tl">${r.atividade.map(a => `<li>${h(a.acao)} <b>${h(a.alvo)}</b><small>${h(a.em)} · ${h(a.quem)}</small></li>`).join('')}</ul>` : ''}`;
+  ${r.atividade.length ? `<p class="sec">Últimas ações</p><ul class="tl">${r.atividade.map(a => `<li>${h(a.acao)} <b>${h(a.alvo)}</b><small>${h(a.em)} · ${h(a.quem)}</small></li>`).join('')}</ul>` : ''}`; if (window.HLinstalar) HLinstalar();
 };
 
 /* ---------- tela: indicações ---------- */
@@ -955,5 +967,6 @@ const inicio = (location.hash || '#hoje').slice(1);
 if (DEMO) { document.body.classList.add('ehdemo'); $('#demo-bar').hidden = false; $('#demo-reset').addEventListener('click', e => { e.preventDefault(); DEMO_RESET(); cache = {}; ir('hoje'); toast('Demonstração recomeçada.'); }); }
 }
 </script>
+<script src="__BASE__assets/instalar.js" defer></script>
 </body>
 </html>
