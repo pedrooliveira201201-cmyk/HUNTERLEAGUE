@@ -26,7 +26,7 @@ if (!$a && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($a) {
-  $boot = 'window.HL_ADMIN = ' . json_encode(['modo' => 'real', 'token' => token_admin(), 'nome' => primeiro_nome($a['nome']), 'papel' => $a['papel']], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) . ';';
+  $boot = 'window.HL_ADMIN = ' . json_encode(['modo' => 'real', 'token' => token_admin(), 'nome' => primeiro_nome($a['nome']), 'papel' => $a['papel'], 'foto' => foto_admin_url((int)$a['id'])], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) . ';';
   echo str_replace(['/*__ADMIN_BOOT__*/', '__BASE__'], [$boot, '../'], file_get_contents(__DIR__ . '/app.tpl.html'));
   exit;
 }

@@ -249,6 +249,37 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
 }
 
 @media(min-width:901px) and (max-width:1280px){.wrap{grid-template-columns:minmax(0,1fr) 360px}.placar div{min-width:66px;padding:4px 8px}}
+
+/* ===== celular: o mapa é a tela; o resto é pequeno e flutua por cima ===== */
+@media(max-width:900px){
+ .top{padding:6px 10px 6px;gap:5px 8px}
+ .top a.vol{font-size:0;width:30px;height:30px;display:grid;place-items:center}
+ .top a.vol::before{content:"←";font-size:20px;color:var(--ink)}
+ .top h1{font-size:17px}
+ #b-tour{min-height:28px!important;width:28px!important;font-size:13px!important}
+ .abas button{min-height:30px;font-size:12px;padding:3px 4px}
+ .placar{gap:3px}
+ .placar div{display:flex;align-items:baseline;gap:4px;padding:2px 10px 3px;min-width:0;flex:none!important}
+ .placar div::before{height:1.5px}
+ .placar b{font-size:13.5px;display:inline}.placar small{font-size:10px}
+ .lado.f0{--fh:58px}
+ body{overflow:hidden!important}
+ .wrap{display:block!important;height:calc(100dvh - var(--topo,110px))!important}
+ #map{height:100%!important}
+ .lado h2{font-size:19px}
+ .lado.f0 #lado-c{opacity:.9}
+ .ferr{gap:4px}
+ .ferr button,.ferr input{min-height:30px;padding:3px 9px;font-size:12px}
+ .ferr input{width:118px}
+ .chips-et{gap:4px}
+ .chips-et button{min-height:26px;padding:2px 8px 2px 7px;font-size:11px;gap:5px}
+ .chips-et button i{width:7px;height:7px}.chips-et button b{font-size:10.5px}
+ .b-eu{width:32px;height:32px;bottom:calc(var(--fhv,58px) + 10px);transition:bottom .25s}
+ .leaflet-top.leaflet-right{bottom:calc(var(--fhv,58px) + 50px);transition:bottom .25s}
+ .leaflet-control-zoom a{width:30px!important;height:30px!important;line-height:30px!important}
+ .camp{width:min(270px,calc(100% - 16px));padding:10px 12px}
+ #map::after{background:radial-gradient(130% 100% at 50% 45%,transparent 65%,rgba(2,4,6,.45) 100%)}
+}
 </style>
 <script>/*__CRM_BOOT__*/</script>
 </head>
@@ -617,7 +648,9 @@ const topo = () => document.documentElement.style.setProperty('--topo', document
 /* as fichas de etapa e o menu de camadas ficam logo abaixo da barra de ferramentas (que pode quebrar em 2 linhas no iPad) */
 const encaixa = () => { const f = document.querySelector('.ferr'); if (!f) return; const y = f.offsetTop + f.offsetHeight + 6; $('#chips').style.top = y + 'px'; $('#camp').style.top = (y + 40) + 'px'; };
 addEventListener('resize', () => { topo(); encaixa(); map.invalidateSize(); }); topo(); setTimeout(encaixa, 0);
-function folha(n) { const a = $('#lado'); a.classList.remove('f0', 'f1', 'f2'); a.style.removeProperty('--fh'); a.classList.add('f' + n); setTimeout(() => map.invalidateSize(), 300); }
+if (cel()) folha(0);
+const alturaFolha = () => document.documentElement.style.setProperty('--fhv', ($('#lado').offsetHeight || 58) + 'px');
+function folha(n) { const a = $('#lado'); a.classList.remove('f0', 'f1', 'f2'); a.style.removeProperty('--fh'); a.classList.add('f' + n); setTimeout(() => { map.invalidateSize(); alturaFolha(); }, 300); }
 {
  const a = $('#lado'), al = $('#alca'); let y0 = null, h0 = 0, moveu = false;
  al.addEventListener('pointerdown', ev => { if (!cel()) return; y0 = ev.clientY; h0 = a.offsetHeight; moveu = false; a.classList.add('arrasta'); al.setPointerCapture(ev.pointerId); });
@@ -625,6 +658,7 @@ function folha(n) { const a = $('#lado'); a.classList.remove('f0', 'f1', 'f2'); 
  al.addEventListener('pointerup', () => { if (y0 === null) return; a.classList.remove('arrasta'); y0 = null;
   if (!moveu) { folha(a.classList.contains('f2') ? 0 : a.classList.contains('f0') ? 1 : 2); return; }
   const hh = a.offsetHeight / innerHeight; folha(hh < .3 ? 0 : hh < .7 ? 1 : 2); });
+ al.addEventListener('pointermove', () => { if (y0 !== null) alturaFolha(); });
 }
 $('#b-filtros').addEventListener('click', () => { const f = $('#fx'), on = !f.classList.contains('on'); f.classList.toggle('on', on); $('#b-filtros').setAttribute('aria-expanded', on); });
 
@@ -655,7 +689,7 @@ function abreRegiao(id) {
 lado.addEventListener('click', ev => {
  const li = ev.target.closest('[data-id]'); if (li && !li.closest('#lista-box')) return abreFicha(+li.dataset.id);
  const rg = ev.target.closest('[data-reg]'); if (rg) return abreRegiao(+rg.dataset.reg);
- if (ev.target.closest('[data-voltar]')) { regSel = null; fichaId = null; desenha(); painelLista(filtradas()); return; }
+ if (ev.target.closest('[data-voltar]')) { regSel = null; fichaId = null; desenha(); painelLista(filtradas()); if (cel()) folha(0); return; }
  const lr = ev.target.closest('[data-ligar-reg]'); if (lr) { regSel = +lr.dataset.ligarReg; return proximo(); }
  const er = ev.target.closest('[data-edreg]'); if (er) return editarRegiao(+er.dataset.edreg);
  const v2 = ev.target.closest('[data-v2]'); if (v2) return troca(v2.dataset.v2);
@@ -768,7 +802,7 @@ function ajustarPonto(id) { pegaPonto = id; toast('Clique no mapa onde fica a em
 /* ---------- desenhar região ---------- */
 let pts = [], linha = null;
 $('#b-des').addEventListener('click', () => { const on = $('#b-des').getAttribute('aria-pressed') !== 'true'; $('#b-des').setAttribute('aria-pressed', on); pts = []; G.des.clearLayers();
- if (on) { map.getContainer().style.cursor = 'crosshair'; lado.innerHTML = `<h2>Nova região</h2><p class="sub">Clique no mapa em volta da área, ponto a ponto. Depois dê o nome e salve.</p><form id="f-reg"><label class="f">Nome<input name="nome" placeholder="Região do Aeroporto" required maxlength="60"></label><label class="f">Cor<input name="cor" type="color" value="#19F7FF"></label><div class="g2" style="margin-top:10px"><button class="bt" type="button" id="r-desf">Desfazer ponto</button><button class="bt go" type="submit">Salvar região</button></div><p class="sub" id="r-n">0 pontos</p></form>`;
+ if (on) { if (cel()) folha(1); map.getContainer().style.cursor = 'crosshair'; lado.innerHTML = `<h2>Nova região</h2><p class="sub">Clique no mapa em volta da área, ponto a ponto. Depois dê o nome e salve.</p><form id="f-reg"><label class="f">Nome<input name="nome" placeholder="Região do Aeroporto" required maxlength="60"></label><label class="f">Cor<input name="cor" type="color" value="#19F7FF"></label><div class="g2" style="margin-top:10px"><button class="bt" type="button" id="r-desf">Desfazer ponto</button><button class="bt go" type="submit">Salvar região</button></div><p class="sub" id="r-n">0 pontos</p></form>`;
   $('#r-desf').onclick = () => { pts.pop(); redes(); }; $('#f-reg').onsubmit = salvaRegiao(null); }
  else { map.getContainer().style.cursor = ''; desenha(); } });
 function redes() { G.des.clearLayers(); if (pts.length) L.polygon(pts, { color:'#FFB547', weight:2, dashArray:'5 5', fillOpacity:.08 }).addTo(G.des); pts.forEach(p => L.circleMarker(p, { radius:4, color:'#FFB547' }).addTo(G.des)); const n = $('#r-n'); if (n) n.textContent = pts.length + ' pontos'; }
@@ -796,7 +830,7 @@ function troca(v) {
  if (v === 'ligar') { proximo(); }
  if (v === 'agenda') { agenda(); if (cel()) folha(2); }
  if (v === 'base') { base(); if (cel()) folha(2); }
- if (v === 'mapa' && cel()) folha(1);
+ if (v === 'mapa' && cel()) folha(0);
 }
 document.querySelector('.abas').addEventListener('click', ev => { const b = ev.target.closest('[data-v]'); if (b) troca(b.dataset.v); });
 

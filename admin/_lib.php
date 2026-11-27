@@ -12,6 +12,8 @@ function admin_logado(): ?array {
   $_SESSION['admin_visto'] = time();
   return one('SELECT * FROM admins WHERE id = ? AND ativo = 1', [$id]);
 }
+function foto_admin_arq(int $id): string { return PASTA_ARQ . '/fotos/admin-' . $id . '.jpg'; }
+function foto_admin_url(int $id): string { $f = foto_admin_arq($id); return is_file($f) ? 'foto.php?v=' . filemtime($f) : ''; }
 function token_admin(): string { if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16)); return $_SESSION['csrf']; }
 function data_br(?string $d): string { return $d ? date('d/m/Y', strtotime($d)) : ''; }
 function dh_br(?string $d): string { return $d ? date('d/m H:i', strtotime($d)) : ''; }

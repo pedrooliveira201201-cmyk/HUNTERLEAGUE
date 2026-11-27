@@ -332,8 +332,42 @@ body.ehdemo main{padding-top:24px}
 /* iPad em pé (601 a 900 px): aproveita a largura */
 @media (min-width:601px) and (max-width:900px){
  main{padding-left:24px;padding-right:24px}
- .dia{grid-template-columns:1fr 1fr}.dia .pn:last-child{grid-column:1/-1}
+ .dia{grid-template-columns:1fr 1fr}
  .pf-g{grid-template-columns:1fr 1fr}
+}
+
+/* foto do perfil */
+.av.com-foto{padding:0;overflow:hidden;background:#0B1013}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-foto{display:flex;align-items:center;gap:14px}
+.pf-foto small{display:block;color:var(--mut);font-weight:700}
+.av.gr{width:84px;height:84px;font-size:26px}
+.top .eu-av{margin:0;width:38px;height:38px;border:0;flex:none}
+.top .top-logo{margin-left:auto;width:30px!important;opacity:.85}
+.dia{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* celular: tudo mais compacto, com coisas lado a lado */
+@media (max-width:600px){
+ body{font-size:14px}
+ main{padding:calc(62px + var(--st)) 12px calc(88px + var(--sb))}
+ .top{height:calc(52px + var(--st))}
+ .top b{font-size:19px}
+ .ola{margin-bottom:14px}.ola h1{font-size:30px}.ola p{font-size:12.5px;margin-top:4px}
+ .hd{margin-bottom:14px;gap:10px}.hd h1{font-size:32px}.hd p{font-size:12.5px}
+ .tarefas{grid-template-columns:1fr 1fr;gap:8px}
+ .tf{padding:12px 12px 12px;gap:3px}.tf .n{font-size:32px}.tf b{font-size:13.5px;line-height:1.2}
+ .tf small{font-size:11.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .tf .btn{margin-top:6px;height:32px;padding:0 10px;font-size:12.5px}
+ .emdia{padding:14px;gap:12px}.emdia .ok2{width:44px;height:44px}.emdia b{font-size:20px}
+ .dia{grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;align-items:start}
+ .pn{padding:12px;gap:8px}.pn header small{font-size:10px;letter-spacing:.08em}.pn header b{font-size:20px;margin:4px 0 2px}.pn header span{font-size:11.5px;display:block;line-height:1.3}
+ .pn ul,.pn .vz{display:none}
+ .mini2{gap:4px}.mini2 div{padding:6px 2px}.mini2 b{font-size:17px}.mini2 small{font-size:10px}
+ .pn .btn{height:32px;padding:0 10px;font-size:12px}
+ .sec{margin:20px 0 8px;font-size:11px}
+ .funil{padding:10px 12px}.fl{grid-template-columns:92px minmax(0,1fr) 34px 32px;gap:6px;padding:4px 0}.fl span{font-size:11.5px}.fl b{font-size:16px}.fl small{font-size:10.5px}.fl .br{height:10px}
+ .stats{grid-template-columns:repeat(3,1fr);gap:6px}.st{padding:10px}.st b{font-size:22px}.st span{font-size:11px}
+ .alerta{padding:10px 12px;font-size:13px}
+ .btn{height:40px;font-size:13.5px}
 }
 </style>
 </head>
@@ -346,7 +380,7 @@ body.ehdemo main{padding-top:24px}
  <nav id="nav-side"></nav>
  <div class="foot"><span class="av" id="me-av">E</span><div><b id="me-n">Erick</b><small id="me-p">master</small></div><button type="button" data-sair title="Sair"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
 </aside>
-<header class="top"><img src="__BASE__img/crest-160.webp" alt=""><b class="bs" id="top-t">Hoje</b><button class="av" type="button" data-ir="mais" aria-label="Mais opções" id="me-av2">E</button></header>
+<header class="top"><button class="av eu-av" type="button" data-ir="mais" data-mais="perfil" aria-label="Meu perfil e mais opções" id="me-av2">E</button><b class="bs" id="top-t">Hoje</b><img class="top-logo" src="__BASE__img/crest-160.webp" alt="Hunter League"></header>
 
 <main id="main"><p class="carregando">Carregando…</p></main>
 
@@ -444,7 +478,7 @@ const ir = async (k, extra) => {
  navDraw();
 };
 document.addEventListener('click', e => {
- const n = e.target.closest('[data-ir]'); if (n) { e.preventDefault(); if (n.dataset.aba) maisAba = n.dataset.aba; ir(n.dataset.ir, n.dataset.extra); return; }
+ const n = e.target.closest('[data-ir]'); if (n) { e.preventDefault(); if (n.dataset.mais) maisAba = n.dataset.mais; ir(n.dataset.ir, n.dataset.extra); return; }
  if (e.target.closest('[data-novo]')) { novaIndicacao(); return; }
  const rl = e.target.closest('[data-rolar]'); if (rl) { const el = document.getElementById(rl.dataset.rolar); if (el) el.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
  if (e.target.closest('[data-sair]')) sair();
@@ -457,17 +491,14 @@ const TELAS = {};
 const painelDia = r => {
  const c = r.campo || {}, f = r.funil || [], v = r.ao_vivo || [], g = r.goto;
  const mx = Math.max(1, ...f.map(x => x[1]));
- return `${g && g.alerta ? `<div class="alerta ch"><b>WhatsApp do GoTo sem mensagens ${g.horas == null ? 'desde a conexão' : `há ${g.horas} h`}</b><span>Se o WhatsApp da CallNet recebeu mensagens nesse tempo, a integração pode ter caído. Confira em Mais → GoTo.</span><button class="btn sm" type="button" data-ir="mais" data-aba="goto">Conferir</button></div>` : ''}
+ return `${g && g.alerta ? `<div class="alerta ch"><b>WhatsApp do GoTo sem mensagens ${g.horas == null ? 'desde a conexão' : `há ${g.horas} h`}</b><span>Se o WhatsApp da CallNet recebeu mensagens nesse tempo, a integração pode ter caído. Confira em Mais → GoTo.</span><button class="btn sm" type="button" data-ir="mais" data-mais="goto">Conferir</button></div>` : ''}
  <div class="dia">
   <section class="pn ch" style="--a:#FFB547"><header><small>Na rua hoje</small><b class="bs">${c.visitas || 0} ${c.visitas === 1 ? 'visita' : 'visitas'}</b><span>${c.manha || 0} de manhã · ${c.tarde || 0} à tarde</span></header>
    ${(c.lista || []).length ? `<ul>${c.lista.map(x => `<li><i>${h(x.turno)}</i>${h(x.nome)}<small>${h(x.bairro)}</small></li>`).join('')}</ul>` : '<p class="vz">Nenhuma visita marcada para hoje.</p>'}
    <a class="btn sm" href="crm.php#agenda">Abrir a rota do dia</a></section>
   <section class="pn ch" style="--a:#19F7FF"><header><small>No telefone</small><b class="bs">${(c.retornos || 0) + (c.a_ligar || 0)} para ligar</b><span>${c.retornos || 0} ${c.retornos === 1 ? 'retorno vence' : 'retornos vencem'} hoje · ${c.a_ligar || 0} nunca ligadas</span></header>
-   <div class="mini2"><div><b class="bs">${c.ligadas || 0}</b><small>ligadas hoje</small></div><div><b class="bs" style="color:var(--ok)">${c.agendou || 0}</b><small>agendaram</small></div><div><b class="bs">${c.ligadas ? Math.round((c.agendou || 0) / c.ligadas * 100) : 0}%</b><small>conversão</small></div></div>
+   <div class="mini2"><div><b class="bs">${c.ligadas || 0}</b><small>ligadas</small></div><div><b class="bs" style="color:var(--ok)">${c.agendou || 0}</b><small>agendou</small></div><div><b class="bs">${c.ligadas ? Math.round((c.agendou || 0) / c.ligadas * 100) : 0}%</b><small>conv.</small></div></div>
    <a class="btn sm" href="crm.php#ligar">Abrir a fila de ligação</a></section>
-  <section class="pn ch" style="--a:#4DF0A0"><header><small>QR ao vivo</small><b class="bs">${r.stats.leit_hoje} ${r.stats.leit_hoje === 1 ? 'leitura' : 'leituras'} hoje</b><span>quem leu o QR e foi para o WhatsApp</span></header>
-   ${v.length ? `<ul class="vivo">${v.map(x => `<li><i>${h(x.em)}</i>${h(x.loja)}<small>${h(x.codigo || '')}</small></li>`).join('')}</ul>` : '<p class="vz">Nenhuma leitura hoje ainda. Aparece aqui na hora.</p>'}
-   <a class="btn sm g" href="crm.php">Ver no mapa</a></section>
  </div>
  ${f.length ? `<p class="sec">Funil da operação</p><div class="funil ch">${f.map((x, k) => { const ant = k ? f[k - 1][1] : 0, pc0 = k && ant ? Math.round(x[1] / ant * 100) : null, pc = pc0 != null && pc0 <= 100 ? pc0 : null;
    return `<div class="fl"><span>${h(x[0])}</span><div class="br"><i style="width:${Math.max(2, x[1] / mx * 100)}%"></i></div><b class="bs">${x[1]}</b><small>${pc == null ? '' : pc + '%'}</small></div>`; }).join('')}
@@ -859,7 +890,7 @@ document.addEventListener('click', async e => {
 let maisAba = 'config';
 TELAS.mais = async () => {
  const r = cache.cfg = await api('config'); const c = r.config;
- const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['goto', 'GoTo (WhatsApp)'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['zerar', 'Zerar testes'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
+ const abas = r.master ? [['perfil', 'Meu perfil'], ['config', 'Configurações'], ['email', 'E-mail'], ['goto', 'GoTo (WhatsApp)'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['zerar', 'Zerar testes'], ['senha', 'Minha senha']] : [['perfil', 'Meu perfil'], ['senha', 'Minha senha']];
  if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
  $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
   <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
@@ -949,6 +980,25 @@ TELAS.mais = async () => {
    const rr = await api('zerar', f); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), cache = {}, TELAS.mais()); });
  }
  if (maisAba === 'hist') box.innerHTML = `<ul class="hist">${r.historico.map(x => `<li class="ch"><span>${h(x.em)}</span><span>${h(x.quem)}</span><div><b>${h(x.acao)}</b> ${h(x.alvo)}${x.detalhe ? ` <span>· ${h(x.detalhe)}</span>` : ''}</div></li>`).join('')}</ul>`;
+ if (maisAba === 'perfil') {
+  box.innerHTML = `<div class="form ch perfil" style="max-width:520px">
+   <div class="pf-foto"><span class="av gr ${BOOT.foto ? 'com-foto' : ''}" id="pf-av">${BOOT.foto ? `<img src="${h(BOOT.foto)}" alt="">` : h(iniciais(BOOT.nome))}</span>
+    <div><b class="bs" style="font-size:26px">${h(BOOT.nome)}</b><small>${MASTER ? 'Master' : 'Atendimento'}</small></div></div>
+   <p class="sub" style="margin:0">Sua foto aparece no canto de cima da Central.</p>
+   <input type="file" id="pf-arq" accept="image/*" hidden>
+   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="pf-esc">${BOOT.foto ? 'Trocar foto' : 'Colocar foto'}</button>${BOOT.foto ? '<button class="btn g" type="button" id="pf-tira">Tirar foto</button>' : ''}</div></div>`;
+  $('#pf-esc').addEventListener('click', () => $('#pf-arq').click());
+  $('#pf-arq').addEventListener('change', async ev => {
+   const f = ev.target.files[0]; if (!f) return; toast('Enviando a foto…');
+   /* reduz no próprio aparelho: quadrada, 320 px, JPEG (também converte foto de iPhone) */
+   let blob = f;
+   try { const bm = await createImageBitmap(f); const l = Math.min(bm.width, bm.height), c = document.createElement('canvas'); c.width = c.height = 320;
+    c.getContext('2d').drawImage(bm, (bm.width - l) / 2, (bm.height - l) / 2, l, l, 0, 0, 320, 320); blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', .88)); } catch (x) {}
+   const fd = new FormData(); fd.append('foto', blob, 'foto.jpg');
+   const rr = await api('minha_foto', fd); if (rr.erro) return toast(rr.erro, true);
+   BOOT.foto = rr.foto; fotoEu(rr.foto); toast(rr.msg); TELAS.mais(); });
+  const tira = $('#pf-tira'); if (tira) tira.addEventListener('click', async () => { const fd = new FormData(); fd.append('o', 'apagar'); const rr = await api('minha_foto', fd); if (rr.erro) return toast(rr.erro, true); BOOT.foto = ''; fotoEu(''); toast(rr.msg); TELAS.mais(); });
+ }
  if (maisAba === 'senha') {
   box.innerHTML = `<form class="form ch" id="f-pw" style="max-width:440px"><label class="f">Senha atual<input name="atual" type="password" required></label><label class="f">Senha nova (10 ou mais)<input name="nova" type="password" minlength="10" required></label><button class="btn" type="submit" style="justify-self:start">Trocar senha</button></form>`;
   $('#f-pw').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('minha_senha', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), e.target.reset()); });
@@ -961,7 +1011,8 @@ document.addEventListener('click', async e => {
 
 /* ---------- começo ---------- */
 $('#me-n').textContent = BOOT.nome; $('#me-p').textContent = BOOT.papel === 'master' ? 'Master' : 'Atendimento';
-$('#me-av').textContent = $('#me-av2').textContent = iniciais(BOOT.nome);
+const fotoEu = url => { for (const el of [$('#me-av'), $('#me-av2')]) { if (!el) continue; el.innerHTML = url ? `<img src="${h(url)}" alt="">` : h(iniciais(BOOT.nome)); el.classList.toggle('com-foto', !!url); } };
+fotoEu(BOOT.foto || '');
 const inicio = (location.hash || '#hoje').slice(1);
 (async () => { await atualizaResumo(); ir(TELAS[inicio] ? inicio : 'hoje'); })();
 if (DEMO) { document.body.classList.add('ehdemo'); $('#demo-bar').hidden = false; $('#demo-reset').addEventListener('click', e => { e.preventDefault(); DEMO_RESET(); cache = {}; ir('hoje'); toast('Demonstração recomeçada.'); }); }
