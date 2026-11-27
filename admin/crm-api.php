@@ -19,6 +19,8 @@ crm_migrar();
 function crm_empresa_ou_404(int $id): array { $x = one('SELECT * FROM empresas WHERE id = ?', [$id]); if (!$x) json_out(['erro' => 'Empresa não encontrada.'], 404); return $x; }
 function crm_dist(float $a1, float $o1, float $a2, float $o2): float { $r = 6371000; $dl = deg2rad($a2 - $a1); $do = deg2rad($o2 - $o1);
   $h = sin($dl / 2) ** 2 + cos(deg2rad($a1)) * cos(deg2rad($a2)) * sin($do / 2) ** 2; return 2 * $r * asin(min(1, sqrt($h))); }
+/* fila "ligar nesta região": a região do mapa é feita das células da Nio (o painel manda os nomes) */
+function crm_cels_de(string $v): ?array { $c = array_values(array_filter(array_map('trim', explode('|', mb_substr($v, 0, 4000))))); return $c ?: null; }
 function crm_regiao_poli(?int $id): ?array { if (!$id) return null; $r = one('SELECT poligono FROM regioes WHERE id = ?', [$id]); return $r ? json_decode($r['poligono'], true) : null; }
 
 switch ($acao) {
@@ -28,7 +30,7 @@ case 'estado': {
   $hoje = date('Y-m-d');
   $emp = array_map(fn($r) => [(int)$r['id'], crm_nome($r), (string)$r['segmento'], (string)$r['bairro'],
       $r['lat'] !== null ? (float)$r['lat'] : null, $r['lng'] !== null ? (float)$r['lng'] : null, $r['etapa'],
-      $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds'], (string)$r['cnae']],
+      $r['proximo_em'] ? ($r['proximo_em'] <= agora() ? 1 : 2) : 0, $r['celula'] && $r['celula'] !== '-' ? 1 : 0, $r['geo'] ?? '', $r['tel1'] ? 1 : 0, (int)$r['leit'], (int)$r['inds'], (string)$r['cnae'], $r['celula'] && $r['celula'] !== '-' ? (string)$r['celula'] : ''],
     all("SELECT e.id, e.fantasia, e.razao, e.responsavel, e.segmento, e.cnae, e.bairro, e.lat, e.lng, e.etapa, e.proximo_em, e.celula, e.geo, e.tel1,
       (SELECT COUNT(*) FROM leituras l WHERE l.parceiro_id = e.parceiro_id) AS leit, (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = e.parceiro_id) AS inds
       FROM empresas e WHERE " . str_replace(['geo', 'celula'], ['e.geo', 'e.celula'], CRM_VISIVEL) . " ORDER BY e.id"));
@@ -72,7 +74,7 @@ case 'parecer': {
   $x = crm_empresa_ou_404((int)($e['id'] ?? 0));
   $antes = array_intersect_key($x, array_flip(['etapa','motivo','proximo_em','tentativas','visita_dia','visita_turno','visita_quem','tel_ok','tel1','tel2']));
   try { $txt = crm_parecer($x, $s('p', 20), $e, $quem); } catch (InvalidArgumentException $z) { json_out(['erro' => $z->getMessage()], 422); }
-  $prox = crm_proximo(crm_regiao_poli((int)($e['regiao'] ?? 0) ?: null), (int)$x['id']);
+  $prox = crm_proximo(crm_regiao_poli((int)($e['regiao'] ?? 0) ?: null), (int)$x['id'], crm_cels_de((string)($e['cels'] ?? '')));
   $_SESSION['crm_desfazer'] = ['id' => (int)$x['id'], 'antes' => $antes, 'hist' => (int)(one('SELECT MAX(id) AS m FROM empresa_hist WHERE empresa_id = ?', [$x['id']])['m'] ?? 0), 'em' => time()];
   json_out(['ok' => true, 'msg' => $txt, 'proximo' => $prox ? (int)$prox['id'] : null, 'desfazer' => true]);
 }
@@ -107,7 +109,7 @@ case 'campo': {
 }
 
 case 'proximo': {
-  $prox = crm_proximo(crm_regiao_poli((int)($_GET['regiao'] ?? 0) ?: null), (int)($_GET['exceto'] ?? 0));
+  $prox = crm_proximo(crm_regiao_poli((int)($_GET['regiao'] ?? 0) ?: null), (int)($_GET['exceto'] ?? 0), crm_cels_de((string)($_GET['cels'] ?? '')));
   json_out(['proximo' => $prox ? (int)$prox['id'] : null]);
 }
 
@@ -213,7 +215,8 @@ case 'regioes_auto': {
   $cores = ['#19F7FF', '#FFB547', '#B47CFF', '#32E000', '#FF5C7A', '#5B8CFF', '#FFD84D', '#FF8A3D', '#3DFFB4', '#F06BFF', '#9BE15D', '#7FD4FF'];
   $velhas = array_filter(array_map('intval', explode(',', (string)conf('crm_reg_auto', ''))));
   if ($velhas) q('DELETE FROM regioes WHERE id IN (' . implode(',', $velhas) . ')');
-  $novas = []; $ordem = 0;
+  $novas = []; $ordem = 0; $usados = [];
+  foreach (all('SELECT nome FROM regioes') as $rr) $usados[mb_strtolower($rr['nome'])] = 1;
   usort($grupo, fn($a, $b) => count($b) <=> count($a));
   foreach ($grupo as $g) {
     if (count($g) < 3) continue;
@@ -222,7 +225,13 @@ case 'regioes_auto': {
     if (count($h) < 3) { $h = []; for ($a = 0; $a < 8; $a++) $h[] = [$cx + 0.003 * sin($a * M_PI / 4), $cy + 0.0032 * cos($a * M_PI / 4)]; }
     $h = array_map(function ($p) use ($cx, $cy) { $dy = $p[0] - $cx; $dx = $p[1] - $cy; $n = sqrt($dy * $dy + $dx * $dx) ?: 1; return [round($p[0] + $dy / $n * 0.0023, 6), round($p[1] + $dx / $n * 0.0024, 6)]; }, $h);
     $b = []; foreach ($g as $p) if ($p[2] !== '') $b[$p[2]] = ($b[$p[2]] ?? 0) + 1; arsort($b);
-    $nome = 'Região ' . ($b ? crm_nome_proprio((string)array_key_first($b)) : (string)($ordem + 1));
+    /* nome sem repetir: o bairro com mais empresas que ainda não deu nome; se todos já deram, o bairro + o lado da cidade */
+    $nome = '';
+    foreach (array_keys($b) as $bn) { $t = 'Região ' . crm_nome_proprio((string)$bn); if (!isset($usados[mb_strtolower($t)])) { $nome = $t; break; } }
+    if ($nome === '') { $lado = abs($cx + 18.6475) > abs($cy + 48.1875) * .95 ? ($cx > -18.6475 ? 'Norte' : 'Sul') : ($cy > -48.1875 ? 'Leste' : 'Oeste');
+      $nome = 'Região ' . ($b ? crm_nome_proprio((string)array_key_first($b)) . ' ' . $lado : $lado); $n2 = 2; $base = $nome;
+      while (isset($usados[mb_strtolower($nome)])) $nome = $base . ' ' . $n2++; }
+    $usados[mb_strtolower($nome)] = 1;
     q('INSERT INTO regioes (nome, cor, poligono, criado_em) VALUES (?,?,?,?)', [mb_substr($nome, 0, 60), $cores[$ordem % count($cores)], json_encode($h), agora()]);
     $novas[] = (int)db()->lastInsertId(); $ordem++;
   }

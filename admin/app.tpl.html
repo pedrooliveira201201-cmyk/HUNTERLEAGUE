@@ -279,6 +279,50 @@ body.ehdemo main{padding-top:24px}
 .kitf{display:grid;gap:10px;margin:0;padding:12px;border:1px solid var(--line,#22343B)}
 .kitf legend{padding:0 6px;font-weight:800}
 .kitf .ck{display:flex;align-items:center;gap:8px;font-weight:700}
+
+/* painel do dia */
+.alerta{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;margin:22px 0 0;padding:14px 16px;background:linear-gradient(120deg,rgba(255,200,87,.14),var(--p1));border:1px solid rgba(255,200,87,.4)}
+.alerta b{color:#FFC857}.alerta span{grid-column:1;color:var(--sil);font-size:13.5px}.alerta .btn{grid-row:1/3;grid-column:2;background:#FFC857}
+.dia{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:26px}
+.pn{display:flex;flex-direction:column;gap:12px;padding:18px;background:linear-gradient(160deg,var(--p2),var(--p1));border:1px solid var(--ln);border-top:3px solid var(--a)}
+.pn header small{display:block;color:var(--a);font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
+.pn header b{display:block;font-size:30px;line-height:1;margin:6px 0 2px}
+.pn header span{color:var(--mut);font-size:13px;font-weight:600}
+.pn ul{list-style:none;margin:0;padding:0}
+.pn li{display:grid;grid-template-columns:auto 1fr;gap:0 10px;padding:7px 0;border-top:1px solid var(--ln);font-weight:700;font-size:14px}
+.pn li i{grid-row:1/3;align-self:center;font-style:normal;min-width:52px;padding:3px 6px;background:#0F1A1E;color:var(--a);font-size:11.5px;font-weight:800;text-align:center}
+.pn li small{color:var(--mut);font-weight:600;font-size:12px}
+.pn .btn{margin-top:auto;align-self:flex-start;text-decoration:none}
+.pn .vz,.vz{color:var(--mut);font-size:13px;margin:0}
+.mini2{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini2 div{padding:10px;background:#0A1114;border:1px solid var(--ln);text-align:center}
+.mini2 b{display:block;font-size:24px;line-height:1}.mini2 small{color:var(--mut);font-size:11.5px;font-weight:700}
+.vivo li{animation:vivo .6s ease-out}
+@keyframes vivo{from{background:rgba(77,240,160,.18)}}
+.funil{padding:16px 18px;background:var(--p1);border:1px solid var(--ln)}
+.fl{display:grid;grid-template-columns:170px minmax(0,1fr) 56px 44px;gap:12px;align-items:center;padding:6px 0}
+.fl span{font-weight:700;font-size:14px;color:var(--sil)}
+.fl .br{height:14px;background:#0F181C;overflow:hidden}
+.fl .br i{display:block;height:100%;background:linear-gradient(90deg,var(--b),var(--c));box-shadow:0 0 12px rgba(25,247,255,.35)}
+.fl b{font-size:22px;text-align:right}.fl small{color:var(--mut);font-weight:800;font-size:12px}
+@media (max-width:900px){.dia{grid-template-columns:1fr}.fl{grid-template-columns:110px minmax(0,1fr) 44px 38px;gap:8px}.fl span{font-size:12.5px}}
+
+/* ficha completa do parceiro */
+.pf{margin-top:16px}
+.pf-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-c{display:flex;flex-direction:column;gap:4px;padding:12px 14px;background:#0A1114;border:1px solid var(--ln)}
+.pf-c small{color:var(--mut);font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.pf-c b{font-size:19px;line-height:1.1}.pf-c span{color:var(--sil);font-size:12.5px;font-weight:600}
+.pf-b{height:7px;margin-top:6px;background:#16222A}.pf-b i{display:block;height:100%;background:var(--c)}.pf-b.v i{background:var(--ok)}
+.pf-4{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:4px}.pf-4 b{font-size:18px}.pf-4 span{display:block;font-size:11.5px;color:var(--mut)}
+.pf-t{max-height:260px;overflow:auto;border-top:1px solid var(--ln)}
+.pf-t>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--ln)}
+.pf-t b{display:block;font-size:14px}.pf-t small{color:var(--mut);font-size:12px}
+.pf-t em{flex:none;font-style:normal;padding:3px 8px;font-size:11.5px;font-weight:800;color:#050607;background:var(--s)}
+.zap{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto;padding:8px;background:#070B0D;border:1px solid var(--ln)}
+.bal{max-width:85%;padding:8px 10px;font-size:13.5px;white-space:pre-wrap;word-break:break-word;border:1px solid var(--ln)}.bal span{display:block;font-size:11px;opacity:.6;margin-top:3px}
+.bal.in{align-self:flex-start;background:#0E1519}.bal.out{align-self:flex-end;background:#0A2A2C;border-color:rgba(25,247,255,.35)}
+@media (max-width:600px){.pf-g{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -388,7 +432,7 @@ const ir = async (k, extra) => {
  navDraw();
 };
 document.addEventListener('click', e => {
- const n = e.target.closest('[data-ir]'); if (n) { e.preventDefault(); ir(n.dataset.ir, n.dataset.extra); return; }
+ const n = e.target.closest('[data-ir]'); if (n) { e.preventDefault(); if (n.dataset.aba) maisAba = n.dataset.aba; ir(n.dataset.ir, n.dataset.extra); return; }
  if (e.target.closest('[data-novo]')) { novaIndicacao(); return; }
  const rl = e.target.closest('[data-rolar]'); if (rl) { const el = document.getElementById(rl.dataset.rolar); if (el) el.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
  if (e.target.closest('[data-sair]')) sair();
@@ -397,7 +441,29 @@ const sair = async () => { if (DEMO) { toast('Na demonstração não tem login. 
 
 /* ---------- tela: hoje ---------- */
 const TELAS = {};
+/* painel do dia: rua (visitas), telefone (fila do CRM), QR ao vivo e o funil da operação */
+const painelDia = r => {
+ const c = r.campo || {}, f = r.funil || [], v = r.ao_vivo || [], g = r.goto;
+ const mx = Math.max(1, ...f.map(x => x[1]));
+ return `${g && g.alerta ? `<div class="alerta ch"><b>WhatsApp do GoTo sem mensagens ${g.horas == null ? 'desde a conexão' : `há ${g.horas} h`}</b><span>Se o WhatsApp da CallNet recebeu mensagens nesse tempo, a integração pode ter caído. Confira em Mais → GoTo.</span><button class="btn sm" type="button" data-ir="mais" data-aba="goto">Conferir</button></div>` : ''}
+ <div class="dia">
+  <section class="pn ch" style="--a:#FFB547"><header><small>Na rua hoje</small><b class="bs">${c.visitas || 0} ${c.visitas === 1 ? 'visita' : 'visitas'}</b><span>${c.manha || 0} de manhã · ${c.tarde || 0} à tarde</span></header>
+   ${(c.lista || []).length ? `<ul>${c.lista.map(x => `<li><i>${h(x.turno)}</i>${h(x.nome)}<small>${h(x.bairro)}</small></li>`).join('')}</ul>` : '<p class="vz">Nenhuma visita marcada para hoje.</p>'}
+   <a class="btn sm" href="crm.php#agenda">Abrir a rota do dia</a></section>
+  <section class="pn ch" style="--a:#19F7FF"><header><small>No telefone</small><b class="bs">${(c.retornos || 0) + (c.a_ligar || 0)} para ligar</b><span>${c.retornos || 0} ${c.retornos === 1 ? 'retorno vence' : 'retornos vencem'} hoje · ${c.a_ligar || 0} nunca ligadas</span></header>
+   <div class="mini2"><div><b class="bs">${c.ligadas || 0}</b><small>ligadas hoje</small></div><div><b class="bs" style="color:var(--ok)">${c.agendou || 0}</b><small>agendaram</small></div><div><b class="bs">${c.ligadas ? Math.round((c.agendou || 0) / c.ligadas * 100) : 0}%</b><small>conversão</small></div></div>
+   <a class="btn sm" href="crm.php#ligar">Abrir a fila de ligação</a></section>
+  <section class="pn ch" style="--a:#4DF0A0"><header><small>QR ao vivo</small><b class="bs">${r.stats.leit_hoje} ${r.stats.leit_hoje === 1 ? 'leitura' : 'leituras'} hoje</b><span>quem leu o QR e foi para o WhatsApp</span></header>
+   ${v.length ? `<ul class="vivo">${v.map(x => `<li><i>${h(x.em)}</i>${h(x.loja)}<small>${h(x.codigo || '')}</small></li>`).join('')}</ul>` : '<p class="vz">Nenhuma leitura hoje ainda. Aparece aqui na hora.</p>'}
+   <a class="btn sm g" href="crm.php">Ver no mapa</a></section>
+ </div>
+ ${f.length ? `<p class="sec">Funil da operação</p><div class="funil ch">${f.map((x, k) => { const ant = k ? f[k - 1][1] : 0, pc0 = k && ant ? Math.round(x[1] / ant * 100) : null, pc = pc0 != null && pc0 <= 100 ? pc0 : null;
+   return `<div class="fl"><span>${h(x[0])}</span><div class="br"><i style="width:${Math.max(2, x[1] / mx * 100)}%"></i></div><b class="bs">${x[1]}</b><small>${pc == null ? '' : pc + '%'}</small></div>`; }).join('')}
+   <p class="vz" style="margin:8px 0 0">A % é quantos passaram da etapa de cima para esta. Indicações e instalações contam o mês.</p></div>` : ''}`;
+};
+let vivoT = null;
 TELAS.hoje = async () => {
+ clearInterval(vivoT); vivoT = setInterval(async () => { if (pagina !== 'hoje' || document.hidden) return; const r2 = await api('resumo'); if (r2.ao_vivo && JSON.stringify(r2.ao_vivo) !== JSON.stringify((cache.resumo || {}).ao_vivo)) { const novo = r2.ao_vivo[0]; TELAS.hoje(); if (novo) toast(`📍 QR de ${novo.loja} lido agora`); } }, 30000);
  const r = cache.resumo = await api('resumo');
  const t = r.tarefas, hr = new Date().getHours();
  const sauda = hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
@@ -416,6 +482,7 @@ TELAS.hoje = async () => {
   ${cards.length ? `<div class="tarefas">${cards.map(c => `<div class="tf ch" style="--a:${c[0]}"><span class="n bs">${h(c[1])}</span><b>${h(c[2])}</b><small>${h(c[3])}</small><button class="btn sm" type="button" ${c[5][0] === '#' ? `data-rolar="${c[5].slice(1)}"` : `data-ir="${c[5]}"`}>${h(c[4])} ▸</button></div>`).join('')}</div>`
    : `<div class="emdia ch"><span class="ok2">${I.ok}</span><div><b class="bs">Tudo em dia</b><p>Nenhuma tarefa pendente agora. Quando chegar indicação ou cadastro, aparece aqui.</p></div></div>`}
   ${par.length ? `<p class="sec" id="parados">Parceiros parados (${r.dias_alerta}+ dias sem indicar)</p><div class="parados">${par.map(p => `<div class="pd"><div><b>${h(p.nome)} <span class="cod">${h(p.codigo)}</span></b><small>${p.nunca ? `Ainda não indicou ninguém · aprovado há ${p.dias} dias` : `Última indicação há ${p.dias} dias`}</small></div><a class="btn sm" href="https://wa.me/55${h(p.wa_d)}?text=${encodeURIComponent(`Oi, ${p.resp}! Tudo bem? Aqui é da CallNet. Faz uns dias que não chega indicação pelo seu QR. Lembra de mostrar a plaquinha para os clientes e de mandar o seu link para quem precisa de internet. Qualquer dúvida, é só chamar!`)}" target="_blank" rel="noopener">${I.wa}Chamar</a></div>`).join('')}</div>` : ''}
+  ${painelDia(r)}
   <p class="sec">Números</p>
   <div class="stats"><div class="st ch"><b class="bs">${s.ind_hoje}</b><span>indicações hoje</span></div><div class="st ch"><b class="bs">${s.ind_mes}</b><span>indicações no mês</span></div><div class="st ch"><b class="bs" style="color:var(--ok)">${s.inst_mes}</b><span>instalações no mês</span></div><div class="st ch"><b class="bs">${s.leit_hoje}</b><span>leituras de QR hoje</span></div><div class="st ch"><b class="bs">${s.ativos}</b><span>parceiros ativos</span></div></div>
   ${r.atividade.length ? `<p class="sec">Últimas ações</p><ul class="tl">${r.atividade.map(a => `<li>${h(a.acao)} <b>${h(a.alvo)}</b><small>${h(a.em)} · ${h(a.quem)}</small></li>`).join('')}</ul>` : ''}`;
@@ -633,12 +700,14 @@ document.addEventListener('click', async e => {
   const j = jan(`<h2 class="bs">${h(p.loja || p.nome)}</h2><p class="sub"><span class="pill ${pclass(st)}">${h(st)}</span> ${p.codigo ? `<span class="cod" style="margin-left:6px">${h(p.codigo)}</span>` : ''}</p>
    <dl class="det"><dt>Nome</dt><dd>${h(p.nome)}</dd><dt>Tipo</dt><dd>${h(TIPO(p.tipo))}</dd><dt>CPF/CNPJ</dt><dd>${h(p.doc)}</dd><dt>WhatsApp</dt><dd><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a></dd>${p.email ? `<dt>E-mail</dt><dd>${h(p.email)}</dd>` : ''}<dt>Cidade</dt><dd>${h(p.cidade)}</dd>
    <dt>Chave PIX</dt><dd>${h(p.pix)} <button class="btn sm g" type="button" data-cp="${h(p.pix)}" style="height:28px;margin-left:6px">Copiar</button></dd>${p.link ? `<dt>Link do QR</dt><dd>${h(p.link)}</dd>` : ''}<dt>Nível</dt><dd>${h(p.nivel)}</dd><dt>Números</dt><dd>${p.leit} leituras · ${p.ind} indicações · ${p.inst} instalações</dd><dt>Cadastro</dt><dd>${h(p.desde)} · termo ${h(p.termo)}</dd>${p.obs ? `<dt>Observações</dt><dd>${h(p.obs)}</dd>` : ''}</dl>
+   ${DEMO ? '' : '<div id="pf-mais" class="pf"><span class="vz">Carregando o resto da ficha…</span></div>'}
    <div class="rod" style="justify-content:flex-start">
     ${st === 'pendente' || st === 'recusado' ? `<button class="btn ok" type="button" data-o="aprovar">✓ Aprovar</button>` : ''}
     ${(st === 'ativo' || st === 'pendente') && !DEMO ? `<button class="btn" type="button" data-o="lista">Lançar lista dos 20</button>` : ''}
     ${st === 'ativo' ? `<button class="btn g" type="button" data-o="senha">Senha nova</button><button class="btn g" type="button" data-o="editar">Editar WhatsApp/PIX</button>${p.codigo && !DEMO ? `<a class="btn g" href="qr.php?id=${p.id}" target="_blank">Baixar QR</a>` : ''}<button class="btn bad" type="button" data-o="bloquear">Bloquear</button><button class="btn bad" type="button" data-o="desfiliar">Desfiliar</button>` : ''}
     ${st === 'bloqueado' || st === 'desfiliado' ? `<button class="btn" type="button" data-o="reativar">Reativar</button>` : ''}
    </div>`);
+  if (!DEMO) fichaParceiro(p.id, j);
   j.addEventListener('click', async ev => {
    const c = ev.target.closest('[data-cp]'); if (c) return copiar(c.dataset.cp, 'Chave PIX copiada');
    const b = ev.target.closest('[data-o]'); if (!b) return;
@@ -655,6 +724,23 @@ document.addEventListener('click', async e => {
  }
 });
 
+/* ficha completa: kit, bônus, QR, loja no mapa, indicados e a conversa do WhatsApp */
+async function fichaParceiro(id, j) {
+ const r = await api('parceiro_ficha', null, '&id=' + id), box = j.querySelector('#pf-mais'); if (!box) return;
+ if (r.erro) { box.innerHTML = `<span class="vz">${h(r.erro)}</span>`; return; }
+ const k = r.kit, b = r.bonus, l = r.leituras, pc = (a, m) => Math.min(100, Math.round(a / m * 100));
+ const ST = { 'Nova':'#AEFCFF', 'Em contato':'#7FD8FF', 'Em negociação':'#B9A6FF', 'Agendado':'#FFC857', 'Instalado':'#4DF0A0', 'Cancelado':'#FF6B81' };
+ box.innerHTML = `<div class="pf-g">
+   <div class="pf-c"><small>Kit completo</small>${k.liberado ? `<b class="bs" style="color:var(--ok)">Liberado em ${h(k.liberado)}</b>` : `<b class="bs">${k.contatos}/${k.meta_c} contatos · ${k.vendas}/${k.meta_v} vendas</b>`}
+    <div class="pf-b"><i style="width:${pc(k.contatos, k.meta_c)}%"></i></div><div class="pf-b v"><i style="width:${pc(k.vendas, k.meta_v)}%"></i></div></div>
+   <div class="pf-c"><small>QR</small><b class="bs">${l.total} leituras</b><span>${l.hoje} hoje · ${l.semana} nos últimos 7 dias${l.ultimas.length ? ' · última ' + h(l.ultimas[0]) : ''}</span></div>
+   <div class="pf-c"><small>Bônus</small><div class="pf-4"><div><b class="bs">${reaisC(b.espera)}</b><span>esperando 1ª fatura</span></div><div><b class="bs" style="color:var(--c)">${reaisC(b.liberado)}</b><span>liberado</span></div><div><b class="bs" style="color:#FFC857">${reaisC(b.pedido)}</b><span>pedido no app</span></div><div><b class="bs" style="color:var(--ok)">${reaisC(b.pago)}</b><span>pago</span></div></div></div>
+   <div class="pf-c"><small>Loja no mapa</small>${r.loja ? `<b>${h(r.loja.nome)}</b><span>${h(r.loja.etapa)}${r.loja.end ? ' · ' + h(r.loja.end) : ''}</span><a class="btn sm g" href="crm.php#e${r.loja.id}" style="margin-top:8px;align-self:flex-start">Abrir no CRM</a>` : '<span>Ainda sem loja ligada no CRM (liga sozinho pelo CNPJ ou WhatsApp do cadastro).</span>'}</div>
+  </div>
+  <p class="sec" style="margin:18px 0 8px">Indicados (${r.indicados.length})</p>
+  ${r.indicados.length ? `<div class="pf-t">${r.indicados.map(i => `<div><span><b>${h(i.nome)}</b><small>${h(i.tel)} · ${h(i.em)} · ${i.origem === 'qr' ? 'QR' : i.origem === 'lista' ? 'lista dos 20' : 'app'}</small></span><em style="--s:${ST[i.status] || '#7E8A92'}">${h(i.status)}</em></div>`).join('')}</div>` : '<p class="vz">Nenhuma indicação ainda.</p>'}
+  ${r.conversa.length ? `<p class="sec" style="margin:18px 0 8px">Conversa no WhatsApp (GoTo)</p><div class="zap">${r.conversa.map(m => `<div class="bal ${m.dir}">${h(m.texto)}<span>${h(m.em)}</span></div>`).join('')}</div>` : ''}`;
+}
 /* ---------- tela: bônus e prêmios ----------
    Fluxo: instalou → (cliente paga a 1ª fatura) master libera → parceiro pede saque no app → master paga com comprovante. */
 const hojeMes = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };

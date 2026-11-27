@@ -20,6 +20,41 @@ $ABERTAS = ETAPAS_ABERTAS;
 const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'lancar_lista', 'etapa', 'config', 'minha_senha', 'sair'];
 if (!$master && !in_array($acao, ACOES_ATENDIMENTO, true)) json_out(['erro' => 'Seu acesso é de atendimento: só indicações. Peça ao master.'], 403);
 
+/* ---------- painel do dia (tela Hoje) ---------- */
+function resumo_campo(): array {
+  require_once __DIR__ . '/../api/_crm.php'; crm_migrar();
+  $hoje = date('Y-m-d'); $n = fn($sql, $p = []) => (int)(one($sql, $p)['n'] ?? 0);
+  $vis = all("SELECT id, fantasia, razao, responsavel, bairro, visita_turno FROM empresas WHERE etapa = 'agendado' AND visita_dia = ? ORDER BY CASE visita_turno WHEN 'tarde' THEN 1 ELSE 0 END, id", [$hoje]);
+  return ['visitas' => count($vis), 'manha' => count(array_filter($vis, fn($v) => $v['visita_turno'] !== 'tarde')), 'tarde' => count(array_filter($vis, fn($v) => $v['visita_turno'] === 'tarde')),
+    'lista' => array_map(fn($v) => ['nome' => crm_nome($v), 'bairro' => (string)$v['bairro'], 'turno' => $v['visita_turno'] === 'tarde' ? 'tarde' : 'manhã'], array_slice($vis, 0, 4)),
+    'retornos' => $n("SELECT COUNT(*) AS n FROM empresas WHERE etapa = 'mapeado' AND tel1 IS NOT NULL AND proximo_em IS NOT NULL AND proximo_em <= ? AND " . CRM_VISIVEL, [agora()]),
+    'a_ligar' => $n("SELECT COUNT(*) AS n FROM empresas WHERE etapa = 'mapeado' AND tel1 IS NOT NULL AND proximo_em IS NULL AND " . CRM_VISIVEL),
+    'ligadas' => $n("SELECT COUNT(*) AS n FROM empresa_hist WHERE tipo = 'ligacao' AND em >= ?", [$hoje . ' 00:00:00']),
+    'agendou' => $n("SELECT COUNT(*) AS n FROM empresa_hist WHERE tipo = 'ligacao' AND texto LIKE 'Agendou%' AND em >= ?", [$hoje . ' 00:00:00'])];
+}
+function resumo_funil(): array {
+  $n = fn($sql, $p = []) => (int)(one($sql, $p)['n'] ?? 0); $mes = date('Y-m-01');
+  return [
+    ['Lojas no mapa', $n("SELECT COUNT(*) AS n FROM empresas WHERE " . CRM_VISIVEL)],
+    ['Visitas marcadas', $n("SELECT COUNT(*) AS n FROM empresas WHERE etapa IN ('agendado','visitado','afiliado','conquistado','venda')")],
+    ['Parceiros aprovados', $n("SELECT COUNT(*) AS n FROM parceiros WHERE status = 'ativo'")],
+    ['Com QR ativado', $n("SELECT COUNT(*) AS n FROM parceiros WHERE status = 'ativo' AND codigo IS NOT NULL AND codigo <> ''")],
+    ['Indicações no mês', $n("SELECT COUNT(*) AS n FROM indicacoes WHERE criado_em >= ?", [$mes . ' 00:00:00'])],
+    ['Instalações no mês', $n("SELECT COUNT(*) AS n FROM indicacoes WHERE status = 'Instalado' AND instalado_em >= ?", [$mes])]];
+}
+function resumo_ao_vivo(): array {
+  return array_map(fn($r) => ['em' => date('H:i', strtotime($r['em'])), 'loja' => $r['loja'] ?: $r['nome'], 'codigo' => $r['codigo'], 'id' => (int)$r['pid']],
+    all("SELECT l.em, p.id AS pid, p.loja, p.nome, p.codigo FROM leituras l JOIN parceiros p ON p.id = l.parceiro_id WHERE l.em >= ? ORDER BY l.id DESC LIMIT 6", [date('Y-m-d 00:00:00')]));
+}
+function resumo_goto(): ?array {
+  /* alerta: conectado, mas sem mensagem há muito tempo (a integração pode ter caído) */
+  $ok = (string)(one("SELECT valor FROM config WHERE chave = 'goto_ok'")['valor'] ?? '');
+  if ($ok === '') return null;
+  $ult = (string)(one("SELECT valor FROM config WHERE chave = 'goto_ultimo'")['valor'] ?? '');
+  $h = $ult ? (int)floor((time() - strtotime($ult)) / 3600) : null;
+  return ['horas' => $h, 'alerta' => $h === null || $h >= 24];
+}
+
 switch ($acao) {
 
 case 'resumo': {
@@ -48,6 +83,7 @@ case 'resumo': {
       'leit_hoje' => $n("SELECT COUNT(*) AS n FROM leituras WHERE em >= ?", [date('Y-m-d 00:00:00')]),
       'ativos' => $n("SELECT COUNT(*) AS n FROM parceiros WHERE status = 'ativo'"),
     ],
+    'campo' => resumo_campo(), 'funil' => resumo_funil(), 'ao_vivo' => resumo_ao_vivo(), 'goto' => $master ? resumo_goto() : null,
     'atividade' => $master ? array_map(fn($r) => ['em' => dh_br($r['em']), 'quem' => preg_replace('/^admin:/', '', $r['quem']), 'acao' => $r['acao'], 'alvo' => $r['alvo']],
       all("SELECT quem, acao, alvo, em FROM auditoria WHERE acao NOT IN ('login','logout') ORDER BY id DESC LIMIT 8")) : [],
   ]);
@@ -204,6 +240,38 @@ case 'liberar': {
   auditar($quem, $desfaz ? 'desfez liberação' : '1ª fatura paga · bônus liberado', $i['codigo'] . ' #' . $i['id'], primeiro_nome($i['cliente_nome']) . ' R$ ' . number_format((float)$i['comissao'], 2, ',', '.'));
   verificar_premios((int)$i['parceiro_id']);
   json_out(['ok' => true, 'msg' => $desfaz ? 'Liberação desfeita.' : primeiro_nome($i['cliente_nome']) . ': bônus de R$ ' . number_format((float)$i['comissao'], 2, ',', '.') . ' liberado. O parceiro já pode pedir o saque.']);
+}
+
+case 'parceiro_ficha': {
+  /* tudo do parceiro numa tela: loja no mapa, QR e leituras, indicados, kit, bônus e a conversa do WhatsApp */
+  if (!$master) json_out(['erro' => 'Só o master vê a ficha completa.'], 403);
+  require_once __DIR__ . '/../api/_crm.php'; crm_migrar();
+  $p = one('SELECT * FROM parceiros WHERE id = ?', [(int)($_GET['id'] ?? 0)]);
+  if (!$p) json_out(['erro' => 'Parceiro não encontrado.'], 404);
+  $pid = (int)$p['id']; $g = kit_regra(); $k = kit_progresso($pid);
+  $bon = one("SELECT
+      SUM(CASE WHEN i.status = 'Instalado' AND i.fatura_em IS NULL THEN COALESCE(i.comissao, 0) ELSE 0 END) AS espera,
+      SUM(CASE WHEN i.fatura_em IS NOT NULL AND i.saque_id IS NULL THEN COALESCE(i.comissao, 0) ELSE 0 END) AS liberado,
+      SUM(CASE WHEN i.saque_id IS NOT NULL AND s.pago_em IS NULL THEN COALESCE(i.comissao, 0) ELSE 0 END) AS pedido,
+      SUM(CASE WHEN s.pago_em IS NOT NULL THEN COALESCE(i.comissao, 0) ELSE 0 END) AS pago
+    FROM indicacoes i LEFT JOIN saques s ON s.id = i.saque_id WHERE i.parceiro_id = ?", [$pid]) ?: [];
+  $emp = one('SELECT id, fantasia, razao, responsavel, etapa, bairro, logradouro, numero, lat, lng FROM empresas WHERE parceiro_id = ? LIMIT 1', [$pid]);
+  $tel = tel_normal((string)$p['whatsapp']);
+  $conv = [];
+  try { require_once __DIR__ . '/../api/_goto.php'; goto_migrar();
+    $conv = array_reverse(array_map(fn($m) => ['dir' => $m['dir'], 'texto' => mb_substr($m['texto'], 0, 500), 'em' => dh_br($m['em'])], all('SELECT dir, texto, em FROM goto_msgs WHERE tel = ? ORDER BY id DESC LIMIT 30', [$tel]))); } catch (Throwable $x) {}
+  $n = fn($sql, $pp = []) => (int)(one($sql, $pp)['n'] ?? 0);
+  json_out([
+    'kit' => ['contatos' => $k['contatos'], 'vendas' => $k['vendas'], 'meta_c' => $g['contatos'], 'meta_v' => $g['vendas'], 'liberado' => data_br(kit_liberado_em($pid))],
+    'bonus' => array_map(fn($v) => (float)($v ?? 0), ['espera' => $bon['espera'] ?? 0, 'liberado' => $bon['liberado'] ?? 0, 'pedido' => $bon['pedido'] ?? 0, 'pago' => $bon['pago'] ?? 0]),
+    'leituras' => ['total' => $n('SELECT COUNT(*) AS n FROM leituras WHERE parceiro_id = ?', [$pid]), 'hoje' => $n('SELECT COUNT(*) AS n FROM leituras WHERE parceiro_id = ? AND em >= ?', [$pid, date('Y-m-d 00:00:00')]),
+      'semana' => $n('SELECT COUNT(*) AS n FROM leituras WHERE parceiro_id = ? AND em >= ?', [$pid, date('Y-m-d 00:00:00', strtotime('-6 days'))]),
+      'ultimas' => array_map(fn($l) => dh_br($l['em']), all('SELECT em FROM leituras WHERE parceiro_id = ? ORDER BY id DESC LIMIT 6', [$pid]))],
+    'indicados' => array_map(fn($i) => ['nome' => $i['cliente_nome'], 'tel' => tel_br($i['cliente_tel']), 'origem' => $i['origem'], 'status' => $i['status'], 'em' => data_br($i['criado_em'])],
+      all('SELECT cliente_nome, cliente_tel, origem, status, criado_em FROM indicacoes WHERE parceiro_id = ? ORDER BY criado_em DESC LIMIT 80', [$pid])),
+    'loja' => $emp ? ['id' => (int)$emp['id'], 'nome' => crm_nome($emp), 'etapa' => CRM_ETAPAS[$emp['etapa']] ?? $emp['etapa'], 'end' => trim(implode(', ', array_filter([$emp['logradouro'], $emp['numero']])) . ($emp['bairro'] ? ' · ' . $emp['bairro'] : '')), 'mapa' => $emp['lat'] !== null] : null,
+    'conversa' => $conv,
+  ]);
 }
 
 case 'parceiro': {
