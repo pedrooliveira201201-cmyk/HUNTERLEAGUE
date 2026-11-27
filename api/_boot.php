@@ -169,10 +169,17 @@ function hl_migrar_etapas(): void {
   static $feito = false;
   if ($feito) return; $feito = true;
   try {
-    if (conf('etapas_v') === '2') return;
-    q("UPDATE indicacoes SET status = 'Em contato' WHERE status = 'Em atendimento'");
-    q("UPDATE indicacoes SET status = 'Agendado' WHERE status = 'Aguardando instalação'");
-    q("INSERT INTO config (chave, valor) VALUES ('etapas_v', '2')");
+    $v = (string)conf('etapas_v', '');
+    if ($v === '3') return;
+    if ($v !== '2') {
+      q("UPDATE indicacoes SET status = 'Em contato' WHERE status = 'Em atendimento'");
+      q("UPDATE indicacoes SET status = 'Agendado' WHERE status = 'Aguardando instalação'");
+    }
+    /* v3: data da venda (quando a instalação foi marcada), para o bônus seguir o preço da época */
+    try { db()->exec('ALTER TABLE indicacoes ADD COLUMN vendido_em DATETIME NULL'); } catch (Throwable $x) { /* já existe */ }
+    q("UPDATE indicacoes SET vendido_em = atualizado_em WHERE vendido_em IS NULL AND status IN ('Agendado', 'Instalado')");
+    if (one("SELECT chave FROM config WHERE chave = 'etapas_v'")) q("UPDATE config SET valor = '3' WHERE chave = 'etapas_v'");
+    else q("INSERT INTO config (chave, valor) VALUES ('etapas_v', '3')");
   } catch (Throwable $e) { /* tenta de novo na próxima requisição */ }
 }
 const MOTIVOS = ['Restrição de CPF', 'Sem cabeamento', 'Desistiu', 'Sem contato', 'Endereço fora da cobertura', 'Outro'];

@@ -221,6 +221,7 @@ case 'etapa': {
   if ($st === 'Instalado' && !$plano) json_out(['erro' => 'Escolha o plano vendido: o bônus é o valor do plano.'], 422);
   q('UPDATE indicacoes SET status = ?, motivo = ?, instalado_em = ?, competencia = ?, fatura_em = ?, comissao = ?, plano = ?, cliente_cpf = ?, cliente_nome = ?, cliente_tel = ?, cliente_email = ?, atualizado_em = ? WHERE id = ?',
     [$st, $st === 'Não instalado' ? $mot : null, $inst, $inst ? substr($inst, 0, 7) : null, $fat, $inst ? $i['comissao'] : null, $plano, $cpf ?: null, $nome, $tel ?: null, $email ?: null, agora(), $i['id']]);
+  if (in_array($st, ['Agendado', 'Instalado'], true) && empty($i['vendido_em'])) q('UPDATE indicacoes SET vendido_em = ? WHERE id = ?', [$st === 'Agendado' ? agora() : $i['criado_em'], $i['id']]);
   definir_bonus((int)$i['id']);
   $mud = $st !== $i['status'] ? "{$i['status']} → {$st}" . ($st === 'Não instalado' ? " ({$mot})" : '') . ($inst ? " em {$inst}" : '') : 'editou dados';
   auditar($quem, 'etapa', $i['codigo'] . ' #' . $i['id'], $mud);
