@@ -496,6 +496,14 @@ case 'equipe': {
     json_out(['ok' => true, 'msg' => 'Usuário criado.']);
   }
   $id = (int)($e['id'] ?? 0);
+  if ($s('o') === 'papel') {
+    /* troca o perfil: master vê tudo; atendimento só Hoje, Mapa e Indicações */
+    if ($id === (int)$a['id']) json_out(['erro' => 'Você não pode mudar o seu próprio perfil.'], 422);
+    $u = one('SELECT usuario, papel FROM admins WHERE id = ?', [$id]); if (!$u) json_out(['erro' => 'Usuário não encontrado.'], 404);
+    $novo = $u['papel'] === 'master' ? 'atendimento' : 'master';
+    q('UPDATE admins SET papel = ? WHERE id = ?', [$novo, $id]); auditar($quem, 'mudou o perfil', $u['usuario'], $novo);
+    json_out(['ok' => true, 'msg' => $u['usuario'] . ' agora é ' . ($novo === 'master' ? 'Master' : 'Atendimento') . '. Ele precisa sair e entrar de novo para ver a mudança.']);
+  }
   if ($id === (int)$a['id']) json_out(['erro' => 'Você não pode desativar a si mesmo.'], 422);
   q('UPDATE admins SET ativo = 1 - ativo WHERE id = ?', [$id]); auditar($quem, 'ativou/desativou usuário', (string)$id);
   json_out(['ok' => true, 'msg' => 'Feito.']);

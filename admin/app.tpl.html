@@ -949,7 +949,7 @@ TELAS.mais = async () => {
   if (r.master) $('#f-cfg').addEventListener('submit', async e => { e.preventDefault(); const v = Object.fromEntries(new FormData(e.target)); const rr = await api('salvar_config', v); rr.erro ? toast(rr.erro, true) : toast(rr.msg); });
  }
  if (maisAba === 'equipe') {
-  box.innerHTML = `<div class="lista">${r.equipe.map(u => `<div class="pr ch" style="cursor:default"><span class="av">${h(iniciais(u.nome))}</span><span><span class="nm" style="display:block">${h(u.nome)}${u.eu ? ' (você)' : ''}</span><span class="sub" style="display:block">${h(u.usuario)} · ${u.papel === 'master' ? 'Master' : 'Atendimento'}</span></span><span class="dir">${u.eu ? '' : `<button class="btn sm ${u.ativo ? 'g' : ''}" type="button" data-ut="${u.id}">${u.ativo ? 'Desativar' : 'Ativar'}</button>`}${u.ativo ? '' : '<span class="pill p-bloqueado">inativo</span>'}</span></div>`).join('')}</div>
+  box.innerHTML = `<div class="lista">${r.equipe.map(u => `<div class="pr ch" style="cursor:default"><span class="av">${h(iniciais(u.nome))}</span><span><span class="nm" style="display:block">${h(u.nome)}${u.eu ? ' (você)' : ''}</span><span class="sub" style="display:block">${h(u.usuario)} · ${u.papel === 'master' ? 'Master' : 'Atendimento'}</span></span><span class="dir">${u.eu ? '' : `<button class="btn sm g" type="button" data-up="${u.id}">${u.papel === 'master' ? 'Tornar atendimento' : 'Tornar master'}</button>`}${u.eu ? '' : `<button class="btn sm ${u.ativo ? 'g' : ''}" type="button" data-ut="${u.id}">${u.ativo ? 'Desativar' : 'Ativar'}</button>`}${u.ativo ? '' : '<span class="pill p-bloqueado">inativo</span>'}</span></div>`).join('')}</div>
    <p class="sec">Novo usuário</p><form class="form ch" id="f-eq"><div class="g2"><label class="f">Nome<input name="nome" required></label><label class="f">Usuário<input name="usuario" required pattern="[a-z0-9._\\-]{3,40}"></label><label class="f">Senha (10 ou mais)<input name="senha" type="password" minlength="10" required></label><label class="f">Papel<select name="papel"><option value="atendimento">Atendimento (registra e avança)</option><option value="master">Master (tudo)</option></select></label></div><button class="btn" type="submit" style="justify-self:start">Criar usuário</button></form>`;
   $('#f-eq').addEventListener('submit', async e => { e.preventDefault(); const v = Object.assign({ o:'criar' }, Object.fromEntries(new FormData(e.target))); const rr = await api('equipe', v); if (rr.erro) return toast(rr.erro, true); toast(rr.msg); TELAS.mais(); });
  }
@@ -1043,6 +1043,7 @@ TELAS.mais = async () => {
 };
 document.addEventListener('click', async e => {
  const a = e.target.closest('[data-ma]'); if (a) { maisAba = a.dataset.ma; return TELAS.mais(); }
+ const up = e.target.closest('[data-up]'); if (up) { const r = await api('equipe', { id:+up.dataset.up, o:'papel' }); r.erro ? toast(r.erro, true) : toast(r.msg); TELAS.mais(); return; }
  const u = e.target.closest('[data-ut]'); if (u) { const r = await api('equipe', { id:+u.dataset.ut }); r.erro ? toast(r.erro, true) : toast(r.msg); TELAS.mais(); }
 });
 
