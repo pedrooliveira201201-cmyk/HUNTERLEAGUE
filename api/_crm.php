@@ -13,6 +13,7 @@ const CRM_SAFRA_DIAS = 7;          /* "interesse, mas não agora" volta na próx
 const CRM_RETENTATIVAS = [1, 3, 7]; /* não atendeu: amanhã, em 3 dias, em 7 dias; depois encerra */
 /* mandou WhatsApp e espera a resposta: sai da fila de ligação; sem resposta, volta sozinho depois deste prazo */
 const CRM_ZAP_DIAS = 2;
+function crm_msg_padrao(): string { return (string)conf('crm_msg_wa', "Oi, {nome}! Aqui é o {eu}, da CALLNET. Estamos abrindo em Araguari um programa de parceria para negócios como o seu: renda extra por indicação, sem investimento e sem estoque. Amanhã nosso representante está na cidade. Ele pode passar aí para te apresentar a oportunidade de manhã ou à tarde, por 15 minutos?"); }
 const CRM_ZAP_ESPERA = 'Aguardando WhatsApp';
 const CRM_ZAP_RESPONDEU = 'Respondeu no WhatsApp';
 

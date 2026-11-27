@@ -48,7 +48,7 @@ case 'estado': {
       all("SELECT h.quem, MAX(a.nome) AS nome, COUNT(*) AS lig, SUM(CASE WHEN h.texto LIKE 'Agendou%' THEN 1 ELSE 0 END) AS ag FROM empresa_hist h LEFT JOIN admins a ON a.usuario = h.quem
            WHERE h.tipo = 'ligacao' AND h.em >= ? GROUP BY h.quem ORDER BY lig DESC", [$hoje . ' 00:00:00'])), 'etapas' => CRM_ETAPAS, 'pareceres' => CRM_PARECERES, 'eu' => $a['nome'], 'safra' => CRM_SAFRA_DIAS,
     'equipe' => array_column(all('SELECT nome FROM admins WHERE ativo = 1 ORDER BY nome'), 'nome'),
-    'msg_wa' => conf('crm_msg_wa', "Oi, {nome}! Aqui é o {eu}, da CALLNET. Estamos abrindo em Araguari um programa de parceria para negócios como o seu: renda extra por indicação, sem investimento e sem estoque. Amanhã nosso representante está na cidade. Ele pode passar aí para te apresentar a oportunidade de manhã ou à tarde, por 15 minutos?")]);
+    'msg_wa' => msg_wa_de((int)$a['id']) ?: crm_msg_padrao()]);
 }
 
 case 'empresa': {
