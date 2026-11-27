@@ -17,7 +17,7 @@ $master = $a['papel'] === 'master';
 hl_migrar_etapas();
 $ABERTAS = ETAPAS_ABERTAS;
 /* Perfis: master faz tudo. Atendimento só mexe em indicações (registra, muda etapa, edita dados básicos). */
-const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'lancar_lista', 'etapa', 'config', 'minha_senha', 'sair'];
+const ACOES_ATENDIMENTO = ['resumo', 'indicacoes', 'parceiros', 'indicar', 'lancar_lista', 'etapa', 'config', 'minha_senha', 'minha_foto', 'sair'];
 if (!$master && !in_array($acao, ACOES_ATENDIMENTO, true)) json_out(['erro' => 'Seu acesso é de atendimento: só indicações. Peça ao master.'], 403);
 
 /* ---------- painel do dia (tela Hoje) ---------- */
@@ -447,6 +447,25 @@ case 'zerar': {
   } catch (Throwable $x) { $pdo->rollBack(); json_out(['erro' => 'Não zerou (nada foi apagado): ' . mb_substr($x->getMessage(), 0, 160)], 500); }
   auditar($quem, 'zerou os dados de teste', $crm ? 'com o CRM' : 'base do CRM mantida', $prev['parceiros'] . ' parceiros, ' . $prev['indicacoes'] . ' indicações, ' . count($prev['usuarios']) . ' usuários');
   json_out(['ok' => true, 'msg' => 'Pronto. Começo da produção: só a sua conta ficou, e os ' . count(qr_genericos()) . ' códigos estão livres.']);
+}
+case 'minha_foto': {
+  /* foto de perfil: o navegador já manda quadrada e pequena (JPEG); aqui confere e grava de novo (tira metadados) */
+  if (!$post) json_out(['erro' => 'Use POST.'], 405);
+  $arq = foto_admin_arq((int)$a['id']);
+  if (($_POST['o'] ?? '') === 'apagar') { if (is_file($arq)) unlink($arq); auditar($quem, 'tirou a foto do perfil'); json_out(['ok' => true, 'foto' => '', 'msg' => 'Foto removida.']); }
+  $f = $_FILES['foto'] ?? null;
+  if (!$f || ($f['error'] ?? 1) !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) json_out(['erro' => 'Não recebi a foto. Tente de novo.'], 422);
+  if ($f['size'] > 3 * 1024 * 1024) json_out(['erro' => 'Foto grande demais (máximo 3 MB).'], 422);
+  $mime = (new finfo(FILEINFO_MIME_TYPE))->file($f['tmp_name']);
+  $abre = ['image/jpeg' => 'imagecreatefromjpeg', 'image/png' => 'imagecreatefrompng', 'image/webp' => 'imagecreatefromwebp'][$mime] ?? null;
+  if (!$abre || !function_exists($abre)) json_out(['erro' => 'Envie uma foto JPG, PNG ou WEBP.'], 422);
+  $im = @$abre($f['tmp_name']); if (!$im) json_out(['erro' => 'Não consegui ler essa foto.'], 422);
+  $w = imagesx($im); $h2 = imagesy($im); $l = min($w, $h2); $t = 320;
+  $out = imagecreatetruecolor($t, $t); imagecopyresampled($out, $im, 0, 0, intdiv($w - $l, 2), intdiv($h2 - $l, 2), $t, $t, $l, $l);
+  $dir = dirname($arq); if (!is_dir($dir) && !mkdir($dir, 0750, true)) json_out(['erro' => 'Não consegui criar a pasta das fotos.'], 500);
+  imagejpeg($out, $arq, 86); imagedestroy($im); imagedestroy($out);
+  auditar($quem, 'trocou a foto do perfil');
+  json_out(['ok' => true, 'foto' => foto_admin_url((int)$a['id']), 'msg' => 'Foto salva.']);
 }
 case 'email': {
   if ($s('o') === 'teste') {
