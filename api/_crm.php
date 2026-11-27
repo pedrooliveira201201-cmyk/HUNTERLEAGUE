@@ -287,16 +287,26 @@ function crm_marcar_celulas(): void {
 /* ---------- ligação com o app: a empresa que se cadastra no Hunter League muda de cor sozinha ---------- */
 function crm_sincronizar(): void {
   /* liga pelo CNPJ (doc do parceiro) ou pelo WhatsApp do cadastro */
-  foreach (all("SELECT p.id, p.doc, p.whatsapp FROM parceiros p WHERE p.status IN ('pendente', 'ativo') AND NOT EXISTS (SELECT 1 FROM empresas e WHERE e.parceiro_id = p.id) LIMIT 500") as $p) {
-    $e = null;
-    if (strlen((string)$p['doc']) === 14) $e = one('SELECT id FROM empresas WHERE cnpj = ? AND parceiro_id IS NULL', [$p['doc']]);
-    if (!$e && $p['whatsapp']) $e = one('SELECT id FROM empresas WHERE (tel1 = ? OR tel2 = ?) AND parceiro_id IS NULL', [$p['whatsapp'], $p['whatsapp']]);
-    if ($e) { q('UPDATE empresas SET parceiro_id = ?, atualizado_em = ? WHERE id = ?', [$p['id'], agora(), $e['id']]); crm_hist((int)$e['id'], 'sistema', 'app', 'Cadastrou no app Hunter League'); }
+  /* rápido com muita gente: carrega as lojas livres uma vez e casa na memória (antes era uma busca por parceiro) */
+  $ps = all("SELECT p.id, p.doc, p.whatsapp FROM parceiros p WHERE p.status IN ('pendente', 'ativo') AND NOT EXISTS (SELECT 1 FROM empresas e WHERE e.parceiro_id = p.id) LIMIT 500");
+  if ($ps) {
+    $porCnpj = []; $porTel = [];
+    foreach (all('SELECT id, cnpj, tel1, tel2 FROM empresas WHERE parceiro_id IS NULL ORDER BY id') as $r) {
+      if ($r['cnpj']) $porCnpj[$r['cnpj']] ??= (int)$r['id'];
+      foreach ([$r['tel1'], $r['tel2']] as $t) if ($t) $porTel[$t] ??= (int)$r['id'];
+    }
+    $usadas = [];
+    foreach ($ps as $p) {
+      $id = strlen((string)$p['doc']) === 14 ? ($porCnpj[$p['doc']] ?? null) : null;
+      if (!$id && $p['whatsapp']) $id = $porTel[$p['whatsapp']] ?? null;
+      if (!$id || isset($usadas[$id])) continue; $usadas[$id] = 1;
+      q('UPDATE empresas SET parceiro_id = ?, atualizado_em = ? WHERE id = ? AND parceiro_id IS NULL', [$p['id'], agora(), $id]); crm_hist($id, 'sistema', 'app', 'Cadastrou no app Hunter League');
+    }
   }
   /* etapa segue o app: cadastrado → afiliado; QR ativo → conquistado; venda (agendada ou instalada) → venda */
-  foreach (all("SELECT e.id, e.etapa, p.status, p.codigo,
-      (SELECT COUNT(*) FROM indicacoes i WHERE i.parceiro_id = p.id AND i.status IN ('Agendado', 'Instalado')) AS vendas
-      FROM empresas e JOIN parceiros p ON p.id = e.parceiro_id") as $r) {
+  foreach (all("SELECT e.id, e.etapa, p.status, p.codigo, COALESCE(v.n, 0) AS vendas
+      FROM empresas e JOIN parceiros p ON p.id = e.parceiro_id
+      LEFT JOIN (SELECT parceiro_id, COUNT(*) AS n FROM indicacoes WHERE status IN ('Agendado', 'Instalado') GROUP BY parceiro_id) v ON v.parceiro_id = p.id") as $r) {
     $nova = $r['vendas'] > 0 ? 'venda' : ($r['status'] === 'ativo' && $r['codigo'] ? 'conquistado' : 'afiliado');
     if ($nova !== $r['etapa']) { q('UPDATE empresas SET etapa = ?, proximo_em = NULL, atualizado_em = ? WHERE id = ?', [$nova, agora(), $r['id']]); crm_hist((int)$r['id'], 'sistema', 'etapa', CRM_ETAPAS[$nova]); }
   }
