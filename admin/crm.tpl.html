@@ -121,7 +121,7 @@ table.t td,table.t th{border-top:1px solid var(--edge);padding:5px 4px;text-alig
 .med{display:inline-block;margin-left:6px;padding:1px 7px;font-size:11px;font-weight:900;color:#050607;border-radius:9px}
 .med.m1{background:#D9925B}.med.m2{background:#C8D3DA}.med.m3{background:#FFD84D}
 .bolha .pct{display:block;font-size:10px;font-weight:900;color:var(--c)}
-.toast .acao{margin-left:14px;padding:6px 12px;border:1px solid var(--cyan);background:var(--cyan);color:#050607;font-weight:900;cursor:pointer}
+.toast .acao{margin:6px 0 0 10px;padding:6px 12px;border:1px solid var(--cyan);background:var(--cyan);color:#050607;font-weight:900;cursor:pointer}
 .rota{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--edge)}
 .rota .n{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--amb);color:#050607;font-weight:900}
 .rota .acs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.rota .acs .bt{min-height:38px;padding:6px 10px;font-size:13px}
@@ -375,7 +375,7 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
 const B = window.CRM || {}; const $ = s => document.querySelector(s);
 const h = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
 const toast = (t, err, acao) => { const x = $('#toast'); x.textContent = t; x.className = 'toast on' + (err ? ' err' : '');
- if (acao) { const b = document.createElement('button'); b.type = 'button'; b.className = 'acao'; b.textContent = acao[0]; b.onclick = () => { x.className = 'toast'; acao[1](); }; x.appendChild(b); }
+ if (acao) for (const a of (Array.isArray(acao[0]) ? acao : [acao])) { const b = document.createElement('button'); b.type = 'button'; b.className = 'acao'; b.textContent = a[0]; b.onclick = () => { x.className = 'toast'; a[1](); }; x.appendChild(b); }
  clearTimeout(toast.t); toast.t = setTimeout(() => x.className = 'toast', acao ? 5500 : 3800); };
 const SK = (n = 5) => '<span class="sk t"></span><span class="sk s"></span>' + '<span class="sk b"></span>'.repeat(2) + '<span class="sk"></span>'.repeat(n);
 const api = async (a, dados, q = '') => {
@@ -751,6 +751,19 @@ lado.addEventListener('click', ev => {
 lado.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.matches('li[tabindex]')) ev.target.click(); });
 
 /* ---------- ficha ---------- */
+/* abre o WhatsApp instalado (ou o Business) direto na conversa do número, com o texto pronto.
+   Android: intent (o sistema escolhe WhatsApp ou Business); iPhone: whatsapp:// e, se não abrir, wa.me; computador: wa.me */
+const abreZap = (tel, txt) => {
+ let d = String(tel || '').replace(/\D/g, ''); if (!d) return false; if (!d.startsWith('55')) d = '55' + d;
+ const q = 'phone=' + d + (txt ? '&text=' + encodeURIComponent(txt) : ''), web = 'https://wa.me/' + d + (txt ? '?text=' + encodeURIComponent(txt) : ''), ua = navigator.userAgent || '';
+ if (/Android/i.test(ua)) location.href = 'intent://send/?' + q + '#Intent;scheme=whatsapp;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+ else if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) { const t = Date.now(); location.href = 'whatsapp://send?' + q; setTimeout(() => { if (!document.hidden && Date.now() - t < 2500) location.href = web; }, 1600); }
+ else window.open(web, '_blank', 'noopener');
+ return true;
+};
+/* links wa.me da tela também abrem direto no app */
+document.addEventListener('click', ev => { const a = ev.target.closest && ev.target.closest('a[href^="https://wa.me/"]'); if (!a) return;
+ const u = new URL(a.href); ev.preventDefault(); abreZap(u.pathname.slice(1), u.searchParams.get('text') || ''); });
 const telLink = t => t ? 'tel:+55' + t : '#';
 const IC = {
  tel:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h3l1.5 4.5-2.2 1.4a11 11 0 0 0 5.3 5.3l1.4-2.2L20 13.5v3A2 2 0 0 1 18 18.5 15.5 15.5 0 0 1 4.5 5 2 2 0 0 1 6.5 3z"/></svg>',
@@ -811,8 +824,9 @@ async function abreFicha(id, ligando) {
   </div>`;
  desenha();
  F.msgTxt = (S.msg_wa || '').replace('{nome}', (e.responsavel || '').split(' ')[0] || nome).replace('{eu}', B.nome || '');
- $('#b-msg').onclick = () => { const t = F.msgTxt;
-  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Mensagem copiada. Cole no GoTo, na conversa com ' + telBr(e.tel1) + '.')).catch(() => toast('Não deu para copiar.', true)); };
+ /* número do WhatsApp: o que atendeu; senão o celular (11 dígitos); senão o primeiro */
+ F.zap = e.tel_ok === '2' && e.tel2 ? e.tel2 : e.tel_ok === '1' && e.tel1 ? e.tel1 : [e.tel1, e.tel2].find(t => t && t.length === 11) || e.tel1 || e.tel2 || '';
+ $('#b-msg').onclick = () => { if (!abreZap(F.zap, F.msgTxt)) toast('Esta empresa está sem telefone.', true); };
  $('#b-ponto').onclick = () => ajustarPonto(e.id);
  $('#b-res').onclick = () => { const x = $('#parecer') || lado.querySelector('[data-vis]'); if (x) x.closest('.box').scrollIntoView({ behavior:'smooth', block:'center' }); };
  /* (1) tocou em Ligar: quando a pessoa voltar para a Central, pergunta o resultado */
@@ -838,7 +852,8 @@ function parecer(e, p) {
 async function envia(e, p, d) {
  const r = await api('parecer', Object.assign({ id:e.id, p, regiao:regSel || 0, cels:celsSel() }, d)); if (r.erro) return toast(r.erro, true);
  let extra = '';
- if (p === 'nao_atendeu' && F && F.msgTxt) { try { await navigator.clipboard.writeText(F.msgTxt); extra = ' · mensagem do WhatsApp copiada para colar no GoTo'; } catch (x) {} }
+ /* não atendeu: oferece mandar a mensagem no WhatsApp da pessoa */
+ if (p === 'nao_atendeu' && F && F.zap) { const zap = F.zap, txt = F.msgTxt; toast(r.msg, false, [['Mandar WhatsApp', () => abreZap(zap, txt)], ['Desfazer', async () => { const x = await api('desfazer', {}); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); abreFicha(x.id, true); }]]); await carrega(); if (r.proximo) abreFicha(r.proximo, true); else { fichaId = null; toast('Fila zerada nesta região. 🎯'); regSel ? abreRegiao(regSel) : desenha(); } return; }
  toast(r.msg + extra, false, ['Desfazer', async () => { const x = await api('desfazer', {}); if (x.erro) return toast(x.erro, true); toast(x.msg); await carrega(); abreFicha(x.id, true); }]);
  await carrega(); if (r.proximo) abreFicha(r.proximo, true); else { fichaId = null; toast('Fila zerada nesta região. 🎯'); regSel ? abreRegiao(regSel) : desenha(); }
 }
