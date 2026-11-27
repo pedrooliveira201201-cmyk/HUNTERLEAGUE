@@ -40,7 +40,11 @@ case 'estado': {
   $lig = (int)(one("SELECT COUNT(*) AS n FROM empresa_hist WHERE tipo = 'ligacao' AND em >= ?", [$hoje . ' 00:00:00'])['n'] ?? 0);
   json_out(['empresas' => $emp, 'regioes' => array_map(fn($r) => ['id' => (int)$r['id'], 'nome' => $r['nome'], 'cor' => $r['cor'], 'poly' => json_decode($r['poligono'], true)], all('SELECT * FROM regioes ORDER BY nome')),
     'celulas' => array_map(fn($c) => ['nome' => $c['nome'], 'status' => $c['status'], 'hpv' => $c['hpv'], 'hc' => $c['hc'], 'polys' => $c['polys']], crm_celulas()),
-    'geo' => crm_geo_status(), 'ligadas_hoje' => $lig, 'etapas' => CRM_ETAPAS, 'pareceres' => CRM_PARECERES, 'eu' => $a['nome'], 'safra' => CRM_SAFRA_DIAS,
+    'geo' => crm_geo_status(), 'ligadas_hoje' => $lig,
+    /* placar do dia por pessoa: ligações e agendamentos de hoje */
+    'equipe_hoje' => array_map(fn($r) => ['nome' => primeiro_nome($r['nome'] ?: $r['quem']), 'lig' => (int)$r['lig'], 'ag' => (int)$r['ag']],
+      all("SELECT h.quem, MAX(a.nome) AS nome, COUNT(*) AS lig, SUM(CASE WHEN h.texto LIKE 'Agendou%' THEN 1 ELSE 0 END) AS ag FROM empresa_hist h LEFT JOIN admins a ON a.usuario = h.quem
+           WHERE h.tipo = 'ligacao' AND h.em >= ? GROUP BY h.quem ORDER BY lig DESC", [$hoje . ' 00:00:00'])), 'etapas' => CRM_ETAPAS, 'pareceres' => CRM_PARECERES, 'eu' => $a['nome'], 'safra' => CRM_SAFRA_DIAS,
     'equipe' => array_column(all('SELECT nome FROM admins WHERE ativo = 1 ORDER BY nome'), 'nome'),
     'msg_wa' => conf('crm_msg_wa', "Oi, {nome}! Aqui é o {eu}, da CALLNET. Estamos abrindo em Araguari um programa de parceria para negócios como o seu: renda extra por indicação, sem investimento e sem estoque. Amanhã nosso representante está na cidade. Ele pode passar aí para te apresentar a oportunidade de manhã ou à tarde, por 15 minutos?")]);
 }

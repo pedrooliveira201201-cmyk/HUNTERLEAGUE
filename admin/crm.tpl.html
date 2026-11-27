@@ -309,6 +309,27 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
  .abas button{font-size:11.5px;padding:3px 2px}
  .ferr button,.ferr input{font-size:11.5px;padding:3px 7px}
 }
+/* barra fixa da ficha: Ligar, Mensagem, Resultado, Waze e Maps sempre à mão */
+.fixa{position:sticky;bottom:calc(-1 * (24px + env(safe-area-inset-bottom)));z-index:5;display:grid;grid-template-columns:1.35fr repeat(4,1fr);gap:5px;margin:18px -16px 0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(9,14,17,.97);border-top:1px solid var(--edge);box-shadow:0 -10px 24px rgba(0,0,0,.45)}
+.fixa .bt{flex-direction:column;gap:2px;min-height:52px;padding:6px 2px;font-size:11.5px;clip-path:none;border-radius:10px}
+.fixa .bt svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.fixa .bt.go{font:800 13px Montserrat,sans-serif;text-transform:none;letter-spacing:0}
+.fixa .bt[hidden]{display:none}
+.fixa:has(#b-res[hidden]){grid-template-columns:1.35fr repeat(3,1fr)}
+@media(max-width:900px){.fixa{margin:18px -14px 0;bottom:calc(-1 * (18px + env(safe-area-inset-bottom)))}}
+/* pergunta depois da ligação */
+.poslig{position:fixed;inset:0;z-index:3000;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)}
+.pl-c{width:min(460px,100%);padding:20px 16px calc(16px + env(safe-area-inset-bottom));background:#0B1013;border-top:3px solid var(--cyan);border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.6)}
+.pl-c small{display:block;color:var(--cyan);font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
+.pl-c b{display:block;margin:4px 0 14px;font:900 24px/1.05 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase}
+.pl-x{display:block;width:100%;margin-top:10px;padding:10px;border:0;background:none;color:var(--mute);font-weight:700;cursor:pointer}
+@media(min-width:901px){.poslig{align-items:center}.pl-c{border-radius:12px;border:1px solid var(--edge);border-top:3px solid var(--cyan)}}
+/* placar do dia por pessoa */
+.eqh{display:flex;flex-direction:column;gap:3px;margin:0 0 14px;padding:10px 12px;background:#0A1215;border:1px solid var(--edge);border-left:3px solid var(--cyan)}
+.eqh small{color:var(--cyan);font-weight:800;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.eqh span{font-size:13.5px;color:var(--mute)}.eqh span b{color:var(--ink)}.eqh em{font-style:normal;color:var(--nio);font-weight:700}
+.lista li em.dist{color:#8FB2FF}
+
 </style>
 <script>/*__CRM_BOOT__*/</script>
 </head>
@@ -495,7 +516,7 @@ const centroide = poly => [poly.reduce((s, v) => s + v[0], 0) / poly.length, pol
 const dist2 = (a, b) => (a[0] - b[0]) ** 2 + ((a[1] - b[1]) * .95) ** 2;
 function particiona() {
  const k = JSON.stringify(S.regioes.map(r => [r.id, r.poly])) + '|' + S.empresas.length + '|' + S.celulas.length;
- if (k === partKey) return; partKey = k; CEL2REG = {};
+ if (k === partKey && S.regioes.every(r => r.multi)) return; partKey = k; CEL2REG = {};   /* depois de recarregar, as regiões chegam novas: refaz o desenho */
  const cnt = {};
  for (const e of S.empresas) { if (!e.cel) continue; const p = pos(e); if (!p) continue;
   for (const r of S.regioes) if (dentro(p, r.poly)) { const o = cnt[e.cel] || (cnt[e.cel] = {}); o[r.id] = (o[r.id] || 0) + 1; } }
@@ -628,7 +649,7 @@ $('#b-eu').addEventListener('click', () => {
  navigator.geolocation.getCurrentPosition(p => { $('#b-eu').classList.remove('busca-gps'); aqui = [p.coords.latitude, p.coords.longitude]; G.eu.clearLayers();
   L.circle(aqui, { radius:Math.min(p.coords.accuracy, 300), color:'#5B8CFF', weight:1, opacity:.6, fillColor:'#5B8CFF', fillOpacity:.1, interactive:false }).addTo(G.eu);
   L.marker(aqui, { interactive:false, icon:L.divIcon({ className:'', iconSize:[22, 22], html:'<div class="eu"></div>' }) }).addTo(G.eu);
-  map.setView(aqui, Math.max(map.getZoom(), 16)); },
+  map.setView(aqui, Math.max(map.getZoom(), 16)); pertoDeMim(); },
  () => { $('#b-eu').classList.remove('busca-gps'); toast('Sem permissão de localização. Libere no navegador para ver onde você está.', true); }, { enableHighAccuracy:true, timeout:9000 });
 });
 const GRUPO = c => !c ? 'Outros' : c.startsWith('9602') ? 'Beleza' : /^45[234]/.test(c) ? 'Automotivo' : /^(474|4679|433|432|4399|4330)/.test(c) ? 'Construção e reforma'
@@ -702,7 +723,8 @@ function painelLista(l) {
  if (!S.carregado) { lado.innerHTML = SK(); return; }
  if (!S.empresas.length) { lado.innerHTML = `<div class="vazio2"><b>Comece pela base</b>Ainda não tem empresas no mapa. Na aba Base, suba a planilha da Casa dos Dados (CSV ou Excel) e clique em Mapear endereços.</div><button class="bt go" type="button" data-v2="base" style="width:100%">Ir para a Base</button>`; return; }
  const semReg = l.length;
- lado.innerHTML = `<h2>${S.regioes.length ? 'Regiões' : 'Empresas'}</h2><p class="sub">${semReg} empresas no filtro. ${S.regioes.length ? 'Clique numa região (no mapa ou abaixo) para ver a lista.' : 'Desenhe as regiões no mapa: botão "Desenhar região".'}</p>
+ const eq = (S.equipe_hoje || []).length ? `<div class="eqh"><small>Hoje na equipe</small>${S.equipe_hoje.map(x => `<span><b>${h(x.nome)}</b> ${x.lig} ${x.lig === 1 ? 'ligação' : 'ligações'} · <em>${x.ag} ${x.ag === 1 ? 'agendou' : 'agendaram'}</em></span>`).join('')}</div>` : '';
+ lado.innerHTML = eq + `<h2>${S.regioes.length ? 'Regiões' : 'Empresas'}</h2><p class="sub">${semReg} empresas no filtro. ${S.regioes.length ? 'Clique numa região (no mapa ou abaixo) para ver a lista.' : 'Desenhe as regiões no mapa: botão "Desenhar região".'}</p>
   ${S.regioes.length ? `<ul class="lista">${S.regioes.map(r => { const n = l.filter(e => naRegiao(e, r)); return `<li tabindex="0" data-reg="${r.id}"><i style="background:${h(r.cor)};border-radius:2px"></i><span>${h(r.nome)}${medalha(n.length ? Math.round(n.filter(e => CONQ.has(e.et)).length / n.length * 100) : 0)}<small>${n.length ? Math.round(n.filter(e => CONQ.has(e.et)).length / n.length * 100) : 0}% dominada · ${n.filter(e => CONQ.has(e.et)).length} conquistadas · ${n.filter(e => e.et === 'agendado').length} agendadas</small></span><b>${n.length}</b></li>`; }).join('')}</ul>` : ''}
   <p class="sec">Lista</p><ul class="lista">${ordem(l).slice(0, 200).map(itemLista).join('')}</ul>${l.length > 200 ? `<p class="sub">Mostrando 200 de ${l.length}. Use a busca ou uma região.</p>` : ''}`;
 }
@@ -730,6 +752,16 @@ lado.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.mat
 
 /* ---------- ficha ---------- */
 const telLink = t => t ? 'tel:+55' + t : '#';
+const IC = {
+ tel:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h3l1.5 4.5-2.2 1.4a11 11 0 0 0 5.3 5.3l1.4-2.2L20 13.5v3A2 2 0 0 1 18 18.5 15.5 15.5 0 0 1 4.5 5 2 2 0 0 1 6.5 3z"/></svg>',
+ msg:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.6-4.4A8 8 0 1 1 8.6 19z"/></svg>',
+ ok:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>',
+ waze:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15.5A8 8 0 1 1 20 11c0 4-3 6.5-7 6.5H9.5"/><circle cx="7.5" cy="18.5" r="1.6"/><circle cx="15.5" cy="18.5" r="1.6"/><path d="M10 10h.01M15 10h.01M10.5 13c1 .8 2.5.8 3.5 0"/></svg>',
+ maps:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>' };
+const endTxt = e => [[e.logradouro, e.numero].filter(Boolean).join(', '), e.bairro, 'Araguari - MG'].filter(Boolean).join(', ');
+const pontoBom = e => e.lat != null && e.geo !== 'bairro' && e.geo !== 'bairro_ok';
+const irWaze = e => pontoBom(e) ? `https://waze.com/ul?ll=${(+e.lat).toFixed(6)},${(+e.lng).toFixed(6)}&navigate=yes` : `https://waze.com/ul?q=${encodeURIComponent(endTxt(e))}&navigate=yes`;
+const irMaps = e => `https://www.google.com/maps/dir/?api=1&destination=${pontoBom(e) ? (+e.lat).toFixed(6) + ',' + (+e.lng).toFixed(6) : encodeURIComponent(endTxt(e))}`;
 const telBr = t => !t ? '' : t.length === 11 ? `(${t.slice(0, 2)}) ${t.slice(2, 7)}-${t.slice(7)}` : `(${t.slice(0, 2)}) ${t.slice(2, 6)}-${t.slice(6)}`;
 const anos = d => { if (!d) return ''; const m = (Date.now() - new Date(d + 'T12:00:00')) / (365.25 * 864e5); return m < 1 ? 'menos de 1 ano' : Math.floor(m) + (Math.floor(m) === 1 ? ' ano' : ' anos'); };
 let F = null, modoLigar = false;
@@ -746,7 +778,6 @@ async function abreFicha(id, ligando) {
   <h2 style="margin-top:12px">${h(nome)}</h2><div class="sub">${h(e.segmento || '')}${e.razao && e.razao !== nome ? ' · ' + h(e.razao) : ''}</div>
   <div style="margin-top:8px"><span class="tag" style="background:${COR[e.etapa]}">${ETN[e.etapa]}${e.motivo ? ' · ' + h(e.motivo) : ''}</span>
    ${prox ? `<span class="sub"> · próxima ação ${prox.toLocaleDateString('pt-BR')}</span>` : ''}${e.visita_dia ? `<span class="sub"> · visita ${new Date(e.visita_dia + 'T12:00:00').toLocaleDateString('pt-BR')} (${e.visita_turno === 'tarde' ? 'tarde' : 'manhã'})</span>` : ''}</div>
-  <div class="g2" style="margin-top:12px"><a class="bt go big" href="${telLink(e.tel1)}" id="b-lig"${e.tel1 ? '' : ' aria-disabled="true"'}>Ligar</a><button class="bt big" type="button" id="b-msg">Mensagem</button></div>
   ${e.etapa === 'mapeado' || e.etapa === 'perdido' ? `<div class="box" id="parecer"><b>Parecer da ligação</b><div class="g2" style="margin-top:8px">
    <button class="bt ok" type="button" data-p="agendou">Agendou</button><button class="bt" type="button" data-p="depois">Interesse, mas não agora</button>
    <button class="bt am" type="button" data-p="nao_atendeu">Não atendeu</button><button class="bt rd" type="button" data-p="nao_quer">Não quer</button>
@@ -770,12 +801,22 @@ async function abreFicha(id, ligando) {
   <p class="sec">Histórico</p>
   <form id="f-obs" style="display:flex;gap:6px"><input name="texto" placeholder="Anotar uma observação" style="flex:1;padding:10px;border:1px solid var(--edge);background:#070B0D;color:var(--ink);font-size:15px" maxlength="400"><button class="bt" type="submit">Salvar</button></form>
   <ul class="hist">${r.hist.map(x => `<li>${h(x.texto)}<span>${h(x.em)} · ${h(x.quem)}</span></li>`).join('') || '<li class="sub">Nenhum contato ainda.</li>'}</ul>
-  ${e.extra ? `<details><summary>Dados completos da planilha</summary><table class="t">${Object.entries(e.extra).map(([k, v]) => `<tr><td>${h(k)}</td><td>${h(v)}</td></tr>`).join('')}</table></details>` : ''}`;
+  ${e.extra ? `<details><summary>Dados completos da planilha</summary><table class="t">${Object.entries(e.extra).map(([k, v]) => `<tr><td>${h(k)}</td><td>${h(v)}</td></tr>`).join('')}</table></details>` : ''}
+  <div class="fixa">
+   <a class="bt go" href="${telLink(e.tel1)}" id="b-lig"${e.tel1 ? '' : ' aria-disabled="true"'}>${IC.tel}<span>Ligar</span></a>
+   <button class="bt" type="button" id="b-msg">${IC.msg}<span>Mensagem</span></button>
+   <button class="bt" type="button" id="b-res"${e.etapa === 'mapeado' || e.etapa === 'perdido' || e.etapa === 'agendado' ? '' : ' hidden'}>${IC.ok}<span>Resultado</span></button>
+   <a class="bt" href="${irWaze(e)}" target="_blank" rel="noopener">${IC.waze}<span>Waze</span></a>
+   <a class="bt" href="${irMaps(e)}" target="_blank" rel="noopener">${IC.maps}<span>Maps</span></a>
+  </div>`;
  desenha();
  F.msgTxt = (S.msg_wa || '').replace('{nome}', (e.responsavel || '').split(' ')[0] || nome).replace('{eu}', B.nome || '');
  $('#b-msg').onclick = () => { const t = F.msgTxt;
   (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast('Mensagem copiada. Cole no GoTo, na conversa com ' + telBr(e.tel1) + '.')).catch(() => toast('Não deu para copiar.', true)); };
  $('#b-ponto').onclick = () => ajustarPonto(e.id);
+ $('#b-res').onclick = () => { const x = $('#parecer') || lado.querySelector('[data-vis]'); if (x) x.closest('.box').scrollIntoView({ behavior:'smooth', block:'center' }); };
+ /* (1) tocou em Ligar: quando a pessoa voltar para a Central, pergunta o resultado */
+ $('#b-lig').addEventListener('click', () => { if (!e.tel1) return; try { sessionStorage.setItem('crm_lig', JSON.stringify({ id:e.id, nome, t:Date.now() })); } catch (x) {} });
  const bl = $('#b-lista'); if (bl) bl.onclick = () => listaBox(r.app.id, nome, e.id);
  $('#f-obs').onsubmit = async ev => { ev.preventDefault(); const t = ev.target.texto.value.trim(); if (!t) return; const x = await api('obs', { id:e.id, texto:t }); x.erro ? toast(x.erro, true) : abreFicha(e.id, modoLigar); };
  lado.querySelectorAll('[data-p]').forEach(b => b.onclick = () => parecer(e, b.dataset.p));
@@ -966,6 +1007,40 @@ async function carrega() {
  if (!COB) { desenhaCabo(); if (COB && COB.length) map.fitBounds(L.polygon(COB).getBounds(), enquadra()); }
  desenha();
 }
+/* ---------- (4) perto de mim: empresas a até 500 m de onde a dupla está ---------- */
+function pertoDeMim() {
+ if (!aqui) return; fichaId = null; regSel = null;
+ const l = S.empresas.filter(e => e.lat != null && e.et !== 'perdido').map(e => ({ e, d:km(aqui, pos(e)) * 1000 })).filter(x => x.d <= 500).sort((a, b) => a.d - b.d);
+ L.circle(aqui, { radius:500, color:'#5B8CFF', weight:1.5, dashArray:'5 6', fill:false, interactive:false }).addTo(G.eu);
+ if (cel()) folha(1);
+ const dist = d => (d < 100 ? Math.round(d / 10) * 10 : Math.round(d / 50) * 50) + ' m';
+ lado.innerHTML = `<button class="bt" type="button" data-voltar>← Regiões</button><h2 style="margin-top:12px">Perto de você</h2>
+  <p class="sub">${l.length ? `${l.length} ${l.length === 1 ? 'empresa' : 'empresas'} a até 500 m, da mais perto para a mais longe.` : 'Nenhuma empresa do mapa a até 500 m daqui.'}</p>
+  <ul class="lista">${l.slice(0, 60).map(({ e, d }) => `<li tabindex="0" data-id="${e.id}"><i style="background:${COR[e.et]}"></i><span>${h(e.nome)}<small>${h(e.seg || 'Sem segmento')} · ${ETN[e.et]}</small></span><em class="dist">${dist(d)}</em></li>`).join('')}</ul>`;
+}
+
+/* ---------- (1) voltou da ligação: pergunta o resultado na hora ---------- */
+async function voltouDaLigacao() {
+ let Lg = null; try { Lg = JSON.parse(sessionStorage.getItem('crm_lig') || 'null'); } catch (x) {}
+ if (!Lg || document.hidden) return;
+ const passou = Date.now() - Lg.t; if (passou < 6000) return;                 /* ainda nem saiu para ligar */
+ try { sessionStorage.removeItem('crm_lig'); } catch (x) {}
+ if (passou > 3 * 3600 * 1000 || $('#pos-lig')) return;
+ const emp = S.empresas.find(x => x.id === Lg.id); if (emp && !['mapeado', 'perdido'].includes(emp.et)) return;
+ const w = document.createElement('div'); w.id = 'pos-lig'; w.className = 'poslig'; w.setAttribute('role', 'dialog');
+ w.innerHTML = `<div class="pl-c"><small>Ligação</small><b>Como foi com ${h(Lg.nome)}?</b>
+  <div class="g2"><button class="bt ok" type="button" data-pl="agendou">Agendou</button><button class="bt" type="button" data-pl="depois">Interesse, mas não agora</button>
+  <button class="bt am" type="button" data-pl="nao_atendeu">Não atendeu</button><button class="bt rd" type="button" data-pl="nao_quer">Não quer</button>
+  <button class="bt rd" type="button" data-pl="numero_errado">Número errado</button><button class="bt rd" type="button" data-pl="fechou">Empresa fechou</button></div>
+  <button class="pl-x" type="button" data-pl="">Ainda não liguei</button></div>`;
+ document.body.appendChild(w);
+ w.addEventListener('click', async ev => { const b = ev.target.closest('[data-pl]'); if (!b && ev.target !== w) return; w.remove(); const p = b ? b.dataset.pl : '';
+  if (!p) return;
+  if (fichaId !== Lg.id || !F || +F.empresa.id !== Lg.id) await abreFicha(Lg.id, true);
+  if (F && +F.empresa.id === Lg.id) parecer(F.empresa, p); });
+}
+document.addEventListener('visibilitychange', voltouDaLigacao); addEventListener('focus', voltouDaLigacao);
+
 /* ---------- leitura do QR ao vivo: o ponto pisca e aparece o aviso ---------- */
 let desde = -1;
 async function novidades() {
