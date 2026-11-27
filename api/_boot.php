@@ -123,12 +123,27 @@ function limpa_tentativas(string $chave): void { q('DELETE FROM tentativas WHERE
 
 /* parceiro logado no app */
 function parceiro_logado(): ?array {
+  $p = parceiro_sessao();
+  return $p && $p['status'] === 'ativo' ? $p : null;
+}
+/* quem está logado no app, aprovado ou ainda em análise (o cadastro em análise vê só a tela de espera) */
+function parceiro_sessao(): ?array {
   sessao();
   $id = $_SESSION['parceiro_id'] ?? null;
   if (!$id) return null;
   $p = one('SELECT * FROM parceiros WHERE id = ?', [$id]);
-  if (!$p || $p['status'] !== 'ativo') { unset($_SESSION['parceiro_id']); return null; }
+  if (!$p || !in_array($p['status'], ['ativo', 'pendente'], true)) { unset($_SESSION['parceiro_id']); return null; }
   return $p;
+}
+/* abre a sessão do parceiro (no login e logo depois do cadastro) */
+function entrar_parceiro(array $p, bool $manter = false): void {
+  sessao();
+  session_regenerate_id(true);
+  $_SESSION = ['parceiro_id' => (int)$p['id'], 'desde' => time()];
+  if ($manter) {
+    $prm = session_get_cookie_params();
+    setcookie(session_name(), session_id(), ['expires' => time() + 60 * 60 * 24 * 30, 'path' => '/', 'secure' => $prm['secure'], 'httponly' => true, 'samesite' => 'Lax']);
+  }
 }
 
 const ETAPAS = ['Nova', 'Em contato', 'Em negociação', 'Agendado', 'Instalado', 'Não instalado', 'Cancelado'];
@@ -165,8 +180,10 @@ const PLANOS = ['600 Mega', '800 Mega', '1 Giga', 'Ultra Mesh'];
 
 function link_parceiro(string $codigo): string { return rtrim(conf('site_url', 'https://www.hunterleague.com.br'), '/') . '/i/' . $codigo; }
 
-/* QR genéricos: códigos impressos no adesivo A3 de porta antes de o parceiro existir.
-   Na visita, o parceiro lê o QR do cartaz, toca em "Ative o QR" e faz o cadastro (cadastro?r=CODIGO): o código passa a ser dele.
+/* QR genéricos: os códigos já impressos no adesivo A3 (estabelecimento) e na placa A4 (motorista).
+   Fluxo (26/11/2026): cadastro → análise → aprovação → o parceiro toca em "Ativar QR Code" e lê o QR da peça
+   que recebeu na visita. O código lido passa a ser o código do parceiro (parceiros.codigo) e o link dele (/i/CODIGO).
+   Os códigos de teste servem também para quem não tem onde colar a peça: a equipe vincula pela Central.
    A lista fica na Central (config 'qr_genericos', separada por vírgula). Padrão:
    HL-ARG-9001 a HL-ARG-9050 (adesivo A3 dos estabelecimentos), HL-UBR-ARG-0001 a HL-UBR-ARG-0020 (placa A4 dos motoristas)
    e HL-TESTE-01 a HL-TESTE-04 (testes da equipe). */
@@ -181,6 +198,14 @@ function qr_genericos(): array {
 /* peça impressa de cada QR genérico */
 function qr_generico_tipo(string $c): string { return str_starts_with($c, 'HL-UBR-') ? 'Placa A4 · motorista' : (str_starts_with($c, 'HL-TESTE-') ? 'Teste da equipe' : 'Adesivo A3 · estabelecimento'); }
 function qr_generico(?string $codigo): bool { return $codigo !== null && $codigo !== '' && in_array(strtoupper($codigo), qr_genericos(), true); }
+/* o que a câmera leu (o endereço completo do QR) ou o que a pessoa digitou → o código */
+function qr_codigo_lido(string $txt): string {
+  $txt = trim($txt);
+  if (preg_match('#/i/([A-Za-z0-9-]{3,16})/?(?:[?\#].*)?$#', $txt, $m)) $txt = $m[1];
+  return strtoupper(mb_substr((string)preg_replace('/[^A-Za-z0-9-]/', '', $txt), 0, 16));
+}
+/* parceiro dono de um código (o código do parceiro é o do QR que ele ativou) */
+function parceiro_por_codigo(string $c): ?array { return $c === '' ? null : one('SELECT * FROM parceiros WHERE codigo = ?', [strtoupper($c)]); }
 
 /* Cliente já indicado? Bloqueia se já foi instalado (por qualquer parceiro) ou se foi indicado
    nos últimos N dias (config validade_dias, padrão 60). Depois disso, sem instalação, pode ser indicado de novo. */

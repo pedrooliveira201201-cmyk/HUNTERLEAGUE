@@ -24,7 +24,7 @@ RewriteRule ^(conheca|apresentacao)/?$ demo/tour.html [L]
 
 # arquivos internos nunca abrem pelo navegador
 RewriteRule ^arquivos(/|$) - [F,L]
-RewriteRule ^(config\.php|app\.tpl\.html|api/_.*\.php|admin/_.*\.php|admin/app\.tpl\.html)$ - [F,L]
+RewriteRule ^(config\.php|app\.tpl\.html|ativar\.tpl\.html|api/_.*\.php|admin/_.*\.php|admin/app\.tpl\.html)$ - [F,L]
 <FilesMatch "(\.(sqlite|db|sql|log|md|py)|^\.ftp-deploy-sync-state\.json)$">
   Require all denied
 </FilesMatch>
@@ -32,7 +32,7 @@ RewriteRule ^(config\.php|app\.tpl\.html|api/_.*\.php|admin/_.*\.php|admin/app\.
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "same-origin"
-  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(self)"
   # páginas sempre conferem a versão nova (atualização chega na hora para todo mundo)
   <FilesMatch "\.(html|webmanifest)$|^sw\.js$">
     Header set Cache-Control "no-cache"

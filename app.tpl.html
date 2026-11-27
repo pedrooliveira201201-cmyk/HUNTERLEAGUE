@@ -746,6 +746,9 @@ body.compact .sub{display:none}
 .kitc.ok .st{background:var(--cyan);color:#050505}
 .kitc.ent .st{background:#1E3A2E;color:#8DF5B5}
 .kitc.lock .ki{filter:grayscale(1) brightness(.7)}
+.kitc .kbar{margin-top:7px;font-size:12px;font-weight:700;color:var(--silver)}
+.kitc .kbar span{display:flex;justify-content:space-between}.kitc .kbar b{color:var(--ink)}
+.kitc .kbar i{display:block;height:6px;margin-top:3px;background:#1B262B}.kitc .kbar em{display:block;height:100%;background:var(--cyan)}
 .dados{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0;border-top:1px solid var(--line)}
 .dados dt,.dados dd{margin:0;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
 .dados dt{color:var(--mute);padding-right:14px}
@@ -1449,7 +1452,7 @@ body.offline:not(.sigback) .map{opacity:.18}
   $('#f-t').textContent = `A casa ${/a$/i.test(a.n) ? 'da' : 'do'} ${a.n} ligou!`;
   $('#f-s').textContent = list.length > 1 ? `Instalado em ${a.i || a.d} · e mais ${list.length-1} ${list.length === 2 ? 'casa' : 'casas'}` : `Instalado em ${a.i || a.d}`;
   { const kk = HL && HL.kit; let novoKit = false; try { novoKit = !!(kk && kk.ativo && kk.em && !kk.entregue && !localStorage.getItem('hl-kit-visto')); if (novoKit) localStorage.setItem('hl-kit-visto', '1'); } catch (e) {}
-   fx.querySelector('.plus').textContent = novoKit ? `${kk.nome} desbloqueado!` : `Bônus garantido!`; }
+   fx.querySelector('.plus').textContent = novoKit ? `${kk.nome} liberado!` : `Bônus garantido!`; }
   fx.classList.remove('go'); fx.hidden = false;
   requestAnimationFrame(() => { fx.classList.add('on'); requestAnimationFrame(() => fx.classList.add('go')); });
   setTimeout(() => buzz([20,50,20,50,70]), still ? 0 : 500);
@@ -1597,13 +1600,17 @@ body.offline:not(.sigback) .map{opacity:.18}
   gift: `<svg viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="106" rx="34" ry="5" fill="#000" opacity=".45"/><rect x="24" y="48" width="72" height="54" fill="#0E2328" stroke="#19F7FF" stroke-width="2"/><rect x="18" y="34" width="84" height="16" fill="#12323A" stroke="#19F7FF" stroke-width="2"/><path d="M60 34v68" stroke="#AEFCFF" stroke-width="6"/><path d="M60 34c-8-16-28-16-24-4 3 7 24 4 24 4zm0 0c8-16 28-16 24-4-3 7-24 4-24 4z" fill="none" stroke="#AEFCFF" stroke-width="3"/></svg>`
  };
  const premioImg = n => { const t = String(n).toLowerCase(); return PREMIO_IMG[/air ?fryer|fritadeira/.test(t) ? 'air' : /\btv\b|televis|smart ?tv/.test(t) ? 'tv' : /celular|smartphone|iphone|galaxy/.test(t) ? 'phone' : /vale|pix|r\$|dinheiro|b[oô]nus/.test(t) ? 'vale' : 'gift']; };
- // Kit do Estabelecimento: liberado na 1ª instalação
- const KIT = HL ? HL.kit : { ativo:true, nome:'Kit do Estabelecimento', itens:'Adesivos, QR Code para o balcão e panfletos', em:'05/10/2026', entregue:'08/10/2026' };
+ // Kit completo: libera com os contatos e as vendas (padrão 20 contatos e 2 vendas). A peça da visita já sai na hora.
+ const KIT = HL ? HL.kit : { ativo:true, nome:'Kit completo do parceiro', itens:'Bandeirola, display de acrílico com QR e panfletos', regra:{ contatos:20, vendas:2 }, prog:{ contatos:14, vendas:1 }, em:null, entregue:null };
  (() => {
   if (!KIT || !KIT.ativo) return;
   const escK = t => String(t ?? '').replace(/[<>&"]/g, ''), lock = !KIT.em;
-  const st = KIT.entregue ? `Entregue em ${KIT.entregue.slice(0,5)}` : KIT.em ? 'Desbloqueado · a CallNet combina o envio pelo WhatsApp' : 'Bloqueado · libera na 1ª instalação';
-  const html = `<span class="ki">${PREMIO_IMG.gift}</span><div><small class="k1">${lock ? 'Sua 1ª instalação desbloqueia' : 'Desbloqueado na 1ª instalação'}</small><strong>${escK(KIT.nome)}</strong>${KIT.itens ? `<p>${escK(KIT.itens)}</p>` : ''}<span class="st">${st}</span></div>`;
+  const g = KIT.regra || { contatos:20, vendas:2 }, pr = KIT.prog || { contatos:0, vendas:0 };
+  const fc = Math.max(0, g.contatos - pr.contatos), fv = Math.max(0, g.vendas - pr.vendas);
+  const falta = [fc ? `${fc} ${fc === 1 ? 'contato' : 'contatos'}` : '', fv ? `${fv} ${fv === 1 ? 'venda' : 'vendas'}` : ''].filter(Boolean).join(' e ');
+  const st = KIT.entregue ? `Entregue em ${KIT.entregue.slice(0,5)}` : KIT.em ? 'Liberado · a CallNet combina a entrega pelo WhatsApp' : `Faltam ${falta}`;
+  const barra = (v, m, t) => `<div class="kbar"><span>${t} <b>${Math.min(v, m)}/${m}</b></span><i><em style="width:${Math.round(Math.min(1, v / m) * 100)}%"></em></i></div>`;
+  const html = `<span class="ki">${PREMIO_IMG.gift}</span><div><small class="k1">${lock ? `Libera com ${g.contatos} contatos e ${g.vendas} vendas` : 'Você liberou'}</small><strong>${escK(KIT.nome)}</strong>${KIT.itens ? `<p>${escK(KIT.itens)}</p>` : ''}${lock ? barra(pr.contatos, g.contatos, 'Contatos') + barra(pr.vendas, g.vendas, 'Vendas') : ''}<span class="st">${st}</span></div>`;
   const cls = 'kitc' + (KIT.entregue ? ' ent' : lock ? ' lock' : ' ok');
   const pf = $('#pf-kit'); pf.className = cls; pf.innerHTML = html; pf.hidden = false;
   if (lock || (KIT.em && !KIT.entregue)) { const v = $('#v-kit'); v.className = cls; v.innerHTML = html; v.hidden = false; }

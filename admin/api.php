@@ -80,7 +80,7 @@ case 'parceiros': {
     'email' => $p['email'] ?? '', 'cidade' => $p['cidade'], 'pix' => $p['pix'], 'codigo' => $p['codigo'], 'status' => $p['status'], 'nivel' => $p['nivel'],
     'desde' => data_br($p['criado_em']), 'termo' => 'v' . $p['termo_versao'] . ' em ' . data_br($p['termo_aceito_em']), 'obs' => $p['obs'] ?? '',
     'sem_ind' => $p['status'] === 'ativo' ? dias_desde($p['ultima'] ?: $p['aprovado_em']) : null, 'ultima' => data_br($p['ultima']),
-    'leit' => (int)$p['nleit'], 'ind' => (int)$p['ninds'], 'inst' => (int)$p['ninst'], 'link' => $p['codigo'] ? link_parceiro($p['codigo']) : '',
+    'sem_qr' => $p['status'] === 'ativo' && !$p['codigo'], 'leit' => (int)$p['nleit'], 'ind' => (int)$p['ninds'], 'inst' => (int)$p['ninst'], 'link' => $p['codigo'] ? link_parceiro($p['codigo']) : '',
   ], $rows)]);
 }
 
@@ -99,7 +99,7 @@ case 'bonus': {
     $pedidos[(int)$r['saque_id']]['itens'][] = ['n' => primeiro_nome($r['cliente_nome']), 'd' => data_br($r['instalado_em']), 'v' => (float)$r['comissao']];
   $pagos = array_map($sq, all("SELECT g.*, p.codigo, COALESCE(p.loja, p.nome) AS pnome FROM saques g JOIN parceiros p ON p.id = g.parceiro_id WHERE g.pago_em IS NOT NULL AND g.pago_em >= ? ORDER BY g.pago_em DESC, g.id DESC", [date('Y-m-d', strtotime('-60 days'))]));
   $premios = array_map(fn($r) => ['id' => (int)$r['id'], 'parceiro' => $r['pnome'], 'codigo' => $r['codigo'], 'wa' => tel_br($r['whatsapp']), 'wa_d' => $r['whatsapp'],
-    'conquista' => $r['tipo'] === 'kit' ? '1ª instalação' : $r['alvo'] . ' instalações validadas', 'premio' => $r['premio'], 'em' => data_br($r['conquistado_em']), 'entregue' => data_br($r['entregue_em']), 'kit' => $r['tipo'] === 'kit',
+    'conquista' => $r['tipo'] === 'kit' ? kit_regra()['contatos'] . ' contatos e ' . kit_regra()['vendas'] . ' vendas' : $r['alvo'] . ' instalações validadas', 'premio' => $r['premio'], 'em' => data_br($r['conquistado_em']), 'entregue' => data_br($r['entregue_em']), 'kit' => $r['tipo'] === 'kit',
     'pode' => $r['tipo'] === 'kit' || strtotime($r['conquistado_em'] . ' +30 days') <= time(), 'libera' => date('d/m/Y', strtotime($r['conquistado_em'] . ' +30 days'))],
     all("SELECT r.*, p.codigo, p.whatsapp, COALESCE(p.loja, p.nome) AS pnome FROM premios r JOIN parceiros p ON p.id = r.parceiro_id WHERE r.tipo IN ('meta', 'kit') AND (r.entregue_em IS NULL OR r.entregue_em >= ?) ORDER BY r.entregue_em IS NOT NULL, r.conquistado_em", [date('Y-m-d', strtotime('-60 days'))]));
   json_out(['pedidos' => array_values($pedidos), 'faturas' => $faturas, 'liberados' => $liberados, 'pagos' => $pagos, 'premios' => $premios,
@@ -120,7 +120,7 @@ case 'config': {
 /* ---------- escritas ---------- */
 case 'indicar': {
   $codigo = strtoupper(preg_replace('/[^A-Za-z0-9-]/', '', $s('codigo', 20)));
-  $p = one('SELECT * FROM parceiros WHERE codigo = ?', [$codigo]);
+  $p = parceiro_por_codigo($codigo);
   $nome = trim(preg_replace('/\s+/', ' ', strip_tags($s('nome', 120))));
   $cpf = so_digitos($s('cpf', 20)); $tel = tel_normal($s('tel', 20)); $plano = in_array($s('plano'), PLANOS, true) ? $s('plano') : null;
   if (!$p) json_out(['erro' => "Código {$codigo} não encontrado. Confira na mensagem do cliente.", 'campo' => 'codigo'], 422);
@@ -195,13 +195,21 @@ case 'parceiro': {
   if (!$p) json_out(['erro' => 'Parceiro não encontrado.'], 404);
   $o = $s('o', 20); $alvo = $p['codigo'] ?: $p['doc'];
   if ($o === 'aprovar' && in_array($p['status'], ['pendente', 'recusado'], true)) {
-    $codigo = $p['codigo'] ?: novo_codigo($p['cidade']);
-    q('UPDATE parceiros SET status = ?, codigo = ?, aprovado_em = ?, aprovado_por = ? WHERE id = ?', ['ativo', $codigo, agora(), $a['usuario'], $p['id']]);
-    auditar($quem, 'aprovou parceiro', $codigo, $p['nome']);
-    json_out(['ok' => true, 'msg' => "Aprovado. Código {$codigo}. Avise " . primeiro_nome($p['nome']) . ' no WhatsApp: o QR já funciona.', 'codigo' => $codigo]);
+    /* o código do parceiro nasce quando ele ativa o QR da peça (adesivo A3 ou placa A4) no app */
+    q('UPDATE parceiros SET status = ?, aprovado_em = ?, aprovado_por = ? WHERE id = ?', ['ativo', agora(), $a['usuario'], $p['id']]);
+    auditar($quem, 'aprovou parceiro', $p['codigo'] ?: $p['doc'], $p['nome']);
+    $nome = primeiro_nome($p['nome']);
+    $txt = "Olá, {$nome}! Seu cadastro no Hunter League foi aprovado. Abra o app e toque em \"Ativar QR Code\" para ler o QR do seu kit de ativação: " . rtrim((string)conf('site_url', 'https://www.hunterleague.com.br'), '/') . '/app';
+    $mail = false;
+    if ($p['email'] && email_configurado()) {
+      try { enviar_email($p['email'], 'Hunter League: cadastro aprovado', '<p>' . h($txt) . '</p>', $txt); $mail = true; }
+      catch (Throwable $x) { auditar('sistema', 'e-mail de aprovação falhou', $p['doc'], mb_substr($x->getMessage(), 0, 180)); }
+    }
+    json_out(['ok' => true, 'codigo' => $p['codigo'], 'wa' => 'https://wa.me/55' . $p['whatsapp'] . '?text=' . rawurlencode($txt),
+      'msg' => $p['codigo'] ? "Aprovado de novo. Código {$p['codigo']}." : "Aprovado. Agora {$nome} entra no app e ativa o QR do adesivo." . ($mail ? ' O aviso foi por e-mail.' : '') . ' Avise também no WhatsApp.']);
   }
   if (in_array($o, ['recusar', 'bloquear', 'desfiliar', 'reativar'], true)) {
-    if ($o === 'reativar' && !$p['codigo']) json_out(['erro' => 'Use Aprovar para este cadastro.'], 422);
+    if ($o === 'reativar' && !$p['aprovado_em']) json_out(['erro' => 'Use Aprovar para este cadastro.'], 422);
     $novo = ['recusar' => 'recusado', 'bloquear' => 'bloqueado', 'desfiliar' => 'desfiliado', 'reativar' => 'ativo'][$o];
     /* recusou quem ocupou um QR genérico e nunca foi aprovado: o código volta a ficar livre para outro cartaz */
     $solta = $o === 'recusar' && !$p['aprovado_em'] && qr_generico($p['codigo']);
@@ -269,10 +277,12 @@ case 'salvar_config': {
     'pixel_meta' => so_digitos($s('pixel_meta', 30)), 'metas' => implode("\n", $metas),
     'validade_dias' => (string)min(365, max(15, (int)$s('validade_dias', 3))),
     'kit_ativo' => !empty($e['kit_ativo']) ? '1' : '0',
-    'kit_nome' => mb_substr(strip_tags($s('kit_nome', 60)), 0, 60) ?: 'Kit do Estabelecimento',
+    'kit_nome' => mb_substr(strip_tags($s('kit_nome', 60)), 0, 60) ?: 'Kit completo do parceiro',
     'kit_itens' => mb_substr(strip_tags($s('kit_itens', 300)), 0, 300),
+    'kit_contatos' => (string)max(1, min(500, (int)$s('kit_contatos', 4) ?: 20)),
+    'kit_vendas' => (string)max(1, min(100, (int)$s('kit_vendas', 4) ?: 2)),
   ];
-  if (!array_key_exists('kit_nome', $e)) unset($v['kit_ativo'], $v['kit_nome'], $v['kit_itens']);   // formulário sem a parte do kit não mexe nele
+  if (!array_key_exists('kit_nome', $e)) unset($v['kit_ativo'], $v['kit_nome'], $v['kit_itens'], $v['kit_contatos'], $v['kit_vendas']);   // formulário sem a parte do kit não mexe nele
   foreach (explode('|', $v['bonus_planos']) as $x) if ((float)$x <= 0) json_out(['erro' => 'Informe o bônus de todos os planos.'], 422);
   if (strlen($v['whatsapp']) < 12 || !str_contains($v['mensagem_wa'], '{codigo}')) json_out(['erro' => 'WhatsApp com 55 + DDD, e a mensagem precisa ter {codigo}.'], 422);
   foreach ($v as $k => $x) { if (one('SELECT chave FROM config WHERE chave = ?', [$k])) q('UPDATE config SET valor = ? WHERE chave = ?', [$x, $k]); else q('INSERT INTO config (chave, valor) VALUES (?, ?)', [$k, $x]); }
