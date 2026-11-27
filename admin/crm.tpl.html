@@ -87,13 +87,14 @@ textarea{min-height:70px;resize:vertical}
 .barra{height:10px;background:#16222A;margin-top:6px}.barra i{display:block;height:100%;background:var(--cyan);transition:width .4s}
 table.t{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
 table.t td,table.t th{border-top:1px solid var(--edge);padding:5px 4px;text-align:left;vertical-align:top}
-.tour{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55)}
-.tour-c{position:absolute;width:min(360px,calc(100vw - 24px));padding:18px;background:#0B1013;border:2px solid var(--cyan);box-shadow:0 0 0 4000px rgba(0,0,0,0),0 18px 50px rgba(0,0,0,.7)}
+.tour{position:fixed;inset:0;z-index:3000;pointer-events:none}
+.tour-luz{position:fixed;border:3px solid var(--cyan);box-shadow:0 0 0 9999px rgba(0,0,0,.6),0 0 28px rgba(25,247,255,.45);pointer-events:none;transition:left .25s,top .25s,width .25s,height .25s}
+.tour-c{position:fixed;z-index:3002;pointer-events:auto;width:min(360px,calc(100vw - 16px));padding:18px;background:#0B1013;border:2px solid var(--cyan);box-shadow:0 18px 50px rgba(0,0,0,.75)}
 .tour-c .n{font:900 14px Montserrat,sans-serif;color:var(--cyan)}
 .tour-c h3{margin:4px 0 6px;font:900 26px/1.05 "Big Shoulders Display",Impact,sans-serif;text-transform:uppercase}
 .tour-c p{margin:0;color:#C9D1D6}
 .tour-c .pts{display:flex;gap:6px;margin-top:14px}.tour-c .pts i{flex:1;height:5px;background:#1E2A30}.tour-c .pts i.on{background:var(--cyan)}
-.tour-alvo{position:relative;z-index:3001!important;outline:3px solid var(--cyan)!important;outline-offset:3px;box-shadow:0 0 30px rgba(25,247,255,.5)}
+.tour-c .pular{margin-top:10px;border:0;background:none;color:var(--mute);font-weight:700;cursor:pointer;padding:6px 0}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;max-width:min(92vw,520px);padding:12px 18px;background:#0E2A2E;border:1px solid var(--cyan);font-weight:700;display:none}
 .toast.on{display:block}.toast.err{background:#2A0E15;border-color:var(--red)}
 details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px}
@@ -133,7 +134,7 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
  <aside class="lado" id="lado" aria-live="polite"></aside>
 </div>
 <div class="toast" id="toast" role="status"></div>
-<div class="tour" id="tour" hidden><div class="tour-c" id="tour-c" role="dialog" aria-modal="true" aria-labelledby="tour-t"></div></div>
+<div class="tour" id="tour" hidden><div class="tour-luz" id="tour-luz"></div><div class="tour-c" id="tour-c" role="dialog" aria-labelledby="tour-t"></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
 {
@@ -464,19 +465,27 @@ const PASSOS = [
  ['.abas [data-v="agenda"]', 'Agenda e Base', 'Em Agenda ficam as visitas de cada dia, de manhã e à tarde. Em Base vocês sobem a planilha e cadastram a empresa achada na rua.']];
 let passo = 0;
 function tour(i) {
- document.querySelectorAll('.tour-alvo').forEach(x => x.classList.remove('tour-alvo'));
  if (i >= PASSOS.length || i < 0) { $('#tour').hidden = true; try { localStorage.setItem('crm_tour_v1', '1'); } catch (e) {} return; }
- passo = i; const [sel, t, txt] = PASSOS[i], alvo = document.querySelector(sel); $('#tour').hidden = false;
- if (alvo) alvo.classList.add('tour-alvo');
+ passo = i; const [sel, t, txt] = PASSOS[i]; $('#tour').hidden = false;
  const c = $('#tour-c'); c.innerHTML = `<div class="n">${i + 1} de ${PASSOS.length}</div><h3 id="tour-t">${t}</h3><p>${txt}</p><div class="pts">${PASSOS.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</div>
   <div class="g2" style="margin-top:14px"><button class="bt" type="button" data-t="${i - 1}"${i ? '' : ' disabled'}>Voltar</button><button class="bt go" type="button" data-t="${i + 1}">${i === PASSOS.length - 1 ? 'Entendi' : 'Próximo'}</button></div>
-  <button type="button" data-t="99" style="margin-top:10px;border:0;background:none;color:var(--mute);font-weight:700;cursor:pointer">Pular</button>`;
- const r = alvo ? alvo.getBoundingClientRect() : { left:20, top:80, right:20, bottom:80, width:0 };
- const w = c.offsetWidth, hh = c.offsetHeight;
- let x = r.right + 14, y = r.top; if (x + w > innerWidth - 8) x = Math.max(8, r.left - w - 14); if (x < 8 || r.width > innerWidth * .5) { x = Math.min(innerWidth - w - 8, Math.max(8, r.left + 20)); y = Math.min(innerHeight - hh - 12, r.top + 60); }
- c.style.left = x + 'px'; c.style.top = Math.max(8, Math.min(y, innerHeight - hh - 8)) + 'px';
- c.querySelector('.go').focus();
+  <button class="pular" type="button" data-t="99">Pular o tour (Esc)</button>`;
+ posTour(); c.querySelector('.go').focus();
 }
+function posTour() {
+ if ($('#tour').hidden) return;
+ const alvo = document.querySelector(PASSOS[passo][0]), c = $('#tour-c'), luz = $('#tour-luz'), W = innerWidth, H = innerHeight, m = 14;
+ const r = alvo ? alvo.getBoundingClientRect() : { left:W / 2, top:H / 2, right:W / 2, bottom:H / 2, width:0, height:0 };
+ const p = 4; luz.style.left = (r.left - p) + 'px'; luz.style.top = (r.top - p) + 'px'; luz.style.width = (r.width + p * 2) + 'px'; luz.style.height = (r.height + p * 2) + 'px';
+ const w = c.offsetWidth, hh = c.offsetHeight; let x, y;
+ if (r.width > W * .55 && r.height > H * .45) { x = r.left + 24; y = r.top + 72; }          /* alvo grande (o mapa): balão por dentro */
+ else if (r.right + m + w <= W - 8) { x = r.right + m; y = r.top; }                          /* à direita */
+ else if (r.left - m - w >= 8) { x = r.left - m - w; y = r.top; }                            /* à esquerda */
+ else if (r.bottom + m + hh <= H - 8) { x = r.left; y = r.bottom + m; }                      /* embaixo */
+ else { x = r.left; y = r.top - m - hh; }                                                     /* em cima */
+ c.style.left = Math.max(8, Math.min(x, W - w - 8)) + 'px'; c.style.top = Math.max(8, Math.min(y, H - hh - 8)) + 'px';
+}
+addEventListener('resize', posTour);
 $('#tour').addEventListener('click', ev => { const b = ev.target.closest('[data-t]'); if (b) tour(+b.dataset.t); });
 document.addEventListener('keydown', ev => { if (!$('#tour').hidden && ev.key === 'Escape') tour(99); });
 $('#b-tour').addEventListener('click', () => tour(0));
