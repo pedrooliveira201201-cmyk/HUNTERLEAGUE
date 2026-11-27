@@ -103,7 +103,9 @@ function cnpj_valido(string $c): bool {
   $d2 = $s % 11 < 2 ? 0 : 11 - $s % 11; return (int)$c[13] === $d2;
 }
 function doc_valido(string $d): bool { return strlen($d) === 11 ? cpf_valido($d) : cnpj_valido($d); }
-function tel_normal(string $t): string { $t = so_digitos($t); if (strlen($t) >= 12 && str_starts_with($t, '55')) $t = substr($t, 2); return $t; }
+/* celular sem o 9 (número antigo de 8 dígitos): depois do DDD, começa com 6, 7, 8 ou 9 → ganha o 9. Fixo (2 a 5) fica igual. */
+function tel_9(string $d): string { return strlen($d) === 10 && strpos('6789', $d[2]) !== false ? substr($d, 0, 2) . '9' . substr($d, 2) : $d; }
+function tel_normal(string $t): string { $t = so_digitos($t); if (strlen($t) >= 12 && str_starts_with($t, '55')) $t = substr($t, 2); return tel_9($t); }
 function primeiro_nome(string $n): string { $n = trim((string)preg_replace(["/[^\\p{L}\\p{M}\\s'-]+/u", '/\\s+/u'], ['', ' '], strip_tags($n))); $p = explode(' ', $n)[0] ?? ''; return mb_convert_case(mb_strtolower($p), MB_CASE_TITLE); }
 function h(?string $s): string { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 

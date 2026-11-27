@@ -18,13 +18,27 @@ const CRM_SEGMENTOS = ['9602501' => 'Salão de beleza', '9602502' => 'Manicure e
   '9511800' => 'Assistência de computador', '4520001' => 'Oficina mecânica', '4520006' => 'Borracharia', '4520005' => 'Lava-jato'];
 
 /* cria as tabelas na primeira vez (produção já instalada) */
+/* põe o 9 nos celulares antigos já gravados (uma vez só) */
+function crm_corrige_9(): void {
+  $faz = function (string $tab, array $cols) {
+    foreach ($cols as $c) foreach (all("SELECT id, $c AS t FROM $tab WHERE $c IS NOT NULL AND LENGTH($c) = 10") as $r) {
+      $n = tel_9((string)$r['t']); if ($n !== $r['t']) { try { q("UPDATE $tab SET $c = ? WHERE id = ?", [$n, $r['id']]); } catch (Throwable $e) {} }
+    }
+  };
+  try { $faz('empresas', ['tel1', 'tel2']); } catch (Throwable $e) {}
+  try { $faz('indicacoes', ['cliente_tel']); } catch (Throwable $e) {}
+  try { $faz('parceiros', ['whatsapp']); } catch (Throwable $e) {}
+}
 function crm_migrar(): void {
   static $ok = false; if ($ok) return; $ok = true;
   $v = (string)conf('crm_v', '');
-  if ($v === '2') return;
-  if ($v === '1') { /* v2: a célula 40 vinha com o nome "40 (ARI)SECUNDÁRIA" no arquivo da Nio */
+  if ($v === '3') return;
+  if ($v === '1' || $v === '2') {
+    /* v2: a célula 40 vinha com o nome "40 (ARI)SECUNDÁRIA" no arquivo da Nio */
     q("UPDATE empresas SET celula = '40 (ARI)' WHERE celula = '40 (ARI)SECUNDÁRIA'");
-    q("UPDATE config SET valor = '2' WHERE chave = 'crm_v'"); return; }
+    /* v3: celulares antigos sem o 9 (planilha da Casa dos Dados, indicações e cadastros) */
+    crm_corrige_9();
+    q("UPDATE config SET valor = '3' WHERE chave = 'crm_v'"); return; }
   $sq = db()->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
   $id = $sq ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY';
   $ref = $sq ? 'INTEGER' : 'INT UNSIGNED';
@@ -52,7 +66,8 @@ function crm_migrar(): void {
   foreach ($sqls as $s) db()->exec($s);
   foreach (["CREATE UNIQUE INDEX idx_emp_cnpj ON empresas (cnpj)", "CREATE INDEX idx_emp_tel ON empresas (tel1)", "CREATE INDEX idx_emp_etapa ON empresas (etapa, proximo_em)",
             "CREATE INDEX idx_emp_par ON empresas (parceiro_id)", "CREATE INDEX idx_eh ON empresa_hist (empresa_id, em)"] as $s) { try { db()->exec($s); } catch (Throwable $e) {} }
-  q("INSERT INTO config (chave, valor) VALUES ('crm_v', '2')");
+  q("INSERT INTO config (chave, valor) VALUES ('crm_v', '3')");
+  crm_corrige_9();
 }
 
 /* nome que aparece: fantasia; no MEI sem fantasia, o nome do dono */
@@ -135,6 +150,7 @@ function crm_tel(string $t): string {
   $d = preg_replace('/\D/', '', $t);
   if (strlen($d) > 11 && str_starts_with($d, '55')) $d = substr($d, 2);
   if (strlen($d) === 8 || strlen($d) === 9) $d = '34' . $d;
+  $d = tel_9($d);   /* celular antigo sem o 9: sem ele o WhatsApp não abre e a ligação não completa */
   return strlen($d) === 10 || strlen($d) === 11 ? $d : '';
 }
 function crm_data(string $t): ?string {
