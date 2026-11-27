@@ -169,6 +169,8 @@ function hl_migrar_etapas(): void {
   static $feito = false;
   if ($feito) return; $feito = true;
   try {
+    /* 27/11/2026: a equipe toda com o mesmo acesso (todos master), uma vez só */
+    if (conf('equipe_master') !== '1') { q("UPDATE admins SET papel = 'master'"); q("INSERT INTO config (chave, valor) VALUES ('equipe_master', '1')"); }
     $v = (string)conf('etapas_v', '');
     if ($v === '3') return;
     if ($v !== '2') {
