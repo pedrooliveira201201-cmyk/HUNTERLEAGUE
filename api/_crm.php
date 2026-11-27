@@ -20,7 +20,11 @@ const CRM_SEGMENTOS = ['9602501' => 'Salão de beleza', '9602502' => 'Manicure e
 /* cria as tabelas na primeira vez (produção já instalada) */
 function crm_migrar(): void {
   static $ok = false; if ($ok) return; $ok = true;
-  if (conf('crm_v') === '1') return;
+  $v = (string)conf('crm_v', '');
+  if ($v === '2') return;
+  if ($v === '1') { /* v2: a célula 40 vinha com o nome "40 (ARI)SECUNDÁRIA" no arquivo da Nio */
+    q("UPDATE empresas SET celula = '40 (ARI)' WHERE celula = '40 (ARI)SECUNDÁRIA'");
+    q("UPDATE config SET valor = '2' WHERE chave = 'crm_v'"); return; }
   $sq = db()->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite';
   $id = $sq ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY';
   $ref = $sq ? 'INTEGER' : 'INT UNSIGNED';
@@ -48,7 +52,7 @@ function crm_migrar(): void {
   foreach ($sqls as $s) db()->exec($s);
   foreach (["CREATE UNIQUE INDEX idx_emp_cnpj ON empresas (cnpj)", "CREATE INDEX idx_emp_tel ON empresas (tel1)", "CREATE INDEX idx_emp_etapa ON empresas (etapa, proximo_em)",
             "CREATE INDEX idx_emp_par ON empresas (parceiro_id)", "CREATE INDEX idx_eh ON empresa_hist (empresa_id, em)"] as $s) { try { db()->exec($s); } catch (Throwable $e) {} }
-  q("INSERT INTO config (chave, valor) VALUES ('crm_v', '1')");
+  q("INSERT INTO config (chave, valor) VALUES ('crm_v', '2')");
 }
 
 /* nome que aparece: fantasia; no MEI sem fantasia, o nome do dono */
@@ -333,9 +337,13 @@ function crm_parecer(array $e, string $p, array $d, string $quem): string {
   return $txt;
 }
 /* o próximo da fila: retornos vencidos primeiro, depois quem nunca foi ligado; mesma região quando houver */
-function crm_proximo(?array $regiao, int $exceto = 0): ?array {
-  $base = "SELECT id, lat, lng FROM empresas WHERE etapa = 'mapeado' AND id <> ? AND (tel1 IS NOT NULL) AND (proximo_em IS NULL OR proximo_em <= ?) AND " . CRM_VISIVEL;
+function crm_proximo(?array $regiao, int $exceto = 0, ?array $cels = null): ?array {
+  $base = "SELECT id, lat, lng, celula FROM empresas WHERE etapa = 'mapeado' AND id <> ? AND (tel1 IS NOT NULL) AND (proximo_em IS NULL OR proximo_em <= ?) AND " . CRM_VISIVEL;
   $rows = all($base . " ORDER BY CASE WHEN proximo_em IS NULL THEN 1 ELSE 0 END, proximo_em, CASE WHEN celula IS NOT NULL AND celula <> '-' THEN 0 ELSE 1 END, id LIMIT 4000", [$exceto, agora()]);
-  if ($regiao) foreach ($rows as $r) if ($r['lat'] !== null && crm_dentro((float)$r['lat'], (float)$r['lng'], $regiao)) return $r;
+  if ($cels) { $set = array_flip($cels);
+    foreach ($rows as $r) { $c = (string)$r['celula'];
+      if ($c !== '' && $c !== '-' ? isset($set[$c]) : ($regiao && $r['lat'] !== null && crm_dentro((float)$r['lat'], (float)$r['lng'], $regiao))) return $r; }
+    return null; }
+  if ($regiao) { foreach ($rows as $r) if ($r['lat'] !== null && crm_dentro((float)$r['lat'], (float)$r['lng'], $regiao)) return $r; return null; }
   return $rows[0] ?? null;
 }
