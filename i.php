@@ -42,8 +42,10 @@ if (!$p && $generico) {
   <?php if ($podeAtivar): ?>
    <h1 style="font-size:24px">Ativar este QR na sua conta?</h1><p>Olá, <?= h(primeiro_nome($eu['nome'])) ?>! Este é o QR da sua peça:<br><span class="cod"><?= h($codigo) ?></span></p>
    <button class="at" id="at" type="button">Ativar este QR na minha conta</button><p id="m" role="status"></p>
-   <script>document.getElementById('at').onclick=function(){var b=this,m=document.getElementById('m');b.disabled=true;b.textContent='Ativando…';
-    fetch('/api/qr-ativar.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo:<?= json_encode($codigo) ?>})}).then(function(r){return r.json()}).then(function(j){
+   <p style="font-size:14px;margin-top:10px">Ative <b>na sua loja</b> e permita a localização: é assim que a sua loja aparece no mapa da CallNet.</p>
+   <script>document.getElementById('at').onclick=function(){var b=this,m=document.getElementById('m');b.disabled=true;b.textContent='Pegando a localização da loja…';
+    new Promise(function(ok){if(!navigator.geolocation)return ok({});var t=setTimeout(function(){ok({})},9000);navigator.geolocation.getCurrentPosition(function(p){clearTimeout(t);ok({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy})},function(){clearTimeout(t);ok({})},{enableHighAccuracy:true,timeout:8500,maximumAge:60000})}).then(function(g){b.textContent='Ativando…';
+    return fetch('/api/qr-ativar.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({codigo:<?= json_encode($codigo) ?>},g))})}).then(function(r){return r.json()}).then(function(j){
      if(j.ok){m.textContent=j.msg;setTimeout(function(){location.href='/app'},1200);return}b.disabled=false;b.textContent='Ativar este QR na minha conta';m.textContent=j.erro||'Não deu para ativar.'}).catch(function(){b.disabled=false;b.textContent='Ativar este QR na minha conta';m.textContent='Sem conexão. Tente de novo.'})}</script>
   <?php else: ?>
    <h1 style="font-size:24px">Internet fibra Nio</h1><p>Fale com a CallNet no WhatsApp e veja a oferta para o seu endereço.</p><a class="wa" data-wa href="<?= h($link) ?>">Falar com a CallNet</a><?= wa_js($wa, $msg) ?>

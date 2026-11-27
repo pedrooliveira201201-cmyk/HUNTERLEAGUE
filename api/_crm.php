@@ -305,6 +305,30 @@ function crm_marcar_celulas(): void {
     q('UPDATE empresas SET celula = ? WHERE id = ?', [crm_celula_de((float)$e['lat'], (float)$e['lng']) ?? '-', $e['id']]);
 }
 
+/* ---------- parceiro no mapa: o lugar vem do GPS do celular na hora de ativar o QR (ou de um endereço) ---------- */
+function crm_parceiro_no_mapa(array $p, float $lat, float $lng, string $quem, array $end = []): ?int {
+  crm_migrar();
+  $ll = crm_no_bbox([$lat, $lng]); if (!$ll) return null;   /* fora da área atendida: não põe */
+  $cel = crm_celula_de($ll[0], $ll[1]) ?? '-'; $agora = agora();
+  $etapa = $p['status'] === 'ativo' && $p['codigo'] ? 'conquistado' : 'afiliado';
+  $e = one('SELECT id FROM empresas WHERE parceiro_id = ? ORDER BY id LIMIT 1', [$p['id']]);
+  if (!$e && strlen((string)$p['doc']) === 14) $e = one('SELECT id FROM empresas WHERE cnpj = ? AND parceiro_id IS NULL ORDER BY id LIMIT 1', [$p['doc']]);
+  if (!$e && $p['whatsapp']) $e = one('SELECT id FROM empresas WHERE (tel1 = ? OR tel2 = ?) AND parceiro_id IS NULL ORDER BY id LIMIT 1', [$p['whatsapp'], $p['whatsapp']]);
+  if ($e) {
+    q("UPDATE empresas SET lat = ?, lng = ?, geo = 'gps', celula = ?, parceiro_id = ?, atualizado_em = ? WHERE id = ?", [$ll[0], $ll[1], $cel, $p['id'], $agora, $e['id']]);
+    foreach (['logradouro', 'numero', 'bairro', 'cep'] as $k) if (!empty($end[$k])) q("UPDATE empresas SET $k = ? WHERE id = ?", [$end[$k], $e['id']]);
+    crm_hist((int)$e['id'], $quem, 'sistema', 'Lugar no mapa atualizado' . ($quem === 'app' ? ' pelo GPS na ativação do QR' : ''));
+    return (int)$e['id'];
+  }
+  q("INSERT INTO empresas (cnpj, fantasia, responsavel, tel1, cidade, uf, logradouro, numero, bairro, cep, lat, lng, geo, celula, etapa, parceiro_id, origem, criado_em, atualizado_em)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'gps',?,?,?,'app',?,?)",
+    [strlen((string)$p['doc']) === 14 ? $p['doc'] : null, mb_substr((string)($p['loja'] ?: $p['nome']), 0, 160), mb_substr((string)$p['nome'], 0, 120), $p['whatsapp'] ?: null,
+     $p['cidade'] ?: 'Araguari', 'MG', $end['logradouro'] ?? null, $end['numero'] ?? null, $end['bairro'] ?? null, $end['cep'] ?? null, $ll[0], $ll[1], $cel, $etapa, $p['id'], $agora, $agora]);
+  $id = (int)db()->lastInsertId();
+  crm_hist($id, $quem, 'sistema', 'Entrou no mapa como parceiro' . ($quem === 'app' ? ' (GPS na ativação do QR)' : ''));
+  return $id;
+}
+
 /* ---------- ligação com o app: a empresa que se cadastra no Hunter League muda de cor sozinha ---------- */
 function crm_sincronizar(): void {
   /* liga pelo CNPJ (doc do parceiro) ou pelo WhatsApp do cadastro */

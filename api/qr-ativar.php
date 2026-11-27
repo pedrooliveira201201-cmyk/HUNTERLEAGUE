@@ -20,4 +20,9 @@ if ($dono && (int)$dono['id'] !== (int)$p['id']) { errou('qr:' . $p['id']); json
 try { q('UPDATE parceiros SET codigo = ? WHERE id = ? AND codigo IS NULL', [$c, $p['id']]); }
 catch (PDOException $x) { json_out(['erro' => "O QR {$c} acabou de ser ativado em outro parceiro. Fale com a equipe."], 409); }
 auditar('parceiro:' . $p['id'], 'ativou QR', $c, qr_generico_tipo($c));
+/* o celular manda onde está na hora de ativar (o parceiro ativa na loja): a loja entra no mapa do CRM */
+$noMapa = false;
+if (is_numeric($e['lat'] ?? null) && is_numeric($e['lng'] ?? null) && (float)($e['acc'] ?? 9999) <= 300) {
+  try { require_once __DIR__ . '/_crm.php'; $p['codigo'] = $c; $noMapa = (bool)crm_parceiro_no_mapa($p, (float)$e['lat'], (float)$e['lng'], 'app'); } catch (Throwable $x) { error_log('mapa na ativação: ' . $x->getMessage()); }
+}
 json_out(['ok' => true, 'codigo' => $c, 'peca' => qr_generico_tipo($c), 'msg' => "QR {$c} ativado. Bem-vindo ao Hunter League!"]);
