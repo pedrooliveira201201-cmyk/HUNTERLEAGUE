@@ -376,6 +376,10 @@ body.ehdemo main{padding-top:24px}
 .ult summary::after{content:"▾";font-size:12px;transition:transform .2s}.ult[open] summary::after{transform:rotate(180deg)}
 .ult summary span{padding:1px 7px;background:#15222A;color:var(--sil);font-size:11px}
 .ult .tl{margin-top:12px}
+
+/* campo de data no iPhone: não passa da largura da janela */
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
 </style>
 </head>
 <body>
@@ -619,10 +623,13 @@ document.addEventListener('click', e => {
  }
  if ((i = f('inst'))) {
   const j = jan(`<h2 class="bs">Instalou</h2><p class="sub">${h(i.nome)} · ${h(i.parceiro.codigo)} ${h(i.parceiro.nome)}</p>
-   <label class="f">Data da instalação<input type="date" id="j-dt" max="${hojeISO()}" value="${hojeISO()}"></label>
+   <p class="sub" style="margin:14px 0 8px">Plano vendido</p><div class="opcs" id="j-pl">${PLANOS.map(p => `<button type="button" aria-pressed="${p === i.plano}" data-p="${p}">${p}</button>`).join('')}</div>
+   <label class="f" style="margin-top:14px">Data da instalação<input type="date" id="j-dt" max="${hojeISO()}" value="${hojeISO()}"></label>
    <p class="sub" style="margin-top:10px">A casa acende no app do parceiro. O bônus é o valor do plano vendido e é liberado quando o cliente pagar a 1ª fatura.</p>
    <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ok" type="button" id="j-ok">✓ Confirmar instalação</button></div>`);
-  j.querySelector('#j-ok').addEventListener('click', () => { const d = j.querySelector('#j-dt').value; fechaJan(); etapa(i.id, { status:'Instalado', inst:d }); });
+  let plano = i.plano || '';
+  j.querySelector('#j-pl').addEventListener('click', ev => { const b = ev.target.closest('[data-p]'); if (!b) return; plano = b.dataset.p; j.querySelectorAll('#j-pl [data-p]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  j.querySelector('#j-ok').addEventListener('click', () => { if (!plano) return toast('Escolha o plano vendido: o bônus é o valor do plano.', true); const d = j.querySelector('#j-dt').value; fechaJan(); etapa(i.id, { status:'Instalado', inst:d, plano }); });
   return;
  }
  if ((i = f('nd'))) {

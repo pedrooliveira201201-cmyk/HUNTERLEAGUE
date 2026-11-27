@@ -113,6 +113,8 @@ function hl_dados(array $p): array {
     'wa' => so_digitos(conf('whatsapp', '553420281071')),
     'comissao' => min(bonus_planos()), 'planos_bonus' => array_map(fn($p, $v) => ['plano' => $p, 'valor' => $v], array_keys(bonus_planos()), array_values(bonus_planos())),
     'tabela' => cidade_promo((string)$p['cidade']) ? 'promo' : 'cheia',
+    /* virada da promoção: 07/12/2026 00h00 (o 600 Mega sai e o Ultra Mesh passa a R$ 130) */
+    'promo_virou' => time() >= strtotime('2026-12-07 00:00:00'),
     'inds' => $inds,
     'bonus' => $bonus,
     'caminho' => (int)(one("SELECT COUNT(*) AS n FROM indicacoes WHERE parceiro_id = ? AND status = 'Agendado'", [$id])['n'] ?? 0),

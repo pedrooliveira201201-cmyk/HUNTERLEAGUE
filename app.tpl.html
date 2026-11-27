@@ -801,6 +801,8 @@ body.offline:not(.sigback) .map{opacity:.18}
 .trava p{margin:12px auto 0;max-width:340px;color:var(--silver);font-size:15.5px;line-height:1.5}
 #n-rank.travado{position:relative}
 #n-rank.travado::after{content:"";position:absolute;top:8px;left:calc(50% + 8px);width:14px;height:14px;background:no-repeat center/12px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2319F7FF' stroke-width='2.6' stroke-linecap='round'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E")}
+.pcard .tag.ult{background:#FF8A00;color:#fff;box-shadow:0 4px 14px rgba(255,138,0,.35)}
+#pf .ult{display:inline-block;margin-bottom:8px;padding:5px 12px;border-radius:20px;background:#FF8A00;color:#fff;font:800 13px "Plus Jakarta Sans",sans-serif}
 </style>
 </head>
 <body class="arrive">
@@ -1404,15 +1406,19 @@ body.offline:not(.sigback) .map{opacity:.18}
  // planos Nio (tabela da CallNet, preço fixo até jan/2030); a tabela vem da cidade do lojista
  const PROMO = ['Araguari', 'Araguari - MG'];  // no servidor isto vem do cadastro de cidades
  const tab = HL ? HL.tabela : (PROMO.includes(cidade) ? 'promo' : 'cheia');
- const PLANS = [
-  { n:'Essencial',  sp:'600 Mega', who:'Pra casa com celular, TV e redes sociais', x:['Wi‑Fi 5'], de:110, promo:55, cheia:110, cartao:95 },
+ /* virada da promoção (horário de Brasília, pelo relógio do servidor): até 06/12 23h59 o 600 Mega e o Ultra Mesh a R$ 100 aparecem com "Últimos dias";
+    a partir de 07/12 00h00 o 600 Mega sai e o Ultra Mesh passa a R$ 130 (de R$ 200) */
+ const VIROU = HL && 'promo_virou' in HL ? !!HL.promo_virou : Date.now() >= Date.parse('2026-12-07T00:00:00-03:00');
+ const PLANS0 = [
+  { n:'Essencial',  sp:'600 Mega', who:'Pra casa com celular, TV e redes sociais', x:['Wi‑Fi 5'], de:110, promo:55, cheia:110, cartao:95, ult:!VIROU, sai:VIROU },
   { n:'Super',      sp:'800 Mega', who:'Pra família que assiste e joga ao mesmo tempo', x:['Wi‑Fi 6','1 chip de celular 10 GB'], de:140, promo:70, cheia:140 },
   { n:'Ultra',      sp:'1 Giga',   who:'Pra quem trabalha em casa e quer tudo rápido', x:['Wi‑Fi 6','Globoplay','1 chip de celular 20 GB'], de:170, promo:85, cheia:170, top:true },
-  { n:'Ultra Mesh', sp:'1 Giga',   who:'Pra casa grande: sinal forte em todo cômodo', x:['Wi‑Fi 6','Ponto extra Mesh','Globoplay','2 chips de celular 20 GB cada'], de:200, promo:100, cheia:200 }
+  { n:'Ultra Mesh', sp:'1 Giga',   who:'Pra casa grande: sinal forte em todo cômodo', x:['Wi‑Fi 6','Ponto extra Mesh','Globoplay','2 chips de celular 20 GB cada'], de:200, promo:VIROU ? 130 : 100, cheia:200, ult:!VIROU }
  ];
+ const PLANS = PLANS0.filter(x => !x.sai);
  const preco = x => `<div class="price">${tab==='promo' ? `<s>de R$ ${x.de}</s>` : ''}<b>R$ ${tab==='promo' ? x.promo : x.cheia}</b><small>/mês</small></div>${tab==='cheia' && x.cartao ? `<em>R$ ${x.cartao} no cartão</em>` : ''}`;
  $('#city').textContent = `Preços de ${cidade}. Arraste para o lado para ver todos.`;
- $('#rail').innerHTML = PLANS.map((x,i) => `<article class="pcard${x.top?' best':''}" aria-label="${x.n} ${x.sp}">${x.top ? '<span class="tag">Destaque</span>' : ''}
+ $('#rail').innerHTML = PLANS.map((x,i) => `<article class="pcard${x.top?' best':''}" aria-label="${x.n} ${x.sp}">${x.ult ? '<span class="tag ult">Últimos dias</span>' : x.top ? '<span class="tag">Destaque</span>' : ''}
   <span class="pn">${x.n}</span><span class="sp">${x.sp}</span><p class="pwho">${x.who}</p>
   <div class="chips">${x.x.map(c => `<span${/chip/i.test(c) ? ' class="cel"' : ''}>${c}</span>`).join('')}</div>${preco(x)}
   <button class="show" type="button" data-i="${i}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" stroke="currentColor" stroke-width="2.2"/><path d="M2 9l2 3-2 3M22 9l-2 3 2 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Mostrar pro cliente</button></article>`).join('');
@@ -1428,7 +1434,7 @@ body.offline:not(.sigback) .map{opacity:.18}
  const pfull = $('#planfull'); let pi = 0, pfWake = null;
  const pfDraw = () => {
   const x = PLANS[pi];
-  $('#pf').innerHTML = `<span class="nlw"><svg class="nlogo" viewBox="0 9.5 86 29" fill="none" aria-hidden="true"><path d="M46.3894 14.5458C46.3894 11.8163 44.1822 9.60352 41.4595 9.60352C38.7367 9.60352 36.5295 11.8163 36.5295 14.5458V33.399C36.5295 36.1286 38.7367 38.3414 41.4595 38.3414C44.1822 38.3414 46.3894 36.1286 46.3894 33.399V14.5458Z" fill="url(#nio-g)"/><path d="M52.1025 23.9792C52.1025 15.3844 58.3963 9.61719 68.7062 9.61719C79.0161 9.61719 85.1485 15.3293 85.1485 23.9792C85.1485 32.6292 79.0711 38.3413 68.7062 38.3413C58.3414 38.3413 52.1025 32.5741 52.1025 23.9792ZM68.7062 33.9879C75.1632 33.9879 78.8529 29.7998 78.8529 23.9792C78.8529 18.1586 75.1632 13.9706 68.7062 13.9706C62.2492 13.9706 58.3963 18.1052 58.3963 23.9792C58.3963 29.8532 62.3575 33.9879 68.7062 33.9879Z" fill="#14412A"/><path d="M41.4595 19.5048C44.1822 19.5048 46.3894 17.292 46.3894 14.5624C46.3894 11.8329 44.1822 9.62012 41.4595 9.62012C38.7367 9.62012 36.5295 11.8329 36.5295 14.5624C36.5295 17.292 38.7367 19.5048 41.4595 19.5048Z" fill="#14412A"/><path d="M17.8508 9.61719C12.1101 9.61719 8.5028 11.756 6.45526 14.2427V10.2698H0.0515137V37.742H6.45526V23.3266C6.45526 17.6145 10.2532 14.296 15.8977 14.296C21.0526 14.296 23.7117 17.0152 23.7117 22.4552V37.742H30.1154V21.205C30.1154 13.7519 25.8829 9.61719 17.8525 9.61719H17.8508Z" fill="#14412A"/></svg><span class="pa">Parceiro autorizado</span></span><span class="pn">${x.n}</span><span class="sp">${x.sp}</span><p class="pwho">${x.who}</p><div class="chips">${x.x.map(c => `<span${/chip/i.test(c) ? ' class="cel"' : ''}>${c}</span>`).join('')}</div>${preco(x)}<p class="fine">Preço fixo até janeiro de 2030. Sujeito a disponibilidade técnica.</p>`;
+  $('#pf').innerHTML = `${x.ult ? '<span class="ult">Últimos dias</span>' : ''}<span class="nlw"><svg class="nlogo" viewBox="0 9.5 86 29" fill="none" aria-hidden="true"><path d="M46.3894 14.5458C46.3894 11.8163 44.1822 9.60352 41.4595 9.60352C38.7367 9.60352 36.5295 11.8163 36.5295 14.5458V33.399C36.5295 36.1286 38.7367 38.3414 41.4595 38.3414C44.1822 38.3414 46.3894 36.1286 46.3894 33.399V14.5458Z" fill="url(#nio-g)"/><path d="M52.1025 23.9792C52.1025 15.3844 58.3963 9.61719 68.7062 9.61719C79.0161 9.61719 85.1485 15.3293 85.1485 23.9792C85.1485 32.6292 79.0711 38.3413 68.7062 38.3413C58.3414 38.3413 52.1025 32.5741 52.1025 23.9792ZM68.7062 33.9879C75.1632 33.9879 78.8529 29.7998 78.8529 23.9792C78.8529 18.1586 75.1632 13.9706 68.7062 13.9706C62.2492 13.9706 58.3963 18.1052 58.3963 23.9792C58.3963 29.8532 62.3575 33.9879 68.7062 33.9879Z" fill="#14412A"/><path d="M41.4595 19.5048C44.1822 19.5048 46.3894 17.292 46.3894 14.5624C46.3894 11.8329 44.1822 9.62012 41.4595 9.62012C38.7367 9.62012 36.5295 11.8329 36.5295 14.5624C36.5295 17.292 38.7367 19.5048 41.4595 19.5048Z" fill="#14412A"/><path d="M17.8508 9.61719C12.1101 9.61719 8.5028 11.756 6.45526 14.2427V10.2698H0.0515137V37.742H6.45526V23.3266C6.45526 17.6145 10.2532 14.296 15.8977 14.296C21.0526 14.296 23.7117 17.0152 23.7117 22.4552V37.742H30.1154V21.205C30.1154 13.7519 25.8829 9.61719 17.8525 9.61719H17.8508Z" fill="#14412A"/></svg><span class="pa">Parceiro autorizado</span></span><span class="pn">${x.n}</span><span class="sp">${x.sp}</span><p class="pwho">${x.who}</p><div class="chips">${x.x.map(c => `<span${/chip/i.test(c) ? ' class="cel"' : ''}>${c}</span>`).join('')}</div>${preco(x)}<p class="fine">Preço fixo até janeiro de 2030. Sujeito a disponibilidade técnica.</p>`;
   [...$('#pf-dots').children].forEach((d,j) => d.classList.toggle('on', j === pi));
   $('#pf-prev').disabled = pi === 0; $('#pf-next').disabled = pi === PLANS.length - 1;
  };
