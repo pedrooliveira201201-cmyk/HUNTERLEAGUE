@@ -45,6 +45,7 @@ a{color:var(--c)}
 .side .foot b{display:block;font-size:14px}.side .foot small{color:var(--mut);font-size:12px}
 .side .foot button{margin-left:auto;border:0;background:none;color:var(--mut);padding:8px}
 main{margin-left:248px;padding:28px 32px 60px;max-width:1240px}
+main.largo{max-width:none}
 .top{display:none}
 .bot{display:none}
 @media (max-width:900px){
@@ -149,7 +150,20 @@ main{margin-left:248px;padding:28px 32px 60px;max-width:1240px}
 .chip.pl{background:#1A2026;color:var(--sil)}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;font-size:12.5px;font-weight:800}
 .pill::before{content:"";width:7px;height:7px;background:currentColor;transform:rotate(45deg)}
-.p-Nova{color:var(--c2);background:rgba(174,252,255,.1)}.p-Em{color:#7FD8FF;background:rgba(127,216,255,.1)}.p-Aguardando{color:var(--warn);background:rgba(255,200,87,.12)}
+.p-Nova{color:var(--c2);background:rgba(174,252,255,.1)}.p-Em{color:#7FD8FF;background:rgba(127,216,255,.1)}.p-Agendado{color:var(--warn);background:rgba(255,200,87,.12)}
+/* funil (kanban) */
+.kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(222px,1fr);gap:10px;overflow-x:auto;padding-bottom:10px;align-items:start}
+.kc{display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,.02);border:1px solid var(--ln);min-height:160px}
+.kc>h3{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 4px 2px;font-size:14px;font-weight:800;letter-spacing:.3px;color:var(--k,var(--sil))}
+.kc>h3 i{font-style:normal;min-width:24px;padding:1px 7px;background:var(--k,#1A262C);color:#050607;font-size:12px;text-align:center}
+.kc>p.dica{margin:-4px 4px 2px;color:var(--mut);font-size:12.5px;line-height:1.35}
+.kc .ci{padding:13px}.kc .ci .nm{font-size:15.5px}.kc .vz{color:var(--mut);font-size:13px;padding:14px 6px;text-align:center}
+.ci .acoes .btn.sq{flex:none;width:42px;padding:0}
+.kc .ci .chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:normal;text-align:left}.kc .ci .chip .cod{white-space:nowrap}
+.kc .ci .acoes{flex-wrap:wrap}.kc .ci .acoes [data-av],.kc .ci .acoes [data-inst],.kc .ci .acoes [data-fat]{flex:1 1 100%;order:-1}
+.pr .alerta7{display:inline-block;margin-top:4px;padding:2px 8px;font-size:12px;font-weight:800;color:#FFB86B;background:rgba(255,159,67,.12)}
+.parados{display:flex;flex-direction:column;gap:8px}.parados .pd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;background:var(--p1);border:1px solid var(--ln);border-left:0}
+.parados .pd b{display:block;font-size:15px}.parados .pd small{color:var(--mut);font-size:13px}
 .p-Instalado,.p-ativo{color:var(--ok);background:rgba(77,240,160,.12)}.p-Não,.p-Cancelado,.p-bloqueado,.p-desfiliado,.p-recusado{color:var(--bad);background:rgba(255,107,129,.12)}.p-pendente{color:var(--warn);background:rgba(255,200,87,.12)}
 .ci .acoes{display:flex;gap:8px;margin-top:auto;padding-top:4px}
 .ci .acoes .btn{flex:1}
@@ -285,6 +299,7 @@ body.ehdemo main{padding-top:24px}
 <div id="jan-root"></div>
 
 <script>
+const TIPO = t => ({ pj: 'Pessoa Jurídica', pf: 'Pessoa Física', lojista: 'Lojista', vendedor: 'Vendedor' })[t] || t;
 // Dados de exemplo da Central (demonstração). Mesmas respostas da API de verdade, tudo em memória.
 window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
 (() => {
@@ -299,7 +314,7 @@ window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
  const seg = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.getTime(); };
  let D;
  const novo = () => ({
-  cfg: { bonus_base:'50', bonus_passo:'5', bonus_teto:'100', prazo_saque:'até 3 dias úteis', whatsapp:'553420281071', mensagem_wa:'Olá! Quero saber da internet Nio Fibra. Código do parceiro: {codigo}', cidades:'todas', cidades_promo:'', metas:'20|Air Fryer\n60|Smart TV 50"\n200|iPhone 17', kit_ativo:'1', kit_nome:'Kit do Estabelecimento', kit_itens:'Adesivos, QR Code para o balcão e panfletos', validade_dias:'60', pixel_meta:'', smtp_host:'smtp.zoho.com', smtp_porta:'465', smtp_usuario:'', smtp_nome:'Hunter League · CallNet', smtp_tem_senha:false },
+  cfg: { bonus_planos:'55|70|85|100', prazo_saque:'até 3 dias úteis', whatsapp:'553420281071', mensagem_wa:'Olá! Quero saber da internet Nio Fibra. Código do parceiro: {codigo}', cidades:'todas', cidades_promo:'', metas:'20|Air Fryer ou R$ 350\n60|Smart TV 50" ou R$ 2.000\n200|iPhone 17 ou R$ 6.000', kit_ativo:'1', kit_nome:'Kit do Estabelecimento', kit_itens:'Adesivos, QR Code para o balcão e panfletos', validade_dias:'60', pixel_meta:'', smtp_host:'smtp.zoho.com', smtp_porta:'465', smtp_usuario:'', smtp_nome:'Hunter League · CallNet', smtp_tem_senha:false },
   pars: [
    { id:1, tipo:'lojista', nome:'Erick Silva', loja:'Loja do Erick', doc:'11.222.333/0001-81', wa_d:'34999994444', email:'erick@loja.com', cidade:'Araguari - MG', pix:'(34) 99999-4444', codigo:'HL-ARG-0001', status:'ativo', nivel:'Hunter Elite', desde:'21/11/2026', termo:'v2.0-preliminar em 21/11/2026', obs:'', leit:46 },
    { id:2, tipo:'lojista', nome:'Maria das Dores', loja:'Mercearia Bom Preço', doc:'12.345.678/0001-95', wa_d:'34998123311', email:'maria@bompreco.com', cidade:'Araguari - MG', pix:'12.345.678/0001-95', codigo:'HL-ARG-0002', status:'ativo', nivel:'Hunter', desde:'21/11/2026', termo:'v2.0-preliminar em 21/11/2026', obs:'Loja de esquina, muito movimento de manhã.', leit:71 },
@@ -311,9 +326,10 @@ window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
   inds: [
    { id:1, p:1, nome:'Luiza Alves Costa', tel_d:'34992101111', cpf:'', email:'', cep:'', num:'', plano:'', status:'Nova', motivo:'', origem:'qr', criado:atras(0, 9), at:atras(0, 9) },
    { id:2, p:2, nome:'Roberto Lima', tel_d:'34992107777', cpf:'', email:'roberto@gmail.com', cep:'38440-012', num:'88', plano:'800 Mega', status:'Nova', motivo:'', origem:'app', criado:atras(0, 8), at:atras(0, 8) },
-   { id:3, p:2, nome:'Júlia Mendes', tel_d:'34992104444', cpf:'', email:'', cep:'', num:'', plano:'', status:'Em atendimento', motivo:'', origem:'qr', criado:atras(3), at:atras(3) },
-   { id:4, p:1, nome:'Marcos Vieira', tel_d:'34992103333', cpf:'123.456.789-09', email:'', cep:'', num:'', plano:'1 Giga', status:'Aguardando instalação', motivo:'', origem:'qr', criado:atras(4), at:atras(1) },
-   { id:5, p:3, nome:'Sandra Rocha', tel_d:'34992108888', cpf:'', email:'', cep:'', num:'', plano:'600 Mega', status:'Aguardando instalação', motivo:'', origem:'qr', criado:atras(5), at:atras(2) },
+   { id:3, p:2, nome:'Júlia Mendes', tel_d:'34992104444', cpf:'', email:'', cep:'', num:'', plano:'', status:'Em negociação', motivo:'', origem:'qr', criado:atras(3), at:atras(2) },
+   { id:16, p:1, nome:'Rafael Souza', tel_d:'34992106666', cpf:'', email:'', cep:'', num:'', plano:'', status:'Em contato', motivo:'', origem:'qr', criado:atras(1), at:atras(1) },
+   { id:4, p:1, nome:'Marcos Vieira', tel_d:'34992103333', cpf:'123.456.789-09', email:'', cep:'', num:'', plano:'1 Giga', status:'Agendado', motivo:'', origem:'qr', criado:atras(4), at:atras(1) },
+   { id:5, p:3, nome:'Sandra Rocha', tel_d:'34992108888', cpf:'', email:'', cep:'', num:'', plano:'600 Mega', status:'Agendado', motivo:'', origem:'qr', criado:atras(9), at:atras(2) },
    { id:6, p:1, nome:'Ana Paula Souza', tel_d:'34992102222', cpf:'', email:'', cep:'', num:'', plano:'1 Giga', status:'Instalado', motivo:'', origem:'qr', criado:atras(6), at:atras(2), inst:atras(2) },
    { id:7, p:2, nome:'Pedro Lima', tel_d:'34992105555', cpf:'', email:'', cep:'', num:'', plano:'', status:'Não instalado', motivo:'Restrição de CPF', origem:'qr', criado:atras(7), at:atras(5) },
    // instalados há ~1 mês: esperando a 1ª fatura (prontos para conferir)
@@ -333,15 +349,19 @@ window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
    { id:1, p:2, pedido:atras(1, 18), pago:null, pix_id:'', arq:'', por:'' },
    { id:2, p:3, pedido:atras(15, 11), pago:atras(14), pix_id:'E18236120202611101412s0a1B2c3', arq:'', por:'erick' }
   ],
-  premios: [{ id:1, p:2, alvo:20, premio:'Air Fryer', em:atras(34), entregue:null }],
+  premios: [{ id:1, p:2, alvo:20, premio:'Air Fryer ou R$ 350', em:atras(34), entregue:null }],
   equipe: [{ id:1, nome:'Erick', usuario:'erick', papel:'master', ativo:true, eu:true }, { id:2, nome:'Sabrina', usuario:'sabrina', papel:'atendimento', ativo:true, eu:false }],
-  hist: [{ em:atras(0, 9), quem:'sabrina', acao:'registrou indicação', alvo:'HL-ARG-0001 Luiza', detalhe:'' }, { em:atras(1, 18), quem:'parceiro', acao:'pediu saque', alvo:'HL-ARG-0002', detalhe:'R$ 165,00 · 3 clientes' }, { em:atras(2, 11), quem:'sabrina', acao:'etapa', alvo:'HL-ARG-0001 #6', detalhe:'Aguardando instalação → Instalado' }]
+  hist: [{ em:atras(0, 9), quem:'sabrina', acao:'registrou indicação', alvo:'HL-ARG-0001 Luiza', detalhe:'' }, { em:atras(1, 18), quem:'parceiro', acao:'pediu saque', alvo:'HL-ARG-0002', detalhe:'R$ 210,00 · 3 clientes' }, { em:atras(2, 11), quem:'sabrina', acao:'etapa', alvo:'HL-ARG-0001 #6', detalhe:'Agendado → Instalado' }]
  });
  const P = id => D.pars.find(p => p.id === id);
  const log = (acao, alvo, detalhe = '') => D.hist.unshift({ em:new Date(), quem:'erick', acao, alvo, detalhe });
- const conf = () => [+D.cfg.bonus_base, +D.cfg.bonus_passo, +D.cfg.bonus_teto];
- const valor = n => { const [b, p, t] = conf(); return Math.min(t, b + p * (n - 1)); };
- const recalc = () => { const g = {}; D.inds.filter(i => i.status === 'Instalado').forEach(i => { const k = i.p + ':' + seg(i.inst); (g[k] = g[k] || []).push(i); }); Object.values(g).forEach(l => { const v = valor(l.length); l.forEach(i => { if (!i.saque || i.v == null) i.v = v; }); }); };
+ const PL = ['600 Mega', '800 Mega', '1 Giga', 'Ultra Mesh'];
+ const conf = () => { const v = String(D.cfg.bonus_planos || '55|70|85|100').split('|').map(Number), o = {}; PL.forEach((p, k) => o[p] = v[k] || 0); return o; };
+ const valor = plano => { const c = conf(); return c[plano] || c['600 Mega']; };   // bônus = valor do plano vendido (100% da mensalidade)
+ const recalc = () => { D.inds.filter(i => i.status === 'Instalado').forEach(i => { if (!i.saque || i.v == null) i.v = valor(i.plano); }); };
+ const ultimaInd = p => { const l = D.inds.filter(i => i.p === p.id).map(i => i.criado.getTime()); return l.length ? new Date(Math.max(...l)) : null; };
+ const semInd = p => { const u = ultimaInd(p); return dias(u || deBR(p.desde)); };
+ const deBR = s => { const [d, m, a] = s.split('/').map(Number); return new Date(a, m - 1, d, 12); };
  const premios = () => { // metas por instalações validadas (1ª fatura paga)
   const metas = D.cfg.metas.split('\n').map(l => l.split('|')).filter(x => +x[0] > 0 && x[1]).map(x => [+x[0], x[1].trim()]);
   D.pars.forEach(p => { const v = D.inds.filter(i => i.p === p.id && i.status === 'Instalado' && i.fatura).sort((a, b) => a.fatura - b.fatura);
@@ -356,27 +376,27 @@ window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
   itens:D.inds.filter(i => i.saque === s.id).map(i => ({ n:i.nome.split(' ')[0], d:br(i.inst), v:i.v })) });
  const it = i => ({ id:i.id, cliente:i.nome, parceiro:P(i.p).loja || P(i.p).nome, codigo:P(i.p).codigo, inst:br(i.inst), dias:dias(i.inst), v:i.v, plano:i.plano, fatura:br(i.fatura) });
  window.DEMO_API = (a, e, q) => {
-  const ab = ['Nova','Em atendimento','Aguardando instalação'];
+  const ab = ['Nova','Em contato','Em negociação','Agendado'];
   if (a === 'resumo') {
    const ped = D.saques.filter(s => !s.pago);
    return { me:{ nome:'Erick', papel:'master' }, tarefas:{ pendentes:D.pars.filter(p => p.status === 'pendente').length, novas:D.inds.filter(i => i.status === 'Nova').length,
     paradas:D.inds.filter(i => ab.includes(i.status) && dias(i.at) >= 2).length, saques:{ n:ped.length, total:ped.reduce((t, s) => t + s.valor, 0) },
     faturas:D.inds.filter(i => i.status === 'Instalado' && !i.fatura && dias(i.inst) >= 25).length, premios:D.premios.filter(p => !p.entregue).length },
     stats:{ ind_hoje:D.inds.filter(i => dias(i.criado) === 0).length, ind_mes:D.inds.filter(i => dias(i.criado) < 30).length + 9, inst_mes:D.inds.filter(i => i.status === 'Instalado' && dias(i.inst) < 30).length + 3, leit_hoje:23, ativos:D.pars.filter(p => p.status === 'ativo').length },
-    atividade:D.hist.slice(0, 8).map(x => ({ em:dh(x.em), quem:x.quem, acao:x.acao, alvo:x.alvo })) };
+    atividade:D.hist.slice(0, 8).map(x => ({ em:dh(x.em), quem:x.quem, acao:x.acao, alvo:x.alvo })),
+    parados:D.pars.filter(p => p.status === 'ativo' && p.codigo && semInd(p) >= 7).map(p => ({ id:p.id, codigo:p.codigo, nome:p.loja || p.nome, resp:p.nome.split(' ')[0], wa_d:p.wa_d, dias:semInd(p), nunca:!ultimaInd(p) })), dias_alerta:7 };
   }
   if (a === 'indicacoes') return { itens:D.inds.slice().sort((x, y) => y.criado - x.criado).map(i => ({ id:i.id, nome:i.nome, tel:telBr(i.tel_d), tel_d:i.tel_d, cpf:i.cpf, email:i.email, cep:i.cep, num:i.num, plano:i.plano, status:i.status, motivo:i.motivo,
    inst:br(i.inst), origem:i.origem, criado:dh(i.criado), dias:dias(i.at), bonus:i.status === 'Instalado' ? i.v : null, fatura:br(i.fatura), saque:i.saque ? (D.saques.find(s => s.id === i.saque).pago ? 'pago' : 'pedido') : '', pago:!!(i.saque || i.fatura),
    parceiro:{ codigo:P(i.p).codigo, nome:P(i.p).loja || P(i.p).nome } })) };
-  if (a === 'parceiros') return { itens:D.pars.map(p => { const n = D.inds.filter(i => i.p === p.id); return Object.assign({}, p, { wa:telBr(p.wa_d), ind:n.length, inst:n.filter(i => i.status === 'Instalado').length, link:p.codigo ? 'https://www.hunterleague.com.br/i/' + p.codigo : '' }); }) };
+  if (a === 'parceiros') return { itens:D.pars.map(p => { const n = D.inds.filter(i => i.p === p.id); return Object.assign({}, p, { wa:telBr(p.wa_d), ind:n.length, inst:n.filter(i => i.status === 'Instalado').length, link:p.codigo ? 'https://www.hunterleague.com.br/i/' + p.codigo : '', sem_ind:p.status === 'ativo' && p.codigo ? semInd(p) : null, ultima:br(ultimaInd(p)) }); }) };
   if (a === 'bonus') {
    const fat = D.inds.filter(i => i.status === 'Instalado' && !i.fatura).sort((x, y) => x.inst - y.inst).map(it);
    const lib = D.inds.filter(i => i.status === 'Instalado' && i.fatura && !i.saque).map(it);
    const ped = D.saques.filter(s => !s.pago).map(sq), pag = D.saques.filter(s => s.pago).sort((x, y) => y.pago - x.pago).map(sq);
-   const [b, p, t] = conf();
-   return { pedidos:ped, faturas:fat, liberados:lib, pagos:pag,
+      return { pedidos:ped, faturas:fat, liberados:lib, pagos:pag,
     premios:D.premios.map(r => { const lib30 = new Date(r.em); lib30.setDate(lib30.getDate() + 30); return { id:r.id, parceiro:P(r.p).loja || P(r.p).nome, codigo:P(r.p).codigo, wa:telBr(P(r.p).wa_d), wa_d:P(r.p).wa_d, conquista:r.kit ? '1ª instalação' : r.alvo + ' instalações validadas', premio:r.premio, em:br(r.em), entregue:br(r.entregue), kit:!!r.kit, pode:r.kit || lib30 <= hoje, libera:br(lib30) }; }),
-    tot:{ pedidos:ped.reduce((s, x) => s + x.valor, 0), faturas:fat.reduce((s, x) => s + x.v, 0), liberados:lib.reduce((s, x) => s + x.v, 0) }, regra:{ base:b, passo:p, teto:t, prazo:D.cfg.prazo_saque } };
+    tot:{ pedidos:ped.reduce((s, x) => s + x.valor, 0), faturas:fat.reduce((s, x) => s + x.v, 0), liberados:lib.reduce((s, x) => s + x.v, 0) }, regra:{ planos:conf(), prazo:D.cfg.prazo_saque } };
   }
   if (a === 'config') return { config:D.cfg, master:true, equipe:D.equipe, historico:D.hist.map(x => ({ em:dh(x.em), quem:(x.quem === 'parceiro' ? '' : 'admin:') + x.quem, acao:x.acao, alvo:x.alvo, detalhe:x.detalhe })) };
   if (a === 'indicar') {
@@ -403,7 +423,7 @@ window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
    if (st === 'Instalado') { i.inst = e.inst ? deISO(e.inst) : (i.inst || new Date()); } else { i.inst = null; i.fatura = null; i.v = null; }
    recalc(); premios();
    log('etapa', `${P(i.p).codigo} #${i.id}`, antes !== st ? `${antes} → ${st}` : 'editou dados');
-   return { ok:true, msg:`${i.nome.split(' ')[0]}: ${antes !== st ? st + '.' : 'dados salvos.'}` + (st === 'Instalado' && antes !== st ? ` Bônus de ${reais(i.v)} (multiplicador da semana), liberado após a 1ª fatura paga.` : '') };
+   return { ok:true, msg:`${i.nome.split(' ')[0]}: ${antes !== st ? st + '.' : 'dados salvos.'}` + (st === 'Instalado' && antes !== st ? ` Bônus de ${reais(i.v)} (valor do plano), liberado após a 1ª fatura paga.` : '') };
   }
   if (a === 'liberar') {
    const i = D.inds.find(x => x.id === +e.id); if (!i || i.status !== 'Instalado') return { erro:'Só instalação concluída pode ter o bônus liberado.' };
@@ -427,7 +447,7 @@ window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
    if (e.o === 'editar') { p.wa_d = String(e.wa).replace(/\D/g, ''); p.pix = e.pix; p.obs = e.obs; log('editou parceiro', p.codigo); return { ok:true, msg:'Dados salvos.' }; }
   }
   if (a === 'entregar') { const r = D.premios.find(x => x.id === e.id); r.entregue = new Date(); log('prêmio entregue', P(r.p).codigo, r.premio); return { ok:true, msg:'Entrega registrada: ' + r.premio + '.' }; }
-  if (a === 'salvar_config') { if (+e.bonus_teto < +e.bonus_base) return { erro:'O teto do bônus não pode ser menor que a base.' }; Object.assign(D.cfg, e, { kit_ativo: e.kit_ativo ? '1' : '0' }); recalc(); premios(); log('configurações', ''); return { ok:true, msg:'Configurações salvas.' }; }
+  if (a === 'salvar_config') { const bp = PL.map((p, k) => Math.max(0, +String(e['bonus_pl_' + k] || '').replace(',', '.') || 0)); if (bp.some(x => x <= 0)) return { erro:'Informe o bônus de todos os planos.' }; PL.forEach((p, k) => delete e['bonus_pl_' + k]); e.bonus_planos = bp.join('|'); Object.assign(D.cfg, e, { kit_ativo: e.kit_ativo ? '1' : '0' }); recalc(); premios(); log('configurações', ''); return { ok:true, msg:'Configurações salvas.' }; }
   if (a === 'email') { if (e.o === 'teste') return D.cfg.smtp_tem_senha ? { ok:true, msg:`E-mail de teste enviado para ${D.cfg.smtp_usuario} (demonstração).` } : { erro:'Salve o usuário e a senha do e-mail antes de testar.' };
    D.cfg.smtp_host = e.smtp_host; D.cfg.smtp_porta = e.smtp_porta; D.cfg.smtp_usuario = e.smtp_usuario; D.cfg.smtp_nome = e.smtp_nome; if (e.smtp_senha) D.cfg.smtp_tem_senha = true; return { ok:true, msg:'E-mail salvo. Use "Enviar teste" para conferir.' }; }
   if (a === 'equipe') { if (e.o === 'criar') { D.equipe.push({ id:D.equipe.length + 1, nome:e.nome, usuario:e.usuario, papel:e.papel, ativo:true, eu:false }); return { ok:true, msg:'Usuário criado.' }; } const u = D.equipe.find(x => x.id === e.id); u.ativo = !u.ativo; return { ok:true, msg:'Feito.' }; }
@@ -435,7 +455,6 @@ window.HL_ADMIN = { modo:'demo', nome:'Erick', papel:'master' };
   return { erro:'Ação desconhecida.' };
  };
 })();
-
 </script>
 <script>
 {
@@ -447,8 +466,8 @@ const reais = v => 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',').replace(/
 const reaisC = v => 'R$ ' + (Number.isInteger(+v) ? (+v).toLocaleString('pt-BR') : Number(v).toFixed(2).replace('.', ','));
 const iniciais = n => String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 const hojeISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
-const ETAPAS = ['Nova', 'Em atendimento', 'Aguardando instalação', 'Instalado', 'Não instalado', 'Cancelado'];
-const ABERTAS = ['Nova', 'Em atendimento', 'Aguardando instalação'];
+const ETAPAS = ['Nova', 'Em contato', 'Em negociação', 'Agendado', 'Instalado', 'Não instalado', 'Cancelado'];
+const ABERTAS = ['Nova', 'Em contato', 'Em negociação', 'Agendado'];
 const MOTIVOS = ['Restrição de CPF', 'Sem cabeamento', 'Desistiu', 'Sem contato', 'Endereço fora da cobertura', 'Outro'];
 const PLANOS = ['600 Mega', '800 Mega', '1 Giga', 'Ultra Mesh'];
 const pclass = s => 'p-' + String(s).split(' ')[0];
@@ -515,7 +534,7 @@ const navDraw = () => {
  $('#top-t').textContent = (MENU.find(m => m[0] === pagina) || ['', 'Central'])[1];
 };
 const ir = async (k, extra) => {
- pagina = k; navDraw(); scrollTo(0, 0);
+ pagina = k; navDraw(); scrollTo(0, 0); $('#main').classList.remove('largo');
  if (location.hash !== '#' + k) history.replaceState(null, '', '#' + k);
  await TELAS[k](extra);
  navDraw();
@@ -523,6 +542,7 @@ const ir = async (k, extra) => {
 document.addEventListener('click', e => {
  const n = e.target.closest('[data-ir]'); if (n) { e.preventDefault(); ir(n.dataset.ir, n.dataset.extra); return; }
  if (e.target.closest('[data-novo]')) { novaIndicacao(); return; }
+ const rl = e.target.closest('[data-rolar]'); if (rl) { const el = document.getElementById(rl.dataset.rolar); if (el) el.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
  if (e.target.closest('[data-sair]')) sair();
 });
 const sair = async () => { if (DEMO) { toast('Na demonstração não tem login. No sistema de verdade, isto encerra a sessão.'); return; } await api('sair', {}); location.reload(); };
@@ -541,46 +561,68 @@ TELAS.hoje = async () => {
  if (t.saques && t.saques.n) cards.push(['#4DF0A0', reaisC(t.saques.total), t.saques.n === 1 ? 'saque para pagar' : 'saques para pagar', `${t.saques.n} ${t.saques.n === 1 ? 'parceiro pediu' : 'parceiros pediram'} o bônus no app. Pague pelo PIX e anexe o comprovante.`, 'Pagar', 'pagar']);
  if (t.faturas) cards.push(['#FFC857', t.faturas, t.faturas === 1 ? 'cliente para conferir a fatura' : 'clientes para conferir a fatura', 'Instalados há 25 dias ou mais. Se a 1ª fatura foi paga, libere o bônus.', 'Conferir', 'pagar']);
  if (t.premios) cards.push(['#19F7FF', t.premios, t.premios === 1 ? 'kit ou prêmio para entregar' : 'kits e prêmios para entregar', 'Kit do Estabelecimento sai na 1ª instalação. Prêmio de meta, a partir de 30 dias da validação.', 'Entregar', 'pagar']);
+ const par = r.parados || [];
+ if (par.length) cards.push(['#FF9F43', par.length, par.length === 1 ? `parceiro sem indicar há ${r.dias_alerta}+ dias` : `parceiros sem indicar há ${r.dias_alerta}+ dias`, 'Mande um recado no WhatsApp para animar. A lista está logo abaixo.', 'Ver lista', '#parados']);
  const s = r.stats;
  $('#main').innerHTML = `<div class="ola"><h1 class="bs">${sauda}, <span>${h(r.me.nome)}</span></h1><p>${h(dt)}</p></div>
-  ${cards.length ? `<div class="tarefas">${cards.map(c => `<div class="tf ch" style="--a:${c[0]}"><span class="n bs">${h(c[1])}</span><b>${h(c[2])}</b><small>${h(c[3])}</small><button class="btn sm" type="button" data-ir="${c[5]}">${h(c[4])} ▸</button></div>`).join('')}</div>`
+  ${cards.length ? `<div class="tarefas">${cards.map(c => `<div class="tf ch" style="--a:${c[0]}"><span class="n bs">${h(c[1])}</span><b>${h(c[2])}</b><small>${h(c[3])}</small><button class="btn sm" type="button" ${c[5][0] === '#' ? `data-rolar="${c[5].slice(1)}"` : `data-ir="${c[5]}"`}>${h(c[4])} ▸</button></div>`).join('')}</div>`
    : `<div class="emdia ch"><span class="ok2">${I.ok}</span><div><b class="bs">Tudo em dia</b><p>Nenhuma tarefa pendente agora. Quando chegar indicação ou cadastro, aparece aqui.</p></div></div>`}
+  ${par.length ? `<p class="sec" id="parados">Parceiros parados (${r.dias_alerta}+ dias sem indicar)</p><div class="parados">${par.map(p => `<div class="pd"><div><b>${h(p.nome)} <span class="cod">${h(p.codigo)}</span></b><small>${p.nunca ? `Ainda não indicou ninguém · aprovado há ${p.dias} dias` : `Última indicação há ${p.dias} dias`}</small></div><a class="btn sm" href="https://wa.me/55${h(p.wa_d)}?text=${encodeURIComponent(`Oi, ${p.resp}! Tudo bem? Aqui é da CallNet. Faz uns dias que não chega indicação pelo seu QR. Lembra de mostrar a plaquinha para os clientes e de mandar o seu link para quem precisa de internet. Qualquer dúvida, é só chamar!`)}" target="_blank" rel="noopener">${I.wa}Chamar</a></div>`).join('')}</div>` : ''}
   <p class="sec">Números</p>
   <div class="stats"><div class="st ch"><b class="bs">${s.ind_hoje}</b><span>indicações hoje</span></div><div class="st ch"><b class="bs">${s.ind_mes}</b><span>indicações no mês</span></div><div class="st ch"><b class="bs" style="color:var(--ok)">${s.inst_mes}</b><span>instalações no mês</span></div><div class="st ch"><b class="bs">${s.leit_hoje}</b><span>leituras de QR hoje</span></div><div class="st ch"><b class="bs">${s.ativos}</b><span>parceiros ativos</span></div></div>
   ${r.atividade.length ? `<p class="sec">Últimas ações</p><ul class="tl">${r.atividade.map(a => `<li>${h(a.acao)} <b>${h(a.alvo)}</b><small>${h(a.em)} · ${h(a.quem)}</small></li>`).join('')}</ul>` : ''}`;
 };
 
 /* ---------- tela: indicações ---------- */
-let indAba = 'Nova', indBusca = '';
-const PROX = { 'Nova':'Em atendimento', 'Em atendimento':'Aguardando instalação' };
+let indAba = 'funil', indBusca = '';
+const PROX = { 'Nova':'Em contato', 'Em contato':'Em negociação', 'Em negociação':'Agendado' };
+const ANT = { 'Em contato':'Nova', 'Em negociação':'Em contato', 'Agendado':'Em negociação' };
+/* colunas do funil: o parceiro vê a mesma etapa no app dele, com palavras simples */
+const COLS = [
+ ['Nova', 'Novas', '#AEFCFF', 'Chegaram pelo QR ou pelo app.'],
+ ['Em contato', 'Em contato', '#7FD8FF', 'Já falamos com o cliente.'],
+ ['Em negociação', 'Em negociação', '#B9A6FF', 'Escolhendo plano e tirando dúvidas.'],
+ ['Agendado', 'Agendado', '#FFC857', 'Instalação marcada.'],
+ ['inst', 'Instalado', '#4DF0A0', 'Esperando a 1ª fatura.'],
+ ['fat', '1ª fatura paga', '#19F7FF', 'Bônus liberado (últimos 60 dias).'],
+];
 TELAS.indicacoes = async () => {
  const r = await api('indicacoes'); cache.inds = r.itens;
- $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Indicações</h1><p>Toque em avançar conforme o atendimento anda.</p></div><div class="busca">${I.busca}<input id="ind-q" type="search" placeholder="Buscar nome, telefone ou código" value="${h(indBusca)}" autocomplete="off"></div><div class="exp"><button class="btn g sm" type="button" data-exp="indicacoes">${I.baixar}Planilha</button></div></div>
+ $('#main').classList.add('largo');
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Indicações</h1><p>Funil de vendas: avance cada cliente de etapa. O parceiro acompanha no app.</p></div><div class="busca">${I.busca}<input id="ind-q" type="search" placeholder="Buscar nome, telefone ou código" value="${h(indBusca)}" autocomplete="off"></div><div class="exp"><button class="btn g sm" type="button" data-exp="indicacoes">${I.baixar}Planilha</button></div></div>
   <div class="tabs" role="tablist" id="ind-tabs"></div><div id="ind-lista"></div>`;
  $('#ind-q').addEventListener('input', e => { indBusca = e.target.value; indDraw(); });
  indDraw();
 };
+const colDe = i => i.status === 'Instalado' ? (i.fatura ? 'fat' : 'inst') : i.status;
 const indDraw = () => {
  const q = indBusca.trim().toLowerCase(), qd = q.replace(/\D/g, '');
  const bate = i => !q || i.nome.toLowerCase().includes(q) || i.parceiro.codigo.toLowerCase().includes(q) || (i.parceiro.nome || '').toLowerCase().includes(q) || (qd.length >= 3 && (i.tel_d || '').includes(qd));
  const todas = cache.inds.filter(bate);
- const grupo = k => k === 'fim' ? todas.filter(i => !ABERTAS.includes(i.status)) : todas.filter(i => i.status === k);
- const abas = [['Nova', 'Novas'], ['Em atendimento', 'Em atendimento'], ['Aguardando instalação', 'Aguardando instalação'], ['fim', 'Finalizadas']];
- $('#ind-tabs').innerHTML = abas.map(([k, t]) => `<button type="button" role="tab" data-aba="${k}" aria-selected="${indAba === k}">${t}<i>${grupo(k).length}</i></button>`).join('');
- const lista = grupo(indAba);
- $('#ind-lista').innerHTML = lista.length ? `<div class="cards">${lista.map(cardInd).join('')}</div>`
-  : `<div class="vazio ch"><b>${q ? 'Nada encontrado' : indAba === 'fim' ? 'Nenhuma finalizada ainda' : 'Nenhuma aqui'}</b>${q ? 'Tente outro nome, telefone ou código.' : indAba === 'Nova' ? 'Quando um cliente chamar com o código, registre em + Indicação.' : 'Tudo andando.'}</div>`;
+ const fim = todas.filter(i => i.status === 'Não instalado' || i.status === 'Cancelado');
+ const funil = todas.filter(i => !fim.includes(i));
+ $('#ind-tabs').innerHTML = [['funil', 'Funil', funil.length], ['fim', 'Não deu / cancelados', fim.length]].map(([k, t, n]) => `<button type="button" role="tab" data-aba="${k}" aria-selected="${indAba === k}">${t}<i>${n}</i></button>`).join('');
+ if (indAba === 'fim') {
+  $('#ind-lista').innerHTML = fim.length ? `<div class="cards">${fim.map(cardInd).join('')}</div>` : `<div class="vazio ch"><b>${q ? 'Nada encontrado' : 'Nenhuma aqui'}</b>${q ? 'Tente outro nome, telefone ou código.' : 'Clientes que não fecharam aparecem aqui.'}</div>`;
+  return;
+ }
+ $('#ind-lista').innerHTML = `<div class="kb">${COLS.map(([k, t, cor, dica]) => {
+  const l = funil.filter(i => colDe(i) === k);
+  return `<section class="kc" style="--k:${cor}" aria-label="${h(t)}"><h3>${h(t)}<i>${l.length}</i></h3><p class="dica">${h(dica)}</p>${l.length ? l.map(cardInd).join('') : `<div class="vz">${q ? 'Nada encontrado' : 'Vazio'}</div>`}</section>`;
+ }).join('')}</div>`;
 };
 const cardInd = i => {
  const aberta = ABERTAS.includes(i.status), velha = aberta && i.dias >= 2;
  const idade = i.dias === 0 ? 'hoje' : i.dias === 1 ? 'há 1 dia' : `há ${i.dias} dias`;
+ const volta = ANT[i.status] ? `<button class="btn sm g sq" type="button" data-volta="${i.id}" aria-label="Voltar para ${h(ANT[i.status])}" title="Voltar para ${h(ANT[i.status])}">◂</button>` : '';
  let acoes = '';
- if (i.status === 'Nova' || i.status === 'Em atendimento') acoes = `<button class="btn sm" type="button" data-av="${i.id}">Avançar ▸</button><button class="btn sm g" type="button" data-nd="${i.id}">Não deu</button>`;
- else if (i.status === 'Aguardando instalação') acoes = `<button class="btn sm ok" type="button" data-inst="${i.id}">✓ Instalou</button><button class="btn sm g" type="button" data-nd="${i.id}">Não deu</button>`;
+ if (PROX[i.status]) acoes = `${volta}<button class="btn sm" type="button" data-av="${i.id}">${h(PROX[i.status])} ▸</button><button class="btn sm g" type="button" data-nd="${i.id}">Não deu</button>`;
+ else if (i.status === 'Agendado') acoes = `${volta}<button class="btn sm ok" type="button" data-inst="${i.id}">✓ Instalou</button><button class="btn sm g" type="button" data-nd="${i.id}">Não deu</button>`;
+ else if (i.status === 'Instalado' && !i.fatura && !i.pago && MASTER) acoes = `<button class="btn sm ok" type="button" data-fat="${i.id}">✓ 1ª fatura paga</button><button class="btn sm g" type="button" data-reabrir="${i.id}">Reabrir</button>`;
  else if (!i.pago) acoes = `<button class="btn sm g" type="button" data-reabrir="${i.id}">Reabrir</button>`;
  return `<article class="ci ch" id="ind-${i.id}">
   <div class="l1"><span class="nm">${h(i.nome)}</span>${aberta ? `<span class="idade${velha ? ' velha' : ''}">${idade}</span>` : `<span class="pill ${pclass(i.status)}">${h(i.status)}</span>`}</div>
-  <div class="meta"><a class="tel" href="https://wa.me/55${h(i.tel_d)}" target="_blank" rel="noopener">${I.wa}${h(i.tel)}</a>${i.cpf ? ` · CPF ${h(i.cpf)}` : ''}</div>
+  ${i.tel || i.cpf ? `<div class="meta">${i.tel ? `<a class="tel" href="https://wa.me/55${h(i.tel_d)}" target="_blank" rel="noopener">${I.wa}${h(i.tel)}</a>` : ''}${i.cpf ? `${i.tel ? ' · ' : ''}CPF ${h(i.cpf)}` : ''}</div>` : ''}
   <div class="meta"><span class="chip"><span class="cod">${h(i.parceiro.codigo)}</span>${h(i.parceiro.nome)}</span>${i.origem === 'app' ? '<span class="chip app">pelo app</span>' : ''}${i.plano ? `<span class="chip pl">${h(i.plano)}</span>` : ''}</div>
   ${i.email || i.cep ? `<div class="meta">${i.email ? h(i.email) : ''}${i.cep ? ` · CEP ${h(i.cep)}, nº ${h(i.num)}` : ''}</div>` : ''}
   ${i.status === 'Instalado' ? `<div class="meta" style="color:var(--ok)">Instalado em ${h(i.inst)}${i.bonus != null ? ` · bônus ${reais(i.bonus)}` : ''} · ${i.saque === 'pago' ? 'bônus pago' : i.saque === 'pedido' ? 'saque pedido' : i.fatura ? `liberado em ${h(i.fatura)}` : 'aguardando 1ª fatura'}</div>` : i.motivo ? `<div class="meta" style="color:var(--bad)">${h(i.motivo)}</div>` : ''}
@@ -601,10 +643,19 @@ document.addEventListener('click', e => {
  const f = (k) => { const b = e.target.closest(`[data-${k}]`); return b ? cache.inds.find(i => i.id === +b.dataset[k]) : null; };
  let i;
  if ((i = f('av'))) return etapa(i.id, { status: PROX[i.status] });
+ if ((i = f('volta'))) return etapa(i.id, { status: ANT[i.status] });
+ if ((i = f('fat'))) {
+  const j = jan(`<h2 class="bs">1ª fatura paga</h2><p class="sub">${h(i.nome)} · ${h(i.parceiro.codigo)} ${h(i.parceiro.nome)} · instalou ${h(i.inst)}</p>
+   <label class="f">Data do pagamento da fatura<input type="date" id="j-fd" max="${hojeISO()}" value="${hojeISO()}"></label>
+   <p class="sub" style="margin-top:10px">Libera o bônus para o parceiro pedir o saque no app. Também conta para as metas de prêmio.</p>
+   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ok" type="button" id="j-ok">✓ Liberar bônus</button></div>`);
+  j.querySelector('#j-ok').addEventListener('click', async () => { const d = j.querySelector('#j-fd').value; fechaJan(); const r = await api('liberar', { id:i.id, data:d }); if (r.erro) return toast(r.erro, true); toast(r.msg); const rr = await api('indicacoes'); cache.inds = rr.itens; indDraw(); atualizaResumo(); });
+  return;
+ }
  if ((i = f('inst'))) {
   const j = jan(`<h2 class="bs">Instalou</h2><p class="sub">${h(i.nome)} · ${h(i.parceiro.codigo)} ${h(i.parceiro.nome)}</p>
    <label class="f">Data da instalação<input type="date" id="j-dt" max="${hojeISO()}" value="${hojeISO()}"></label>
-   <p class="sub" style="margin-top:10px">A casa acende no app do parceiro. O bônus segue a escada da semana e é liberado quando o cliente pagar a 1ª fatura.</p>
+   <p class="sub" style="margin-top:10px">A casa acende no app do parceiro. O bônus é o valor do plano vendido e é liberado quando o cliente pagar a 1ª fatura.</p>
    <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ok" type="button" id="j-ok">✓ Confirmar instalação</button></div>`);
   j.querySelector('#j-ok').addEventListener('click', () => { const d = j.querySelector('#j-dt').value; fechaJan(); etapa(i.id, { status:'Instalado', inst:d }); });
   return;
@@ -612,7 +663,7 @@ document.addEventListener('click', e => {
  if ((i = f('nd'))) {
   return naoDeu(i);
  }
- if ((i = f('reabrir'))) return etapa(i.id, { status:'Aguardando instalação' });
+ if ((i = f('reabrir'))) return etapa(i.id, { status:'Agendado' });
  if ((i = f('ed'))) {
   let plano = i.plano;
   const j = jan(`<h2 class="bs">Editar</h2><p class="sub">${h(i.parceiro.codigo)} · ${h(i.parceiro.nome)}</p>
@@ -672,7 +723,7 @@ const novaIndicacao = async () => {
   const r = await api('indicar', { codigo:cod.value, nome:j.querySelector('#n-nome').value, tel:j.querySelector('#n-tel').value, cpf:j.querySelector('#n-cpf').value, plano });
   b.disabled = false;
   if (r.erro) { j.querySelector('#n-erro').innerHTML = `<div class="erro">${h(r.erro)}</div>`; return; }
-  fechaJan(); toast(r.msg); atualizaResumo(); if (pagina === 'indicacoes') { indAba = 'Nova'; TELAS.indicacoes(); } else if (pagina === 'hoje') TELAS.hoje();
+  fechaJan(); toast(r.msg); atualizaResumo(); if (pagina === 'indicacoes') { indAba = 'funil'; TELAS.indicacoes(); } else if (pagina === 'hoje') TELAS.hoje();
  });
 };
 const atualizaResumo = async () => { cache.resumo = await api('resumo'); navDraw(); };
@@ -691,9 +742,9 @@ const parDraw = () => {
  const pend = cache.pars.filter(p => p.status === 'pendente' && bate(p));
  const outros = cache.pars.filter(p => p.status !== 'pendente' && bate(p) && (parFiltro === 'todos' || p.status === parFiltro));
  const cont = s => cache.pars.filter(p => p.status === s).length;
- $('#par-corpo').innerHTML = (pend.length ? `<p class="sec" style="margin-top:0;color:var(--warn)">Para aprovar (${pend.length})</p><div class="pend">${pend.map(p => `<div class="pc ch"><span class="nm">${h(p.loja || p.nome)}</span><span class="meta">${h(p.tipo === 'lojista' ? 'Lojista' : 'Vendedor')} · ${h(p.nome)}<br>${h(p.doc)} · ${h(p.cidade)}<br><a class="tel" href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a> · cadastro em ${h(p.desde)}</span><div class="acoes"><button class="btn sm ok" type="button" data-apr="${p.id}">✓ Aprovar</button><button class="btn sm g" type="button" data-ver="${p.id}">Ver</button><button class="btn sm bad" type="button" data-rec="${p.id}">Recusar</button></div></div>`).join('')}</div>` : '')
+ $('#par-corpo').innerHTML = (pend.length ? `<p class="sec" style="margin-top:0;color:var(--warn)">Para aprovar (${pend.length})</p><div class="pend">${pend.map(p => `<div class="pc ch"><span class="nm">${h(p.loja || p.nome)}</span><span class="meta">${h(TIPO(p.tipo))} · ${h(p.nome)}<br>${h(p.doc)} · ${h(p.cidade)}<br><a class="tel" href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a> · cadastro em ${h(p.desde)}</span><div class="acoes"><button class="btn sm ok" type="button" data-apr="${p.id}">✓ Aprovar</button><button class="btn sm g" type="button" data-ver="${p.id}">Ver</button><button class="btn sm bad" type="button" data-rec="${p.id}">Recusar</button></div></div>`).join('')}</div>` : '')
   + `<div class="tabs" style="margin-bottom:12px">${[['todos', 'Todos'], ['ativo', 'Ativos'], ['bloqueado', 'Bloqueados'], ['desfiliado', 'Desfiliados'], ['recusado', 'Recusados']].map(([k, t]) => `<button type="button" data-pf="${k}" aria-selected="${parFiltro === k}">${t}<i>${k === 'todos' ? cache.pars.filter(p => p.status !== 'pendente').length : cont(k)}</i></button>`).join('')}</div>`
-  + (outros.length ? `<div class="lista">${outros.map(p => `<button class="pr ch" type="button" data-ver="${p.id}"><span class="av">${h(iniciais(p.loja || p.nome))}</span><span><span class="nm" style="display:block">${h(p.loja || p.nome)}</span><span class="sub" style="display:block">${p.codigo ? `<span class="cod">${h(p.codigo)}</span> · ` : ''}${h(p.tipo === 'lojista' ? 'Lojista' : 'Vendedor')} · ${h(p.cidade)}</span></span><span class="dir"><span class="pill ${pclass(p.status)}">${h(p.status)}</span><span class="nums"><b>${p.leit}</b> QR · <b>${p.ind}</b> ind · <b>${p.inst}</b> inst</span></span></button>`).join('')}</div>`
+  + (outros.length ? `<div class="lista">${outros.map(p => `<button class="pr ch" type="button" data-ver="${p.id}"><span class="av">${h(iniciais(p.loja || p.nome))}</span><span><span class="nm" style="display:block">${h(p.loja || p.nome)}</span><span class="sub" style="display:block">${p.codigo ? `<span class="cod">${h(p.codigo)}</span> · ` : ''}${h(TIPO(p.tipo))} · ${h(p.cidade)}</span>${p.sem_ind != null && p.sem_ind >= 7 ? `<span class="alerta7">${p.sem_ind} dias sem indicar</span>` : ''}</span><span class="dir"><span class="pill ${pclass(p.status)}">${h(p.status)}</span><span class="nums"><b>${p.leit}</b> QR · <b>${p.ind}</b> ind · <b>${p.inst}</b> inst</span></span></button>`).join('')}</div>`
    : `<div class="vazio ch"><b>Ninguém aqui</b>${q ? 'Tente outra busca.' : 'Os parceiros aprovados aparecem nesta lista.'}</div>`);
 };
 const acaoParceiro = async (id, o, extra) => {
@@ -714,7 +765,7 @@ document.addEventListener('click', async e => {
   const p = cache.pars.find(x => x.id === id);
   const st = p.status;
   const j = jan(`<h2 class="bs">${h(p.loja || p.nome)}</h2><p class="sub"><span class="pill ${pclass(st)}">${h(st)}</span> ${p.codigo ? `<span class="cod" style="margin-left:6px">${h(p.codigo)}</span>` : ''}</p>
-   <dl class="det"><dt>Nome</dt><dd>${h(p.nome)}</dd><dt>Tipo</dt><dd>${p.tipo === 'lojista' ? 'Lojista' : 'Vendedor'}</dd><dt>CPF/CNPJ</dt><dd>${h(p.doc)}</dd><dt>WhatsApp</dt><dd><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a></dd>${p.email ? `<dt>E-mail</dt><dd>${h(p.email)}</dd>` : ''}<dt>Cidade</dt><dd>${h(p.cidade)}</dd>
+   <dl class="det"><dt>Nome</dt><dd>${h(p.nome)}</dd><dt>Tipo</dt><dd>${h(TIPO(p.tipo))}</dd><dt>CPF/CNPJ</dt><dd>${h(p.doc)}</dd><dt>WhatsApp</dt><dd><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a></dd>${p.email ? `<dt>E-mail</dt><dd>${h(p.email)}</dd>` : ''}<dt>Cidade</dt><dd>${h(p.cidade)}</dd>
    <dt>Chave PIX</dt><dd>${h(p.pix)} <button class="btn sm g" type="button" data-cp="${h(p.pix)}" style="height:28px;margin-left:6px">Copiar</button></dd>${p.link ? `<dt>Link do QR</dt><dd>${h(p.link)}</dd>` : ''}<dt>Nível</dt><dd>${h(p.nivel)}</dd><dt>Números</dt><dd>${p.leit} leituras · ${p.ind} indicações · ${p.inst} instalações</dd><dt>Cadastro</dt><dd>${h(p.desde)} · termo ${h(p.termo)}</dd>${p.obs ? `<dt>Observações</dt><dd>${h(p.obs)}</dd>` : ''}</dl>
    <div class="rod" style="justify-content:flex-start">
     ${st === 'pendente' || st === 'recusado' ? `<button class="btn ok" type="button" data-o="aprovar">✓ Aprovar</button>` : ''}
@@ -750,7 +801,7 @@ TELAS.pagar = async () => {
    <div class="tr ch" style="--a:#FFC857"><small>Esperando 1ª fatura</small><b class="bs">${reais(r.tot.faturas)}</b><span>${r.faturas.length} ${r.faturas.length === 1 ? 'cliente instalado' : 'clientes instalados'}</span></div>
    <div class="tr ch" style="--a:#19F7FF"><small>Liberado, sem pedido</small><b class="bs">${reais(r.tot.liberados)}</b><span>o parceiro já pode sacar</span></div>
   </div>
-  <p class="escada">Multiplicador da semana: 1 instalação ${reaisC(r.regra.base)} · cada instalação a mais sobe ${reaisC(r.regra.passo)} o valor de todas da semana · até ${reaisC(r.regra.teto)} cada</p>
+  <p class="escada">Bônus por instalação = valor do plano: ${PLANOS.map(p => `${p} ${reaisC((r.regra.planos || {})[p] || 0)}`).join(' · ')}</p>
   <div class="tabs" id="bon-tabs">${ab.map(([k, t, n]) => `<button type="button" data-bab="${k}" aria-selected="${bonAba === k}">${t}<i>${n}</i></button>`).join('')}</div>
   <div id="bon-c"></div>`;
  bonDraw();
@@ -765,7 +816,7 @@ const bonDraw = () => {
   : vazio('Nenhum saque pedido', 'Quando um parceiro tocar em "Solicitar saque" no app, aparece aqui.');
  if (bonAba === 'faturas') box.innerHTML = r.faturas.length ? `<div class="lista">${r.faturas.map(x => `<div class="fat ch${x.dias >= 25 ? ' pronta' : ''}"><div><div class="nm">${h(x.cliente)}</div><div class="sub"><span class="cod">${h(x.codigo)}</span> ${h(x.parceiro)}${x.plano ? ` · ${h(x.plano)}` : ''}</div></div>
    <div class="qd"><b>${h(x.inst)}</b><small>${x.dias === 0 ? 'instalou hoje' : `há ${x.dias} ${x.dias === 1 ? 'dia' : 'dias'}`}</small></div><span class="val bs">${reais(x.v)}</span><button class="btn sm${x.dias >= 25 ? ' ok' : ' g'}" type="button" data-lib="${x.id}">✓ 1ª fatura paga</button></div>`).join('')}</div>
-   <p class="sub" style="margin-top:12px">Confira no sistema da operadora se a 1ª fatura foi paga (em geral uns 30 dias depois da instalação) e libere. O valor de cada instalação segue o multiplicador da semana: base × multiplicador, igual para todas as instalações do parceiro naquela semana.</p>`
+   <p class="sub" style="margin-top:12px">Confira no sistema da operadora se a 1ª fatura foi paga (em geral uns 30 dias depois da instalação) e libere. O bônus de cada instalação é o valor do plano vendido.</p>`
   : vazio('Nenhum cliente esperando', 'Toda instalação nova aparece aqui até a 1ª fatura ser paga.');
  if (bonAba === 'liberados') {
   const por = {}; r.liberados.forEach(x => { (por[x.codigo] = por[x.codigo] || { nome:x.parceiro, itens:[] }).itens.push(x); });
@@ -850,8 +901,8 @@ TELAS.mais = async () => {
  if (maisAba === 'config') {
   const dis = r.master ? '' : ' disabled';
   box.innerHTML = `<form class="form ch" id="f-cfg">
-   <p class="sub" style="margin:0 0 4px">Multiplicador da semana: com 1 instalação ela vale a base; com 2, cada uma vale a base + o aumento; com 3, + 2 aumentos… até o teto. Todas as instalações da semana valem o mesmo. Zera toda segunda.</p>
-   <div class="g3"><label class="f">Base (R$)<input name="bonus_base" inputmode="decimal" value="${h(c.bonus_base)}"${dis}></label><label class="f">Sobe por venda (R$)<input name="bonus_passo" inputmode="decimal" value="${h(c.bonus_passo)}"${dis}></label><label class="f">Teto (R$)<input name="bonus_teto" inputmode="decimal" value="${h(c.bonus_teto)}"${dis}></label></div>
+   <p class="sub" style="margin:0 0 4px">Bônus por instalação: o valor do plano vendido (100% da mensalidade), liberado após a 1ª fatura paga.</p>
+   <div class="g3">${PLANOS.map((p, k) => `<label class="f">${h(p)} (R$)<input name="bonus_pl_${k}" inputmode="decimal" value="${h(String(c.bonus_planos || '55|70|85|100').split('|')[k] || '')}"${dis}></label>`).join('')}</div>
    <label class="f">Prazo para pagar o saque (aparece no app)<input name="prazo_saque" value="${h(c.prazo_saque)}"${dis}></label>
    <label class="f">WhatsApp que recebe as indicações<input name="whatsapp" value="${h(c.whatsapp)}"${dis}><small>55 + DDD + número</small></label>
    <label class="f">Mensagem que o cliente manda<input name="mensagem_wa" value="${h(c.mensagem_wa)}"${dis}><small>Precisa ter {codigo}</small></label>

@@ -5,12 +5,40 @@ declare(strict_types=1);
 require __DIR__ . '/api/_boot.php';
 
 $codigo = strtoupper(preg_replace('/[^A-Za-z0-9-]/', '', (string)($_GET['c'] ?? '')));
-$p = $codigo !== '' ? one("SELECT id, codigo, status FROM parceiros WHERE codigo = ?", [$codigo]) : null;
+$p = parceiro_por_codigo($codigo);
 $wa = so_digitos(conf('whatsapp', '553420281071'));
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex');
+$generico = qr_generico($codigo);
 
-if (!$p || $p['status'] !== 'ativo') {
+/* QR genérico ainda livre: a peça foi impressa, mas nenhum parceiro ativou o código.
+   Quem ler fala com a CallNet (a mensagem já leva o código). Se quem leu é um parceiro aprovado que ainda
+   não ativou o QR (no iPhone, a câmera abre esta página), aparece o botão para ativar na conta dele. */
+if (!$p && $generico) {
+  $msg = str_replace('{codigo}', $codigo, conf('mensagem_wa', 'Olá! Quero saber da internet Nio Fibra. Código do parceiro: {codigo}'));
+  $link = 'https://wa.me/' . $wa . '?text=' . rawurlencode($msg);
+  $eu = parceiro_sessao();
+  $podeAtivar = $eu && $eu['status'] === 'ativo' && !$eu['codigo'];
+  ?><!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Internet fibra Nio · CallNet</title>
+  <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#F0F5EB;color:#14412A;font:17px/1.45 system-ui,sans-serif;text-align:center}main{padding:24px;max-width:360px}.wa,.at{display:block;width:100%;margin-top:18px;padding:16px;border:0;border-radius:14px;background:#32E000;color:#14412A;font:800 17px system-ui,sans-serif;text-decoration:none;cursor:pointer}.at{background:#14412A;color:#fff}.dono{margin-top:34px;padding-top:18px;border-top:1px solid #C9D8BF;font-size:15px}.dono a{color:#14412A;font-weight:800}.cod{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:8px;background:#fff;font-weight:800;letter-spacing:.04em}#m{min-height:1.4em;margin-top:12px;font-weight:700}</style>
+  <main>
+  <?php if ($podeAtivar): ?>
+   <h1 style="font-size:24px">Ativar este QR na sua conta?</h1><p>Olá, <?= h(primeiro_nome($eu['nome'])) ?>! Este é o QR da sua peça:<br><span class="cod"><?= h($codigo) ?></span></p>
+   <button class="at" id="at" type="button">Ativar este QR na minha conta</button><p id="m" role="status"></p>
+   <script>document.getElementById('at').onclick=function(){var b=this,m=document.getElementById('m');b.disabled=true;b.textContent='Ativando…';
+    fetch('/api/qr-ativar.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo:<?= json_encode($codigo) ?>})}).then(function(r){return r.json()}).then(function(j){
+     if(j.ok){m.textContent=j.msg;setTimeout(function(){location.href='/app'},1200);return}b.disabled=false;b.textContent='Ativar este QR na minha conta';m.textContent=j.erro||'Não deu para ativar.'}).catch(function(){b.disabled=false;b.textContent='Ativar este QR na minha conta';m.textContent='Sem conexão. Tente de novo.'})}</script>
+  <?php else: ?>
+   <h1 style="font-size:24px">Internet fibra Nio</h1><p>Fale com a CallNet no WhatsApp e veja a oferta para o seu endereço.</p><a class="wa" href="<?= h($link) ?>">Falar com a CallNet</a>
+   <p class="dono">Quer ser parceiro? <a href="/cadastro">Crie sua conta</a>.</p>
+  <?php endif; ?>
+  </main></html><?php
+  exit;
+}
+
+/* o QR só leva ao parceiro quando a conta está ativa */
+$liberado = $p && $p['status'] === 'ativo';
+if (!$liberado) {
   $link = 'https://wa.me/' . $wa . '?text=' . rawurlencode('Olá! Quero saber da internet Nio Fibra.');
   http_response_code(404);
   ?><!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Internet fibra · CallNet</title>

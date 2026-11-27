@@ -1,5 +1,5 @@
 <?php
-/* Cadastro de parceiro (lojista ou vendedor). Fica pendente até o admin aprovar. */
+/* Cadastro de parceiro (CNPJ ou CPF). Fica em análise até o admin aprovar; depois o parceiro ativa o QR da peça que recebeu. */
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 /* Versão do contrato aceita no cadastro. Mude junto com o texto do termo.html. */
@@ -33,7 +33,9 @@ if ($erros) json_out(['erro' => 'Confira os campos marcados.', 'campos' => $erro
 if (one('SELECT id FROM parceiros WHERE doc = ?', [$doc])) json_out(['erro' => 'Já existe um cadastro com este ' . (strlen($doc) === 11 ? 'CPF' : 'CNPJ') . '. Entre com sua senha ou fale com a CallNet.', 'campos' => ['doc' => 'Documento já cadastrado.']], 409);
 
 errou('cad:' . ip_hash());
-q('INSERT INTO parceiros (tipo, doc, nome, loja, whatsapp, email, cidade, pix, status, senha_hash, termo_versao, termo_aceito_em, termo_ip, criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-  [$tipo, $doc, $nome, $loja !== '' ? $loja : null, $wa, $email, $cidade, $pix, 'pendente', password_hash($senha, PASSWORD_DEFAULT), TERMO_VERSAO, agora(), ip(), agora()]);
+q('INSERT INTO parceiros (tipo, doc, nome, loja, whatsapp, email, cidade, pix, codigo, status, senha_hash, termo_versao, termo_aceito_em, termo_ip, criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+  [$tipo, $doc, $nome, $loja !== '' ? $loja : null, $wa, $email, $cidade, $pix, null, 'pendente', password_hash($senha, PASSWORD_DEFAULT), TERMO_VERSAO, agora(), ip(), agora()]);
+/* já entra no app: a conta fica na tela "em análise" até a CallNet aprovar; depois vem o "Ativar QR Code" */
+entrar_parceiro(one('SELECT * FROM parceiros WHERE doc = ?', [$doc]), true);
 auditar('cadastro', 'novo parceiro', $doc, $tipo);
-json_out(['ok' => true, 'nome' => primeiro_nome($nome)]);
+json_out(['ok' => true, 'nome' => primeiro_nome($nome), 'app' => '/app']);

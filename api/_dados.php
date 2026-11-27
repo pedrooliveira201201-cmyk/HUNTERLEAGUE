@@ -101,7 +101,7 @@ function hl_dados(array $p): array {
     'ranking' => ranking_liga($id),
     'prog' => ['feitas' => $niv['feitas'], 'meta' => $niv['meta']],
     'metas' => $metas,
-    'kit' => ['ativo' => kit_ativo(), 'nome' => kit_nome(), 'itens' => kit_itens(),
+    'kit' => ['ativo' => kit_ativo(), 'nome' => kit_nome(), 'itens' => kit_itens(), 'regra' => kit_regra(), 'prog' => kit_progresso($id),
               'em' => isset($conq['kit:1']) ? date('d/m/Y', strtotime($conq['kit:1']['conquistado_em'])) : null,
               'entregue' => !empty($conq['kit:1']['entregue_em']) ? date('d/m/Y', strtotime($conq['kit:1']['entregue_em'])) : null],
     'validadas' => $validadas,
@@ -248,15 +248,30 @@ function metas_conf(): array {
   usort($m, fn($x, $y) => $x[0] <=> $y[0]);
   return $m;
 }
-/* Kit do Estabelecimento: liberado na 1ª instalação (não precisa esperar a 1ª fatura). Itens configuráveis na Central. */
+/* Kit completo (bandeirola, acrílico etc.): por mérito, quando o parceiro passou os contatos e gerou as vendas
+   (padrão: 20 contatos e 2 vendas; regra de 27/11/2026). A peça da visita (adesivo A3 ou placa A4) sai na hora e não entra aqui.
+   Contato = indicação registrada (menos as canceladas). Venda = link seguro aprovado e instalação agendada (Agendado ou Instalado). */
 function kit_ativo(): bool { return conf('kit_ativo', '1') === '1'; }
-function kit_nome(): string { return conf('kit_nome', 'Kit do Estabelecimento') ?: 'Kit do Estabelecimento'; }
-function kit_itens(): string { return conf('kit_itens', 'Adesivos, QR Code para o balcão e panfletos'); }
+function kit_nome(): string { return conf('kit_nome', 'Kit completo do parceiro') ?: 'Kit completo do parceiro'; }
+function kit_itens(): string { return conf('kit_itens', 'Bandeirola, display de acrílico com QR e panfletos'); }
+function kit_regra(): array { return ['contatos' => max(1, (int)conf('kit_contatos', '20')), 'vendas' => max(1, (int)conf('kit_vendas', '2'))]; }
+function kit_progresso(int $pid): array {
+  $r = one("SELECT COUNT(*) AS c, SUM(CASE WHEN status IN ('Agendado', 'Instalado') THEN 1 ELSE 0 END) AS v FROM indicacoes WHERE parceiro_id = ? AND status <> 'Cancelado'", [$pid]);
+  return ['contatos' => (int)($r['c'] ?? 0), 'vendas' => (int)($r['v'] ?? 0)];
+}
+/* dia em que bateu as duas metas: o mais tarde entre o N-ésimo contato e a M-ésima venda */
+function kit_liberado_em(int $pid): ?string {
+  $g = kit_regra();
+  $c = all("SELECT criado_em FROM indicacoes WHERE parceiro_id = ? AND status <> 'Cancelado' ORDER BY criado_em LIMIT " . $g['contatos'], [$pid]);
+  $v = all("SELECT COALESCE(instalado_em, atualizado_em, criado_em) AS d FROM indicacoes WHERE parceiro_id = ? AND status IN ('Agendado', 'Instalado') ORDER BY d LIMIT " . $g['vendas'], [$pid]);
+  if (count($c) < $g['contatos'] || count($v) < $g['vendas']) return null;
+  return max(end($c)['criado_em'], end($v)['d']);
+}
 function verificar_premios(int $pid): void {
   $datas = array_column(all("SELECT fatura_em FROM indicacoes WHERE parceiro_id = ? AND status = 'Instalado' AND fatura_em IS NOT NULL ORDER BY fatura_em", [$pid]), 'fatura_em');
   $total = count($datas); $quer = [];
   foreach (metas_conf() as [$alvo, $premio]) if ($total >= $alvo) $quer['meta:' . $alvo] = ['meta', $alvo, $premio, $datas[$alvo - 1]];
-  if (kit_ativo() && ($pri = one("SELECT MIN(instalado_em) AS d FROM indicacoes WHERE parceiro_id = ? AND status = 'Instalado' AND instalado_em IS NOT NULL", [$pid])['d'] ?? null)) $quer['kit:1'] = ['kit', 1, kit_nome(), $pri];
+  if (kit_ativo() && ($kd = kit_liberado_em($pid))) $quer['kit:1'] = ['kit', 1, kit_nome(), $kd];
   $tem = [];
   foreach (all('SELECT id, tipo, alvo, entregue_em FROM premios WHERE parceiro_id = ?', [$pid]) as $r) $tem[$r['tipo'] . ':' . $r['alvo']] = $r;
   foreach ($quer as $k => [$tipo, $alvo, $premio, $d]) if (!isset($tem[$k])) {

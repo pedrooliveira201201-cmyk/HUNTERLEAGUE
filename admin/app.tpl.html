@@ -401,12 +401,12 @@ TELAS.hoje = async () => {
  const sauda = hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
  const dt = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' });
  const cards = [];
- if (t.pendentes) cards.push(['#FFC857', t.pendentes, t.pendentes === 1 ? 'cadastro para aprovar' : 'cadastros para aprovar', 'Lojas e vendedores esperando o código para começar.', 'Aprovar', 'parceiros']);
+ if (t.pendentes) cards.push(['#FFC857', t.pendentes, t.pendentes === 1 ? 'cadastro para aprovar' : 'cadastros para aprovar', 'Aprove e o parceiro ativa o QR da peça no app.', 'Aprovar', 'parceiros']);
  if (t.novas) cards.push(['#AEFCFF', t.novas, t.novas === 1 ? 'indicação nova' : 'indicações novas', 'Chegaram pelo QR ou pelo app e ainda não foram atendidas.', 'Atender', 'indicacoes']);
  if (t.paradas) cards.push(['#FF6B81', t.paradas, t.paradas === 1 ? 'indicação parada' : 'indicações paradas', 'Há mais de 2 dias sem mudar de etapa. Vale cobrar.', 'Ver', 'indicacoes']);
  if (t.saques && t.saques.n) cards.push(['#4DF0A0', reaisC(t.saques.total), t.saques.n === 1 ? 'saque para pagar' : 'saques para pagar', `${t.saques.n} ${t.saques.n === 1 ? 'parceiro pediu' : 'parceiros pediram'} o bônus no app. Pague pelo PIX e anexe o comprovante.`, 'Pagar', 'pagar']);
  if (t.faturas) cards.push(['#FFC857', t.faturas, t.faturas === 1 ? 'cliente para conferir a fatura' : 'clientes para conferir a fatura', 'Instalados há 25 dias ou mais. Se a 1ª fatura foi paga, libere o bônus.', 'Conferir', 'pagar']);
- if (t.premios) cards.push(['#19F7FF', t.premios, t.premios === 1 ? 'kit ou prêmio para entregar' : 'kits e prêmios para entregar', 'Kit do Estabelecimento sai na 1ª instalação. Prêmio de meta, a partir de 30 dias da validação.', 'Entregar', 'pagar']);
+ if (t.premios) cards.push(['#19F7FF', t.premios, t.premios === 1 ? 'kit ou prêmio para entregar' : 'kits e prêmios para entregar', 'Kit completo sai com 20 contatos e 2 vendas. Prêmio de meta, a partir de 30 dias da validação.', 'Entregar', 'pagar']);
  const par = r.parados || [];
  if (par.length) cards.push(['#FF9F43', par.length, par.length === 1 ? `parceiro sem indicar há ${r.dias_alerta}+ dias` : `parceiros sem indicar há ${r.dias_alerta}+ dias`, 'Mande um recado no WhatsApp para animar. A lista está logo abaixo.', 'Ver lista', '#parados']);
  const s = r.stats;
@@ -531,7 +531,7 @@ document.addEventListener('click', e => {
 /* ---------- nova indicação: cola a mensagem do WhatsApp e o sistema preenche ---------- */
 const lerMensagem = txt => {
  const out = {};
- const cod = txt.match(/HL[\s-]?([A-Z]{3})[\s-]?(\d{4})/i); if (cod) out.codigo = `HL-${cod[1].toUpperCase()}-${cod[2]}`;
+ const cod = txt.match(/\bHL-(?:UBR-)?(?:[A-Z]{3}-\d{4}|TESTE-\d{2})\b/i); if (cod) out.codigo = cod[0].toUpperCase();
  const semCod = txt.replace(/HL[\s-]?[A-Z]{3}[\s-]?\d{4}/ig, ' ');
  const tel = semCod.match(/(?:\+?55[\s.-]?)?\(?([1-9]\d)\)?[\s.-]?(9?\d{4})[\s.-]?(\d{4})/); if (tel) out.tel = `(${tel[1]}) ${tel[2]}-${tel[3]}`;
  let nome = (txt.match(/\]\s*([^:\n\]]{2,60}):/) || txt.match(/^([A-ZÀ-Ú][\wÀ-ú]+(?:\s[A-ZÀ-Ú][\wÀ-ú]+){0,4}):/m) || txt.match(/(?:meu nome é|me chamo|sou o|sou a)\s+([A-ZÀ-Úa-zà-ú]+(?:\s[A-ZÀ-Úa-zà-ú]+){0,3})/i) || [])[1];
@@ -578,7 +578,7 @@ const atualizaResumo = async () => { cache.resumo = await api('resumo'); navDraw
 let parFiltro = 'todos', parBusca = '';
 TELAS.parceiros = async () => {
  cache.pars = (await api('parceiros')).itens;
- $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Parceiros</h1><p>Lojas e vendedores da liga.</p></div><div class="busca">${I.busca}<input id="par-q" type="search" placeholder="Buscar nome, loja, código ou CPF" value="${h(parBusca)}" autocomplete="off"></div></div><div id="par-corpo"></div>`;
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Parceiros</h1><p>Lojas e vendedores da liga.${DEMO ? '' : ' <a href="qr-genericos.php" target="_blank" rel="noopener" style="color:var(--cyan);font-weight:700">QR genéricos (A3, A4 e testes)</a>'}</p></div><div class="busca">${I.busca}<input id="par-q" type="search" placeholder="Buscar nome, loja, código ou CPF" value="${h(parBusca)}" autocomplete="off"></div></div><div id="par-corpo"></div>`;
  $('#par-q').addEventListener('input', e => { parBusca = e.target.value; parDraw(); });
  parDraw();
 };
@@ -588,15 +588,16 @@ const parDraw = () => {
  const pend = cache.pars.filter(p => p.status === 'pendente' && bate(p));
  const outros = cache.pars.filter(p => p.status !== 'pendente' && bate(p) && (parFiltro === 'todos' || p.status === parFiltro));
  const cont = s => cache.pars.filter(p => p.status === s).length;
- $('#par-corpo').innerHTML = (pend.length ? `<p class="sec" style="margin-top:0;color:var(--warn)">Para aprovar (${pend.length})</p><div class="pend">${pend.map(p => `<div class="pc ch"><span class="nm">${h(p.loja || p.nome)}</span><span class="meta">${h(TIPO(p.tipo))} · ${h(p.nome)}<br>${h(p.doc)} · ${h(p.cidade)}<br><a class="tel" href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a> · cadastro em ${h(p.desde)}</span><div class="acoes"><button class="btn sm ok" type="button" data-apr="${p.id}">✓ Aprovar</button><button class="btn sm g" type="button" data-ver="${p.id}">Ver</button><button class="btn sm bad" type="button" data-rec="${p.id}">Recusar</button></div></div>`).join('')}</div>` : '')
+ $('#par-corpo').innerHTML = (pend.length ? `<p class="sec" style="margin-top:0;color:var(--warn)">Para aprovar (${pend.length})</p><div class="pend">${pend.map(p => `<div class="pc ch"><span class="nm">${h(p.loja || p.nome)}</span><span class="meta">${h(TIPO(p.tipo))} · ${h(p.nome)}<br>${h(p.doc)} · ${h(p.cidade)}<br><a class="tel" href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">${h(p.wa)}</a> · cadastro em ${h(p.desde)}${p.codigo ? ` · QR <span class="cod">${h(p.codigo)}</span>` : ''}</span><div class="acoes"><button class="btn sm ok" type="button" data-apr="${p.id}">✓ Aprovar</button><button class="btn sm g" type="button" data-ver="${p.id}">Ver</button><button class="btn sm bad" type="button" data-rec="${p.id}">Recusar</button></div></div>`).join('')}</div>` : '')
   + `<div class="tabs" style="margin-bottom:12px">${[['todos', 'Todos'], ['ativo', 'Ativos'], ['bloqueado', 'Bloqueados'], ['desfiliado', 'Desfiliados'], ['recusado', 'Recusados']].map(([k, t]) => `<button type="button" data-pf="${k}" aria-selected="${parFiltro === k}">${t}<i>${k === 'todos' ? cache.pars.filter(p => p.status !== 'pendente').length : cont(k)}</i></button>`).join('')}</div>`
-  + (outros.length ? `<div class="lista">${outros.map(p => `<button class="pr ch" type="button" data-ver="${p.id}"><span class="av">${h(iniciais(p.loja || p.nome))}</span><span><span class="nm" style="display:block">${h(p.loja || p.nome)}</span><span class="sub" style="display:block">${p.codigo ? `<span class="cod">${h(p.codigo)}</span> · ` : ''}${h(TIPO(p.tipo))} · ${h(p.cidade)}</span>${p.sem_ind != null && p.sem_ind >= 7 ? `<span class="alerta7">${p.sem_ind} dias sem indicar</span>` : ''}</span><span class="dir"><span class="pill ${pclass(p.status)}">${h(p.status)}</span><span class="nums"><b>${p.leit}</b> QR · <b>${p.ind}</b> ind · <b>${p.inst}</b> inst</span></span></button>`).join('')}</div>`
+  + (outros.length ? `<div class="lista">${outros.map(p => `<button class="pr ch" type="button" data-ver="${p.id}"><span class="av">${h(iniciais(p.loja || p.nome))}</span><span><span class="nm" style="display:block">${h(p.loja || p.nome)}</span><span class="sub" style="display:block">${p.codigo ? `<span class="cod">${h(p.codigo)}</span> · ` : ''}${h(TIPO(p.tipo))} · ${h(p.cidade)}</span>${p.sem_qr ? `<span class="alerta7">Sem QR ativado</span>` : p.sem_ind != null && p.sem_ind >= 7 ? `<span class="alerta7">${p.sem_ind} dias sem indicar</span>` : ''}</span><span class="dir"><span class="pill ${pclass(p.status)}">${h(p.status)}</span><span class="nums"><b>${p.leit}</b> QR · <b>${p.ind}</b> ind · <b>${p.inst}</b> inst</span></span></button>`).join('')}</div>`
    : `<div class="vazio ch"><b>Ninguém aqui</b>${q ? 'Tente outra busca.' : 'Os parceiros aprovados aparecem nesta lista.'}</div>`);
 };
 const acaoParceiro = async (id, o, extra) => {
  const r = await api('parceiro', Object.assign({ id, o }, extra || {}));
  if (r.erro) { toast(r.erro, true); return r; }
  if (r.senha) jan(`<h2 class="bs">Senha nova</h2><p class="sub">Mande para o parceiro pelo WhatsApp. Ela aparece só agora.</p><div class="senha ch"><b>${h(r.senha)}</b><button class="btn sm" type="button" id="cp-s">Copiar</button></div><div class="rod"><button class="btn g" type="button" data-fecha>Fechar</button></div>`, jj => jj.querySelector('#cp-s').addEventListener('click', () => copiar(r.senha, 'Senha copiada')));
+ else if (r.wa) jan(`<h2 class="bs">Cadastro aprovado</h2><p class="sub">${h(r.msg)}</p><p class="sub">O parceiro já vê no app o botão <b>Ativar QR Code</b>. Se a peça ainda não estiver com ele, vincule o código pela página dos QR.</p><div class="rod"><button class="btn g" type="button" data-fecha>Fechar</button><a class="btn ok" href="${h(r.wa)}" target="_blank" rel="noopener">Avisar no WhatsApp</a></div>`);
  else { fechaJan(); toast(r.msg); }
  cache.pars = (await api('parceiros')).itens; if (pagina === 'parceiros') parDraw(); atualizaResumo();
  return r;
@@ -616,7 +617,7 @@ document.addEventListener('click', async e => {
    <div class="rod" style="justify-content:flex-start">
     ${st === 'pendente' || st === 'recusado' ? `<button class="btn ok" type="button" data-o="aprovar">✓ Aprovar</button>` : ''}
     ${st === 'ativo' ? `<button class="btn g" type="button" data-o="senha">Senha nova</button><button class="btn g" type="button" data-o="editar">Editar WhatsApp/PIX</button>${p.codigo && !DEMO ? `<a class="btn g" href="qr.php?id=${p.id}" target="_blank">Baixar QR</a>` : ''}<button class="btn bad" type="button" data-o="bloquear">Bloquear</button><button class="btn bad" type="button" data-o="desfiliar">Desfiliar</button>` : ''}
-    ${(st === 'bloqueado' || st === 'desfiliado') && p.codigo ? `<button class="btn" type="button" data-o="reativar">Reativar</button>` : ''}
+    ${st === 'bloqueado' || st === 'desfiliado' ? `<button class="btn" type="button" data-o="reativar">Reativar</button>` : ''}
    </div>`);
   j.addEventListener('click', async ev => {
    const c = ev.target.closest('[data-cp]'); if (c) return copiar(c.dataset.cp, 'Chave PIX copiada');
@@ -678,7 +679,7 @@ const bonDraw = () => {
  if (bonAba === 'premios') {
   const pend = r.premios.filter(p => !p.entregue), ent = r.premios.filter(p => p.entregue);
   box.innerHTML = (pend.length ? `<div class="prems">${pend.map(p => `<div class="pm ch"><span class="gi">${I.gift}</span><div><b>${h(p.premio)}</b><small>${h(p.parceiro)} · <span class="cod">${h(p.codigo)}</span></small><small>${h(p.conquista)} · ${h(p.em)}</small><small>${p.kit ? '<span style="color:var(--ok)">Kit liberado: combine o envio</span>' : p.pode ? '<span style="color:var(--ok)">Já pode entregar</span>' : `Entrega a partir de ${h(p.libera)}`}</small><small><a href="https://wa.me/55${h(p.wa_d)}" target="_blank" rel="noopener">Combinar no WhatsApp</a></small></div><button class="btn sm${p.pode ? '' : ' g'}" type="button" data-ent="${p.id}">Entregue</button></div>`).join('')}</div>`
-   : vazio('Nenhum prêmio ou kit pendente', 'O kit aparece aqui na 1ª instalação do parceiro, e os prêmios quando ele bate uma meta. Tire foto na entrega (com autorização de imagem).'))
+   : vazio('Nenhum prêmio ou kit pendente', 'O kit aparece aqui quando o parceiro passa os contatos e gera as vendas, e os prêmios quando ele bate uma meta. Tire foto na entrega (com autorização de imagem).'))
    + (ent.length ? `<p class="sec">Já entregues</p><div class="prems">${ent.map(p => `<div class="pm ch ent"><span class="gi">${I.gift}</span><div><b>${h(p.premio)}</b><small>${h(p.parceiro)} · entregue em ${h(p.entregue)}</small></div></div>`).join('')}</div>` : '');
  }
 };
@@ -754,7 +755,7 @@ TELAS.mais = async () => {
    <label class="f">Mensagem que o cliente manda<input name="mensagem_wa" value="${h(c.mensagem_wa)}"${dis}><small>Precisa ter {codigo}</small></label>
    <div class="g2"><label class="f">Cidades do cadastro<input name="cidades" value="${h(c.cidades)}"${dis}><small>"todas" = as 323 cidades com fibra. Ou uma lista: Araguari, Uberlândia</small></label><label class="f">Preço promocional extra<input name="cidades_promo" value="${h(c.cidades_promo)}"${dis}><small>A tabela promocional já vem da base de cidades. Use só para incluir outras.</small></label></div>
    <label class="f">Metas: instalações validadas | prêmio (uma por linha)<textarea name="metas"${dis}>${h(c.metas)}</textarea><small>Conta instalação com a 1ª fatura paga. Ex.: 20|Air Fryer</small></label>
-   <fieldset class="f kitf"><legend>Kit do Estabelecimento</legend><label class="ck"><input type="checkbox" name="kit_ativo" value="1"${c.kit_ativo === '0' ? '' : ' checked'}${dis}> Liberar o kit na 1ª instalação do parceiro</label><label class="f">Nome do kit<input name="kit_nome" value="${h(c.kit_nome || 'Kit do Estabelecimento')}"${dis}></label><label class="f">O que vem no kit (aparece no app)<input name="kit_itens" value="${h(c.kit_itens ?? 'Adesivos, QR Code para o balcão e panfletos')}"${dis}><small>Ex.: Adesivos, QR Code para o balcão e panfletos. Libera na 1ª instalação, sem esperar a 1ª fatura.</small></label></fieldset>
+   <fieldset class="f kitf"><legend>Kit completo do parceiro</legend><label class="ck"><input type="checkbox" name="kit_ativo" value="1"${c.kit_ativo === '0' ? '' : ' checked'}${dis}> Liberar o kit completo por mérito</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="f">Contatos passados<input name="kit_contatos" type="number" min="1" value="${h(c.kit_contatos || '20')}"${dis}></label><label class="f">Vendas (agendadas ou instaladas)<input name="kit_vendas" type="number" min="1" value="${h(c.kit_vendas || '2')}"${dis}></label></div><label class="f">Nome do kit<input name="kit_nome" value="${h(c.kit_nome || 'Kit completo do parceiro')}"${dis}></label><label class="f">O que vem no kit (aparece no app)<input name="kit_itens" value="${h(c.kit_itens ?? 'Bandeirola, display de acrílico com QR e panfletos')}"${dis}><small>A peça da visita (adesivo A3 ou placa A4) sai na hora e não entra aqui.</small></label></fieldset>
    <label class="f">Validade da indicação (dias)<input name="validade_dias" type="number" min="15" max="365" value="${h(c.validade_dias || 60)}"${dis}><small>Sem instalação nesse prazo, o cliente pode ser indicado de novo. Cliente instalado nunca é indicado de novo.</small></label>
    <label class="f">Pixel da Meta (opcional)<input name="pixel_meta" value="${h(c.pixel_meta)}"${dis}></label>
    ${r.master ? '<button class="btn" type="submit" style="justify-self:start">Salvar configurações</button>' : '<p class="sub">Só o master muda as configurações.</p>'}</form>`;

@@ -117,7 +117,7 @@ body.pj .loja,body.pf .loja{display:block}
 
  <div class="ok" role="status">
   <h1>Recebido, <span id="ok-n">parceiro</span>!</h1>
-  <p>Seu cadastro foi para análise. A CallNet confere e te avisa no WhatsApp quando liberar o acesso.</p>
+  <p id="ok-p">Seu cadastro foi para análise. A CallNet confere e te avisa no WhatsApp quando liberar o acesso.</p>
   <a class="go" href="./">Voltar para a entrada</a>
  </div>
 </main>
@@ -202,7 +202,7 @@ body.pj .loja,body.pf .loja{display:block}
   fetch('/api/cadastro.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(dados) })
    .then(r => r.json()).then(j => {
     go.disabled = false; go.textContent = 'Quero entrar';
-    if (j.ok) return pronto(j.nome);
+    if (j.ok) { if (j.app) { location.href = j.app; return; } return pronto(j.nome); }
     for (const [c, t] of Object.entries(j.campos || {})) marca(c, t);
     $('#err').textContent = j.erro || 'Não deu para enviar. Tente de novo.'; $('#err').classList.add('on');
    }).catch(() => { go.disabled = false; go.textContent = 'Quero entrar'; $('#err').textContent = 'Sem conexão. Confira a internet e tente de novo.'; $('#err').classList.add('on'); });

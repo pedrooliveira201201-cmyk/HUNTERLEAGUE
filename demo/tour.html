@@ -78,7 +78,8 @@ h1,h2,h3{font-family:"Big Shoulders Display",Montserrat,sans-serif;text-transfor
 .ladder b{font:900 19px "Big Shoulders Display",sans-serif;color:var(--ink)}
 .ladder .t{border-color:var(--cyan);grid-column:span 2}
 .ladder .t b{color:var(--cyan)}
-.ladder.mx b{font-size:18px;color:var(--cyan)}
+.ladder.mx b,.ladder.pb b{font-size:18px;color:var(--cyan)}
+.ladder.pb{grid-template-columns:repeat(5,1fr)}.ladder.pb div{padding:10px 4px}
 .ladder em,.ex em{display:block;font-style:normal;font-size:11.5px;color:var(--mute);font-weight:600}
 .ex b{display:block}
 .ex{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:460px}
@@ -171,9 +172,9 @@ details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
     <a class="btn ghost" href="/demo/produtos.html">Abrir o app de demonstração</a>
    </div>
    <div class="chips">
-    <div class="chip"><b>R$ 50 a 100</b><span>de bônus por instalação</span></div>
+    <div class="chip"><b>R$ 55 a 100</b><span>de bônus por instalação</span></div>
     <div class="chip"><b>PIX</b><span>saque direto na sua conta</span></div>
-    <div class="chip"><b>Kit + prêmios</b><span>kit na 1ª venda, depois Air Fryer, Smart TV e iPhone</span></div>
+    <div class="chip"><b>Kit + prêmios</b><span>kit na 1ª venda, depois Air Fryer, Smart TV e iPhone (ou o valor no PIX)</span></div>
    </div>
   </div>
   <div class="phone"><img src="/demo/tour/04-marca.webp" alt="Tela do app com o QR Code exclusivo do parceiro" width="540" height="1169" fetchpriority="high"></div>
@@ -185,7 +186,7 @@ details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
   <li><a href="#passo-1">1 · Cadastro</a></li>
   <li><a href="#passo-2">2 · Seu QR</a></li>
   <li><a href="#passo-3">3 · O cliente chama</a></li>
-  <li><a href="#passo-4">4 · Multiplicador</a></li>
+  <li><a href="#passo-4">4 · Bônus</a></li>
   <li><a href="#passo-5">5 · Saque</a></li>
   <li><a href="#passo-6">6 · Prêmios</a></li>
   <li><a href="#passo-7">7 · Níveis e ranking</a></li>
@@ -200,7 +201,7 @@ details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
    <h2>Cadastro <span class="k">grátis</span> em 2 minutos</h2>
    <p>O estabelecimento se cadastra pelo celular. Não tem taxa, mensalidade nem meta obrigatória.</p>
    <ul>
-    <li>Precisa de <b>CNPJ</b>.</li>
+    <li>Vale com <b>CNPJ</b> (empresa ou MEI) ou com <b>CPF</b>, se ainda não tiver CNPJ.</li>
     <li>Informe nome da empresa, responsável, WhatsApp, e-mail, cidade e a chave PIX para receber.</li>
     <li>Aceite o contrato de parceria. A CallNet confere e libera o acesso.</li>
    </ul>
@@ -245,7 +246,8 @@ details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
    <ul>
     <li>Prefere indicar alguém conhecido? Use <b>"Indicar um cliente"</b> no app, com a autorização dele.</li>
     <li>A equipe atende, confere a cobertura e agenda a instalação.</li>
-    <li>Você acompanha cada cliente pelo app: em atendimento, instalado ou não deu certo.</li>
+    <li>Você acompanha cada cliente pelo app, em palavras simples: recebemos a indicação, já falamos com a pessoa, escolhendo o plano, instalação marcada e instalado.</li>
+    <li>Ficou 7 dias sem indicar ninguém? O app lembra você, e a CallNet também.</li>
    </ul>
    <p class="note">Os dados do cliente vão só para a CallNet. No app você vê apenas o primeiro nome e a etapa, nunca CPF, telefone ou endereço.</p>
   </div>
@@ -257,23 +259,21 @@ details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
  <div class="wrap">
   <div>
    <span class="num">4</span>
-   <h2>Multiplicador <span class="k">da semana</span></h2>
-   <p>Toda instalação vale <b>R$ 50 × o seu multiplicador</b>. A cada instalação na semana o multiplicador sobe <b>0,1</b>, e ele vale para <b>todas</b> as instalações da semana, até <b>x2,0</b>. Zera toda segunda.</p>
-   <p class="lh">Instalações na semana → multiplicador → quanto vale cada uma</p>
-   <div class="ladder mx" aria-label="Multiplicador conforme a quantidade de instalações na semana">
-    <div><small>1</small><b>x1,0</b><em>R$ 50</em></div><div><small>2</small><b>x1,1</b><em>R$ 55</em></div><div><small>3</small><b>x1,2</b><em>R$ 60</em></div>
-    <div><small>4</small><b>x1,3</b><em>R$ 65</em></div><div><small>5</small><b>x1,4</b><em>R$ 70</em></div><div><small>6</small><b>x1,5</b><em>R$ 75</em></div>
-    <div><small>7</small><b>x1,6</b><em>R$ 80</em></div><div><small>8</small><b>x1,7</b><em>R$ 85</em></div><div><small>9</small><b>x1,8</b><em>R$ 90</em></div>
-    <div><small>10</small><b>x1,9</b><em>R$ 95</em></div><div class="t"><small>11 ou mais</small><b>x2,0</b><em>R$ 100</em></div>
+   <h2>Bônus = <span class="k">valor do plano</span></h2>
+   <p>Você ganha <b>100% da mensalidade</b> do plano que o cliente assinar. Vendeu o plano de R$ 55, ganha R$ 55. Vendeu o de R$ 100, ganha R$ 100. Sem conta difícil.</p>
+   <p class="lh">Plano que o cliente assina → seu bônus</p>
+   <div class="ladder pb" aria-label="Bônus por plano">
+    <div><small>600 Mega</small><b>R$ 55</b><em>de bônus</em></div><div><small>800 Mega</small><b>R$ 70</b><em>de bônus</em></div>
+    <div><small>1 Giga</small><b>R$ 85</b><em>de bônus</em></div><div class="t"><small>Ultra Mesh</small><b>R$ 100</b><em>de bônus</em></div>
    </div>
    <div class="ex">
-    <div><small>3 na semana · x1,2</small><b>R$ 180</b><em>3 × R$ 60</em></div>
-    <div><small>7 na semana · x1,6</small><b>R$ 560</b><em>7 × R$ 80</em></div>
-    <div><small>11 na semana · x2,0</small><b>R$ 1.100</b><em>11 × R$ 100</em></div>
-    <div><small>Cada nova instalação</small><b>+0,1</b><em>no multiplicador de todas</em></div>
+    <div><small>3 casas de 1 Giga</small><b>R$ 255</b><em>3 × R$ 85</em></div>
+    <div><small>10 casas de 800 Mega</small><b>R$ 700</b><em>10 × R$ 70</em></div>
+    <div><small>20 casas validadas</small><b>+ Air Fryer</b><em>ou R$ 350 no PIX</em></div>
+    <div><small>Quando cai</small><b>1ª fatura</b><em>o cliente pagou, o bônus libera</em></div>
    </div>
   </div>
-  <div class="media"><div class="phone"><img src="/demo/tour/08-escada.webp" alt="Multiplicador da semana no app" width="540" height="1169" loading="lazy"></div></div>
+  <div class="media"><div class="phone"><img src="/demo/tour/08-escada.webp" alt="Bônus por plano no app" width="540" height="1169" loading="lazy"></div></div>
  </div>
 </section>
 
@@ -305,11 +305,11 @@ details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
    <p>Logo na <b>1ª instalação</b> você desbloqueia o <b>Kit do Estabelecimento</b> para divulgar no balcão. Depois, cada instalação validada (cliente pagou a 1ª fatura) soma para as metas, desde o dia em que você entrou.</p>
    <div class="prizes">
     <div class="kit"><b>1ª</b><span>Kit do Estabelecimento<small>Na 1ª instalação: adesivos, QR Code para o balcão e panfletos</small></span></div>
-    <div><b>20</b><span>Air Fryer<small>20 instalações validadas</small></span></div>
-    <div><b>60</b><span>Smart TV 50"<small>60 instalações validadas</small></span></div>
-    <div><b>200</b><span>iPhone 17<small>200 instalações validadas</small></span></div>
+    <div><b>20</b><span>Air Fryer ou R$ 350<small>20 instalações validadas</small></span></div>
+    <div><b>60</b><span>Smart TV 50" ou R$ 2.000<small>60 instalações validadas</small></span></div>
+    <div><b>200</b><span>iPhone 17 ou R$ 6.000<small>200 instalações validadas</small></span></div>
    </div>
-   <p class="note">O prêmio é retirado 30 dias após a validação da meta. Prêmio por resultado, não é sorteio. Imagens do app meramente ilustrativas.</p>
+   <p class="note">O prêmio é retirado 30 dias após a validação da meta. Em cada meta você escolhe o produto ou o valor em dinheiro. Prêmio por resultado, não é sorteio. Imagens do app meramente ilustrativas.</p>
   </div>
   <div class="media"><div class="phone"><img src="/demo/tour/12-metas.webp" alt="Metas e prêmios no perfil do parceiro" width="540" height="1169" loading="lazy"></div></div>
  </div>
@@ -340,11 +340,11 @@ details p{margin:0 0 18px;color:#C9D1D6;max-width:60ch}
   <h2>Dúvidas <span class="k">comuns</span></h2>
   <details><summary>Tem algum custo para participar?</summary><p>Não. O cadastro é grátis, sem taxa de entrada nem mensalidade.</p></details>
   <details><summary>Preciso vender ou explicar os planos?</summary><p>Não. Você só divulga o seu QR ou indica o cliente. A equipe da CallNet atende pelo WhatsApp, confere a cobertura e agenda a instalação.</p></details>
-  <details><summary>Quem paga o bônus?</summary><p>A CALLNET BRASIL BPO LTDA, por PIX, para a chave cadastrada no CNPJ do parceiro. O comprovante fica no app.</p></details>
+  <details><summary>Quem paga o bônus?</summary><p>A CALLNET BRASIL BPO LTDA, por PIX, para a chave PIX cadastrada pelo parceiro. O comprovante fica no app.</p></details>
   <details><summary>Quando o bônus é liberado?</summary><p>Quando o cliente paga a 1ª fatura, cerca de 30 dias depois da instalação. Se o cliente não pagar ou cancelar antes, aquele bônus não é liberado.</p></details>
   <details><summary>Ganho por trazer outros parceiros?</summary><p>Não. O bônus é só por instalação de cliente. Não existe ganho por recrutar outros estabelecimentos.</p></details>
   <details><summary>E se o cliente já foi indicado por outra pessoa?</summary><p>Cada indicação vale por 60 dias. Se não houver instalação nesse prazo, o cliente pode ser indicado de novo. Cliente já instalado não pode ser indicado outra vez.</p></details>
-  <details><summary>Preciso ter CNPJ?</summary><p>Sim. O programa é para pessoa jurídica, com CNPJ ativo.</p></details>
+  <details><summary>Preciso ter CNPJ?</summary><p>Não. Quem tem CNPJ (empresa ou MEI) se cadastra com ele. Quem ainda não tem pode entrar com o CPF; nesse caso o pagamento é feito com recibo de autônomo (RPA), com os descontos que a lei exige.</p></details>
  </div>
 </section>
 
