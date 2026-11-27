@@ -380,6 +380,21 @@ body.ehdemo main{padding-top:24px}
 /* campo de data no iPhone: não passa da largura da janela */
 input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;text-align:left}
 input[type=date]::-webkit-date-and-time-value{text-align:left}
+
+/* celular: abas e filtros quebram linha (todos à mostra); funil de indicações uma coluna por vez */
+.kcols{display:none}
+@media (max-width:900px){
+ .tabs{flex-wrap:wrap;overflow:visible;gap:5px}
+ .tabs button{height:36px;padding:0 10px;font-size:13px;gap:6px}
+ .kcols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:10px}
+ .kcols button{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:38px;padding:4px 8px;border:1px solid var(--ln2);border-top:3px solid var(--k);background:var(--p1);color:var(--sil);font-weight:700;font-size:12px;text-align:left;line-height:1.15}
+ .kcols button span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+ .kcols button i{flex:none;font-style:normal;min-width:20px;padding:1px 5px;background:#1A262C;font-size:11.5px;text-align:center}
+ .kcols button[aria-pressed=true]{background:color-mix(in srgb,var(--k) 16%,var(--p1));color:#fff;border-color:var(--k)}
+ .kcols button[aria-pressed=true] i{background:var(--k);color:#050607}
+ .kb.uma{display:block;overflow:visible}
+ .kb.uma .kc{width:100%}
+}
 </style>
 </head>
 <body>
@@ -477,7 +492,7 @@ const navDraw = () => {
  const t = cache.resumo ? cache.resumo.tarefas : {};
  const ct = { indicacoes: t.novas || 0, parceiros: t.pendentes || 0, pagar: (t.saques ? t.saques.n : 0) + (t.faturas || 0) + (t.premios || 0) };
  $('#nav-side').innerHTML = MENU.map(([k, t, ic]) => `<button class="nv${pagina === k ? ' on' : ''}" type="button" data-ir="${k}">${ic}<span>${t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
- const bot = [MENU[0], MENU[1], ['novo', 'Indicação', I.mais2], MENU[2], MENU[3]];
+ const bot = [MENU[0], [MENU[1][0], MENU[1][0] === 'mapa' ? 'Mapa' : MENU[1][1], MENU[1][2]], ['novo', 'Indicação', I.mais2], MENU[2], MENU[3]];
  $('#nav-bot').innerHTML = bot.map(([k, t, ic]) => k === 'novo' ? `<button class="mais" type="button" data-novo aria-label="Nova indicação">${ic}<span>${t}</span></button>` : `<button type="button" data-ir="${k}" class="${pagina === k ? 'on' : ''}">${ic}<span>${k === 'pagar' ? 'Bônus' : t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
  $('#top-t').textContent = (MENU.find(m => m[0] === pagina) || ['', 'Central'])[1];
 };
@@ -543,7 +558,7 @@ TELAS.hoje = async () => {
 };
 
 /* ---------- tela: indicações ---------- */
-let indAba = 'funil', indBusca = '';
+let indAba = 'funil', indBusca = '', indCol = '';
 const PROX = { 'Nova':'Em contato', 'Em contato':'Em negociação', 'Em negociação':'Agendado' };
 const ANT = { 'Em contato':'Nova', 'Em negociação':'Em contato', 'Agendado':'Em negociação' };
 /* colunas do funil: o parceiro vê a mesma etapa no app dele, com palavras simples */
@@ -575,11 +590,18 @@ const indDraw = () => {
   $('#ind-lista').innerHTML = fim.length ? `<div class="cards">${fim.map(cardInd).join('')}</div>` : `<div class="vazio ch"><b>${q ? 'Nada encontrado' : 'Nenhuma aqui'}</b>${q ? 'Tente outro nome, telefone ou código.' : 'Clientes que não fecharam aparecem aqui.'}</div>`;
   return;
  }
- $('#ind-lista').innerHTML = `<div class="kb">${COLS.map(([k, t, cor, dica]) => {
+ /* no celular: uma coluna por vez, escolhida nas fichas de etapa (todas à mostra, sem deslizar para o lado) */
+ const cel = matchMedia('(max-width:900px)').matches;
+ if (cel && !COLS.some(c => c[0] === indCol)) indCol = (COLS.find(c => funil.some(i => colDe(i) === c[0])) || COLS[0])[0];
+ const seletor = cel ? `<div class="kcols">${COLS.map(([k, t, cor]) => `<button type="button" data-kc="${k}" aria-pressed="${indCol === k}" style="--k:${cor}"><span>${h(t)}</span><i>${funil.filter(i => colDe(i) === k).length}</i></button>`).join('')}</div>` : '';
+ $('#ind-lista').innerHTML = seletor + `<div class="kb${cel ? ' uma' : ''}">${COLS.filter(c => !cel || c[0] === indCol).map(([k, t, cor, dica]) => {
   const l = funil.filter(i => colDe(i) === k);
   return `<section class="kc" style="--k:${cor}" aria-label="${h(t)}"><h3>${h(t)}<i>${l.length}</i></h3><p class="dica">${h(dica)}</p>${l.length ? l.map(cardInd).join('') : `<div class="vz">${q ? 'Nada encontrado' : 'Vazio'}</div>`}</section>`;
  }).join('')}</div>`;
 };
+/* girou o tablet ou mudou a largura: redesenha o funil no formato certo */
+let indCel = matchMedia('(max-width:900px)').matches;
+addEventListener('resize', () => { const c = matchMedia('(max-width:900px)').matches; if (c !== indCel) { indCel = c; if (pagina === 'indicacoes' && cache.inds) indDraw(); } });
 const cardInd = i => {
  const aberta = ABERTAS.includes(i.status), velha = aberta && i.dias >= 2;
  const idade = i.dias === 0 ? 'hoje' : i.dias === 1 ? 'há 1 dia' : `há ${i.dias} dias`;
@@ -609,6 +631,7 @@ const naoDeu = i => {
 };
 document.addEventListener('click', e => {
  const aba = e.target.closest('[data-aba]'); if (aba) { indAba = aba.dataset.aba; indDraw(); return; }
+ const kc = e.target.closest('[data-kc]'); if (kc) { indCol = kc.dataset.kc; indDraw(); return; }
  const f = (k) => { const b = e.target.closest(`[data-${k}]`); return b ? cache.inds.find(i => i.id === +b.dataset[k]) : null; };
  let i;
  if ((i = f('av'))) return etapa(i.id, { status: PROX[i.status] });
