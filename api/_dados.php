@@ -22,12 +22,25 @@ function bonus_planos(): array {
   foreach (PLANOS as $k => $p) $out[$p] = ($v[$k] ?? 0) > 0 ? $v[$k] : (float)BONUS_PLANOS_PADRAO[$k];
   return $out;
 }
-function bonus_plano(?string $plano): float { return $plano !== null ? (bonus_planos()[$plano] ?? 0.0) : 0.0; }
+/* virada da promoção em 07/12/2026 00h00: o 600 Mega sai da oferta e o Ultra Mesh passa de R$ 100 para R$ 130.
+   O bônus segue o preço do dia da venda: Ultra Mesh vendido a partir de 07/12 vale R$ 130; o 600 Mega vendido até 06/12 continua valendo o bônus dele. */
+const VIRADA_PROMO = '2026-12-07 00:00:00';
+function bonus_plano(?string $plano, ?string $vendido = null): float {
+  if ($plano === null) return 0.0;
+  if ($plano === 'Ultra Mesh' && $vendido !== null && $vendido >= VIRADA_PROMO) return 130.0;
+  return bonus_planos()[$plano] ?? 0.0;
+}
+/* tabela "quanto vale cada casa" que o parceiro vê hoje */
+function bonus_tabela_atual(): array {
+  $t = bonus_planos();
+  if (agora() >= VIRADA_PROMO) { unset($t['600 Mega']); $t['Ultra Mesh'] = 130.0; }
+  return $t;
+}
 /* grava o bônus de uma instalação pelo plano (as que já foram para saque não mudam) */
 function definir_bonus(int $id): void {
-  $r = one('SELECT status, plano, saque_id FROM indicacoes WHERE id = ?', [$id]);
+  $r = one('SELECT status, plano, saque_id, vendido_em, criado_em FROM indicacoes WHERE id = ?', [$id]);
   if (!$r || $r['saque_id']) return;
-  q('UPDATE indicacoes SET comissao = ? WHERE id = ?', [$r['status'] === 'Instalado' ? bonus_plano($r['plano']) : null, $id]);
+  q('UPDATE indicacoes SET comissao = ? WHERE id = ?', [$r['status'] === 'Instalado' ? bonus_plano($r['plano'], $r['vendido_em'] ?: $r['criado_em']) : null, $id]);
 }
 function semana_de(string $data): array { $t = strtotime(substr($data, 0, 10)); $seg = date('Y-m-d', strtotime('-' . ((int)date('N', $t) - 1) . ' days', $t)); return [$seg, date('Y-m-d', strtotime($seg . ' +6 days'))]; }
 /* vendas da semana: só contagem (para o contador e o ranking); não muda o valor do bônus */
@@ -111,7 +124,7 @@ function hl_dados(array $p): array {
     'codigo' => $p['codigo'],
     'link' => $link,
     'wa' => so_digitos(conf('whatsapp', '553420281071')),
-    'comissao' => min(bonus_planos()), 'planos_bonus' => array_map(fn($p, $v) => ['plano' => $p, 'valor' => $v], array_keys(bonus_planos()), array_values(bonus_planos())),
+    'comissao' => min(bonus_tabela_atual()), 'planos_bonus' => array_map(fn($p, $v) => ['plano' => $p, 'valor' => $v], array_keys(bonus_tabela_atual()), array_values(bonus_tabela_atual())),
     'tabela' => cidade_promo((string)$p['cidade']) ? 'promo' : 'cheia',
     /* virada da promoção: 07/12/2026 00h00 (o 600 Mega sai e o Ultra Mesh passa a R$ 130) */
     'promo_virou' => time() >= strtotime('2026-12-07 00:00:00'),

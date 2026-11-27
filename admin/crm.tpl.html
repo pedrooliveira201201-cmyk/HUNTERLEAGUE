@@ -280,6 +280,35 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
  .camp{width:min(270px,calc(100% - 16px));padding:10px 12px}
  #map::after{background:radial-gradient(130% 100% at 50% 45%,transparent 65%,rgba(2,4,6,.45) 100%)}
 }
+
+/* ===== celular (27/11, 2ª rodada): uma linha só por cima do mapa; etapas e ferramentas dentro de Filtros;
+   placar guardado num botão; o painel de baixo, quando sobe, fica por cima de tudo ===== */
+@media(max-width:900px){
+ .top{padding-top:max(6px,env(safe-area-inset-top));padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+ .top h1{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+ .placar{display:none!important}
+ body.placar-on .placar{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;overflow:visible}
+ body.placar-on .placar div{justify-content:center;min-width:0;padding:3px 4px;white-space:nowrap;overflow:hidden}
+ #b-placar[aria-expanded=true]{border-color:var(--cyan);color:var(--cyan)}
+ .ferr{left:8px;right:8px;top:8px;max-width:none;display:flex;flex-wrap:wrap;align-items:center}
+ .ferr .busca{flex:1 1 120px;min-width:0}
+ .ferr .busca input{width:100%}
+ .ferr #b-filtros,.ferr #b-cam{flex:none}
+ .ferr .fx.on{order:5;width:100%;display:flex;flex-wrap:wrap;gap:4px;padding-top:2px}
+ .chips-et{display:none!important}
+ body.filtros-on .chips-et{display:flex!important;flex-wrap:wrap;overflow:visible;right:8px}
+ .leaflet-top.leaflet-right{display:none}
+ .lado{z-index:1200!important}
+ .lado.f1{--fh:52dvh}
+ .b-eu{right:10px}
+ .sug{z-index:1300}
+ .camp{right:8px;z-index:1250}
+}
+@media(max-width:360px){
+ .top h1{font-size:15px}
+ .abas button{font-size:11.5px;padding:3px 2px}
+ .ferr button,.ferr input{font-size:11.5px;padding:3px 7px}
+}
 </style>
 <script>/*__CRM_BOOT__*/</script>
 </head>
@@ -294,6 +323,7 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
   <button type="button" role="tab" data-v="base" aria-selected="false">Base</button>
  </nav>
  <div class="placar" id="placar"></div>
+ <button class="bt so-cel" type="button" id="b-placar" aria-expanded="false" aria-label="Mostrar o placar" style="min-height:28px;width:28px;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
  <button class="bt" type="button" id="b-tour" aria-label="Como usar" style="min-height:38px;width:38px;padding:0;font-size:18px">?</button>
 </header>
 <div class="wrap">
@@ -660,7 +690,9 @@ function folha(n) { const a = $('#lado'); a.classList.remove('f0', 'f1', 'f2'); 
   const hh = a.offsetHeight / innerHeight; folha(hh < .3 ? 0 : hh < .7 ? 1 : 2); });
  al.addEventListener('pointermove', () => { if (y0 !== null) alturaFolha(); });
 }
-$('#b-filtros').addEventListener('click', () => { const f = $('#fx'), on = !f.classList.contains('on'); f.classList.toggle('on', on); $('#b-filtros').setAttribute('aria-expanded', on); });
+$('#b-filtros').addEventListener('click', () => { const f = $('#fx'), on = !f.classList.contains('on'); f.classList.toggle('on', on); document.body.classList.toggle('filtros-on', on); $('#b-filtros').setAttribute('aria-expanded', on); $('#b-filtros').textContent = on ? 'Fechar filtros' : 'Filtros'; encaixa(); });
+/* celular: o placar (só visual) fica guardado; abre num toque */
+$('#b-placar').addEventListener('click', () => { const on = !document.body.classList.contains('placar-on'); document.body.classList.toggle('placar-on', on); $('#b-placar').setAttribute('aria-expanded', on); topo(); encaixa(); setTimeout(() => map.invalidateSize(), 50); });
 
 /* ---------- painel: lista, região ---------- */
 const lado = $('#lado-c');

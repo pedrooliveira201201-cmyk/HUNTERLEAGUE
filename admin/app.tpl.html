@@ -380,6 +380,29 @@ body.ehdemo main{padding-top:24px}
 /* campo de data no iPhone: não passa da largura da janela */
 input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;text-align:left}
 input[type=date]::-webkit-date-and-time-value{text-align:left}
+
+/* celular: abas e filtros quebram linha (todos à mostra); funil de indicações uma coluna por vez */
+.kcols{display:none}
+@media (max-width:900px){
+ .tabs{flex-wrap:wrap;overflow:visible;gap:5px}
+ .tabs button{height:36px;padding:0 10px;font-size:13px;gap:6px}
+ .kcols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:10px}
+ .kcols button{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:38px;padding:4px 8px;border:1px solid var(--ln2);border-top:3px solid var(--k);background:var(--p1);color:var(--sil);font-weight:700;font-size:12px;text-align:left;line-height:1.15}
+ .kcols button span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+ .kcols button i{flex:none;font-style:normal;min-width:20px;padding:1px 5px;background:#1A262C;font-size:11.5px;text-align:center}
+ .kcols button[aria-pressed=true]{background:color-mix(in srgb,var(--k) 16%,var(--p1));color:#fff;border-color:var(--k)}
+ .kcols button[aria-pressed=true] i{background:var(--k);color:#050607}
+ .kb.uma{display:block;overflow:visible}
+ .kb.uma .kc{width:100%}
+}
+
+/* menu do celular: todas as telas com nome e ícone */
+.menu-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.menu-g button{position:relative;display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 12px;border:1px solid var(--ln2);background:var(--p1);color:var(--ink);font-weight:800;font-size:14px;text-align:left;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+.menu-g button svg{flex:none;color:var(--c)}
+.menu-g button.on{border-color:var(--c);background:rgba(25,247,255,.08)}
+.menu-g button i{margin-left:auto;font-style:normal;min-width:20px;padding:1px 6px;background:var(--bad);color:#fff;font-size:11.5px;text-align:center;border-radius:9px}
+.menu-g [data-sair] svg{color:var(--bad)}
 </style>
 </head>
 <body>
@@ -432,11 +455,14 @@ const I = {
  baixar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  clipe: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 11.5 12.3 19.2a5 5 0 0 1-7.1-7.1l8-8a3.4 3.4 0 0 1 4.8 4.8l-8 8a1.7 1.7 0 0 1-2.4-2.4l7.3-7.3" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  mapa: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5V4l-6 2.5L9 4Zm0 0v13m6-10.5v13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ menu: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+ perfil: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 21c.6-4 3.8-6.5 8-6.5s7.4 2.5 8 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+ sair: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  ok: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
 const MASTER = BOOT.papel === 'master';
-const MENU = MASTER ? [['hoje', 'Hoje', I.hoje], ['mapa', 'Mapa e CRM', I.mapa], ['indicacoes', 'Indicações', I.ind], ['parceiros', 'Parceiros', I.par], ['pagar', 'Bônus e prêmios', I.pag], ['mais', 'Mais', I.mais]]
- : [['hoje', 'Hoje', I.hoje], ['mapa', 'Mapa e CRM', I.mapa], ['indicacoes', 'Indicações', I.ind], ['mais', 'Mais', I.mais]];
+const MENU = MASTER ? [['hoje', 'Hoje', I.hoje], ['mapa', 'Mapa e CRM', I.mapa], ['indicacoes', 'Indicações', I.ind], ['parceiros', 'Parceiros', I.par], ['pagar', 'Bônus e prêmios', I.pag], ['mais', 'Configurações', I.mais]]
+ : [['hoje', 'Hoje', I.hoje], ['mapa', 'Mapa e CRM', I.mapa], ['indicacoes', 'Indicações', I.ind], ['mais', 'Configurações', I.mais]];
 
 /* ---------- dados: servidor de verdade ou demonstração ---------- */
 const api = async (acao, dados, q = '') => {
@@ -477,9 +503,20 @@ const navDraw = () => {
  const t = cache.resumo ? cache.resumo.tarefas : {};
  const ct = { indicacoes: t.novas || 0, parceiros: t.pendentes || 0, pagar: (t.saques ? t.saques.n : 0) + (t.faturas || 0) + (t.premios || 0) };
  $('#nav-side').innerHTML = MENU.map(([k, t, ic]) => `<button class="nv${pagina === k ? ' on' : ''}" type="button" data-ir="${k}">${ic}<span>${t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
- const bot = [MENU[0], MENU[1], ['novo', 'Indicação', I.mais2], MENU[2], MENU[3]];
+ /* celular: Hoje · Mapa · (+) · Indicações · Menu. O Menu abre a lista com todas as outras telas, com nome e ícone */
+ const fora = MENU.filter(m => !['hoje', 'mapa', 'indicacoes'].includes(m[0]));
+ ct.menu = fora.reduce((n, m) => n + (ct[m[0]] || 0), 0);
+ const bot = [MENU[0], ['mapa', 'Mapa', I.mapa], ['novo', 'Indicação', I.mais2], MENU.find(m => m[0] === 'indicacoes'), ['menu', 'Menu', I.menu]];
  $('#nav-bot').innerHTML = bot.map(([k, t, ic]) => k === 'novo' ? `<button class="mais" type="button" data-novo aria-label="Nova indicação">${ic}<span>${t}</span></button>` : `<button type="button" data-ir="${k}" class="${pagina === k ? 'on' : ''}">${ic}<span>${k === 'pagar' ? 'Bônus' : t}</span>${ct[k] ? `<span class="ct">${ct[k]}</span>` : ''}</button>`).join('');
  $('#top-t').textContent = (MENU.find(m => m[0] === pagina) || ['', 'Central'])[1];
+};
+const menuJan = () => {
+ const t = cache.resumo ? cache.resumo.tarefas : {};
+ const ct = { parceiros: t.pendentes || 0, pagar: (t.saques ? t.saques.n : 0) + (t.faturas || 0) + (t.premios || 0) };
+ const itens = MENU.filter(m => !['hoje', 'mapa', 'indicacoes'].includes(m[0]));
+ const j = jan(`<h2 class="bs">Menu</h2><div class="menu-g">${itens.map(([k, tx, ic]) => `<button type="button" data-ir="${k}" class="${pagina === k ? 'on' : ''}">${ic}<span>${h(tx)}</span>${ct[k] ? `<i>${ct[k]}</i>` : ''}</button>`).join('')}
+   <button type="button" data-ir="mais" data-mais="perfil">${I.perfil}<span>Meu perfil</span></button><button type="button" data-sair>${I.sair}<span>Sair</span></button></div>`);
+ j.addEventListener('click', ev => { if (ev.target.closest('[data-ir],[data-sair]')) fechaJan(); });
 };
 const ir = async (k, extra) => {
  if (k === 'mapa') { if (BOOT.modo === 'real') location.href = 'crm.php'; else toast('O mapa e CRM funciona só na Central de verdade.'); return; }
@@ -489,6 +526,7 @@ const ir = async (k, extra) => {
  navDraw();
 };
 document.addEventListener('click', e => {
+ if (e.target.closest('[data-ir="menu"]')) { menuJan(); return; }
  const n = e.target.closest('[data-ir]'); if (n) { e.preventDefault(); if (n.dataset.mais) maisAba = n.dataset.mais; ir(n.dataset.ir, n.dataset.extra); return; }
  if (e.target.closest('[data-novo]')) { novaIndicacao(); return; }
  const rl = e.target.closest('[data-rolar]'); if (rl) { const el = document.getElementById(rl.dataset.rolar); if (el) el.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
@@ -543,7 +581,7 @@ TELAS.hoje = async () => {
 };
 
 /* ---------- tela: indicações ---------- */
-let indAba = 'funil', indBusca = '';
+let indAba = 'funil', indBusca = '', indCol = '';
 const PROX = { 'Nova':'Em contato', 'Em contato':'Em negociação', 'Em negociação':'Agendado' };
 const ANT = { 'Em contato':'Nova', 'Em negociação':'Em contato', 'Agendado':'Em negociação' };
 /* colunas do funil: o parceiro vê a mesma etapa no app dele, com palavras simples */
@@ -575,11 +613,18 @@ const indDraw = () => {
   $('#ind-lista').innerHTML = fim.length ? `<div class="cards">${fim.map(cardInd).join('')}</div>` : `<div class="vazio ch"><b>${q ? 'Nada encontrado' : 'Nenhuma aqui'}</b>${q ? 'Tente outro nome, telefone ou código.' : 'Clientes que não fecharam aparecem aqui.'}</div>`;
   return;
  }
- $('#ind-lista').innerHTML = `<div class="kb">${COLS.map(([k, t, cor, dica]) => {
+ /* no celular: uma coluna por vez, escolhida nas fichas de etapa (todas à mostra, sem deslizar para o lado) */
+ const cel = matchMedia('(max-width:900px)').matches;
+ if (cel && !COLS.some(c => c[0] === indCol)) indCol = (COLS.find(c => funil.some(i => colDe(i) === c[0])) || COLS[0])[0];
+ const seletor = cel ? `<div class="kcols">${COLS.map(([k, t, cor]) => `<button type="button" data-kc="${k}" aria-pressed="${indCol === k}" style="--k:${cor}"><span>${h(t)}</span><i>${funil.filter(i => colDe(i) === k).length}</i></button>`).join('')}</div>` : '';
+ $('#ind-lista').innerHTML = seletor + `<div class="kb${cel ? ' uma' : ''}">${COLS.filter(c => !cel || c[0] === indCol).map(([k, t, cor, dica]) => {
   const l = funil.filter(i => colDe(i) === k);
   return `<section class="kc" style="--k:${cor}" aria-label="${h(t)}"><h3>${h(t)}<i>${l.length}</i></h3><p class="dica">${h(dica)}</p>${l.length ? l.map(cardInd).join('') : `<div class="vz">${q ? 'Nada encontrado' : 'Vazio'}</div>`}</section>`;
  }).join('')}</div>`;
 };
+/* girou o tablet ou mudou a largura: redesenha o funil no formato certo */
+let indCel = matchMedia('(max-width:900px)').matches;
+addEventListener('resize', () => { const c = matchMedia('(max-width:900px)').matches; if (c !== indCel) { indCel = c; if (pagina === 'indicacoes' && cache.inds) indDraw(); } });
 const cardInd = i => {
  const aberta = ABERTAS.includes(i.status), velha = aberta && i.dias >= 2;
  const idade = i.dias === 0 ? 'hoje' : i.dias === 1 ? 'há 1 dia' : `há ${i.dias} dias`;
@@ -609,6 +654,7 @@ const naoDeu = i => {
 };
 document.addEventListener('click', e => {
  const aba = e.target.closest('[data-aba]'); if (aba) { indAba = aba.dataset.aba; indDraw(); return; }
+ const kc = e.target.closest('[data-kc]'); if (kc) { indCol = kc.dataset.kc; indDraw(); return; }
  const f = (k) => { const b = e.target.closest(`[data-${k}]`); return b ? cache.inds.find(i => i.id === +b.dataset[k]) : null; };
  let i;
  if ((i = f('av'))) return etapa(i.id, { status: PROX[i.status] });
@@ -906,7 +952,7 @@ TELAS.mais = async () => {
  const r = cache.cfg = await api('config'); const c = r.config;
  const abas = r.master ? [['perfil', 'Meu perfil'], ['config', 'Configurações'], ['email', 'E-mail'], ['goto', 'GoTo (WhatsApp)'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['zerar', 'Zerar testes'], ['senha', 'Minha senha']] : [['perfil', 'Meu perfil'], ['senha', 'Minha senha']];
  if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
- $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Configurações</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
   <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
  const box = $('#mais-c');
  if (maisAba === 'config') {
@@ -926,8 +972,8 @@ TELAS.mais = async () => {
   if (r.master) $('#f-cfg').addEventListener('submit', async e => { e.preventDefault(); const v = Object.fromEntries(new FormData(e.target)); const rr = await api('salvar_config', v); rr.erro ? toast(rr.erro, true) : toast(rr.msg); });
  }
  if (maisAba === 'equipe') {
-  box.innerHTML = `<div class="lista">${r.equipe.map(u => `<div class="pr ch" style="cursor:default"><span class="av">${h(iniciais(u.nome))}</span><span><span class="nm" style="display:block">${h(u.nome)}${u.eu ? ' (você)' : ''}</span><span class="sub" style="display:block">${h(u.usuario)} · ${u.papel === 'master' ? 'Master' : 'Atendimento'}</span></span><span class="dir">${u.eu ? '' : `<button class="btn sm ${u.ativo ? 'g' : ''}" type="button" data-ut="${u.id}">${u.ativo ? 'Desativar' : 'Ativar'}</button>`}${u.ativo ? '' : '<span class="pill p-bloqueado">inativo</span>'}</span></div>`).join('')}</div>
-   <p class="sec">Novo usuário</p><form class="form ch" id="f-eq"><div class="g2"><label class="f">Nome<input name="nome" required></label><label class="f">Usuário<input name="usuario" required pattern="[a-z0-9._\\-]{3,40}"></label><label class="f">Senha (10 ou mais)<input name="senha" type="password" minlength="10" required></label><label class="f">Papel<select name="papel"><option value="atendimento">Atendimento (registra e avança)</option><option value="master">Master (tudo)</option></select></label></div><button class="btn" type="submit" style="justify-self:start">Criar usuário</button></form>`;
+  box.innerHTML = `<div class="lista">${r.equipe.map(u => `<div class="pr ch" style="cursor:default"><span class="av">${h(iniciais(u.nome))}</span><span><span class="nm" style="display:block">${h(u.nome)}${u.eu ? ' (você)' : ''}</span><span class="sub" style="display:block">${h(u.usuario)} · ${u.papel === 'master' ? 'Master' : 'Atendimento'}</span></span><span class="dir">${u.eu ? '' : `<button class="btn sm g" type="button" data-up="${u.id}">${u.papel === 'master' ? 'Tornar atendimento' : 'Tornar master'}</button>`}${u.eu ? '' : `<button class="btn sm ${u.ativo ? 'g' : ''}" type="button" data-ut="${u.id}">${u.ativo ? 'Desativar' : 'Ativar'}</button>`}${u.ativo ? '' : '<span class="pill p-bloqueado">inativo</span>'}</span></div>`).join('')}</div>
+   <p class="sec">Novo usuário</p><form class="form ch" id="f-eq"><div class="g2"><label class="f">Nome<input name="nome" required></label><label class="f">Usuário<input name="usuario" required pattern="[a-z0-9._\\-]{3,40}"></label><label class="f">Senha (10 ou mais)<input name="senha" type="password" minlength="10" required></label><label class="f">Papel<select name="papel"><option value="master" selected>Master (tudo)</option><option value="atendimento">Atendimento (registra e avança)</option></select></label></div><button class="btn" type="submit" style="justify-self:start">Criar usuário</button></form>`;
   $('#f-eq').addEventListener('submit', async e => { e.preventDefault(); const v = Object.assign({ o:'criar' }, Object.fromEntries(new FormData(e.target))); const rr = await api('equipe', v); if (rr.erro) return toast(rr.erro, true); toast(rr.msg); TELAS.mais(); });
  }
  if (maisAba === 'email') {
@@ -1020,6 +1066,7 @@ TELAS.mais = async () => {
 };
 document.addEventListener('click', async e => {
  const a = e.target.closest('[data-ma]'); if (a) { maisAba = a.dataset.ma; return TELAS.mais(); }
+ const up = e.target.closest('[data-up]'); if (up) { const r = await api('equipe', { id:+up.dataset.up, o:'papel' }); r.erro ? toast(r.erro, true) : toast(r.msg); TELAS.mais(); return; }
  const u = e.target.closest('[data-ut]'); if (u) { const r = await api('equipe', { id:+u.dataset.ut }); r.erro ? toast(r.erro, true) : toast(r.msg); TELAS.mais(); }
 });
 

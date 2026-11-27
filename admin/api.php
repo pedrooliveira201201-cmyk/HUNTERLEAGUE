@@ -221,6 +221,7 @@ case 'etapa': {
   if ($st === 'Instalado' && !$plano) json_out(['erro' => 'Escolha o plano vendido: o bônus é o valor do plano.'], 422);
   q('UPDATE indicacoes SET status = ?, motivo = ?, instalado_em = ?, competencia = ?, fatura_em = ?, comissao = ?, plano = ?, cliente_cpf = ?, cliente_nome = ?, cliente_tel = ?, cliente_email = ?, atualizado_em = ? WHERE id = ?',
     [$st, $st === 'Não instalado' ? $mot : null, $inst, $inst ? substr($inst, 0, 7) : null, $fat, $inst ? $i['comissao'] : null, $plano, $cpf ?: null, $nome, $tel ?: null, $email ?: null, agora(), $i['id']]);
+  if (in_array($st, ['Agendado', 'Instalado'], true) && empty($i['vendido_em'])) q('UPDATE indicacoes SET vendido_em = ? WHERE id = ?', [$st === 'Agendado' ? agora() : $i['criado_em'], $i['id']]);
   definir_bonus((int)$i['id']);
   $mud = $st !== $i['status'] ? "{$i['status']} → {$st}" . ($st === 'Não instalado' ? " ({$mot})" : '') . ($inst ? " em {$inst}" : '') : 'editou dados';
   auditar($quem, 'etapa', $i['codigo'] . ' #' . $i['id'], $mud);
@@ -495,6 +496,14 @@ case 'equipe': {
     json_out(['ok' => true, 'msg' => 'Usuário criado.']);
   }
   $id = (int)($e['id'] ?? 0);
+  if ($s('o') === 'papel') {
+    /* troca o perfil: master vê tudo; atendimento só Hoje, Mapa e Indicações */
+    if ($id === (int)$a['id']) json_out(['erro' => 'Você não pode mudar o seu próprio perfil.'], 422);
+    $u = one('SELECT usuario, papel FROM admins WHERE id = ?', [$id]); if (!$u) json_out(['erro' => 'Usuário não encontrado.'], 404);
+    $novo = $u['papel'] === 'master' ? 'atendimento' : 'master';
+    q('UPDATE admins SET papel = ? WHERE id = ?', [$novo, $id]); auditar($quem, 'mudou o perfil', $u['usuario'], $novo);
+    json_out(['ok' => true, 'msg' => $u['usuario'] . ' agora é ' . ($novo === 'master' ? 'Master' : 'Atendimento') . '. Ele precisa sair e entrar de novo para ver a mudança.']);
+  }
   if ($id === (int)$a['id']) json_out(['erro' => 'Você não pode desativar a si mesmo.'], 422);
   q('UPDATE admins SET ativo = 1 - ativo WHERE id = ?', [$id]); auditar($quem, 'ativou/desativou usuário', (string)$id);
   json_out(['ok' => true, 'msg' => 'Feito.']);
