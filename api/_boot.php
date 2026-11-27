@@ -193,6 +193,13 @@ function hl_migrar_etapas(): void {
   try {
     /* 27/11/2026: a equipe toda com o mesmo acesso (todos master), uma vez só */
     if (conf('equipe_master') !== '1') { q("UPDATE admins SET papel = 'master'"); q("INSERT INTO config (chave, valor) VALUES ('equipe_master', '1')"); }
+    /* 27/11/2026: a Gláucia ativou antes de existir o GPS na ativação; o lugar dela vem do endereço (Av. Batalhão Mauá, 1772), uma vez só */
+    if (conf('mapa_glaucia') !== '1') {
+      $gl = one("SELECT * FROM parceiros WHERE (nome LIKE 'Glaucia%' OR nome LIKE 'Gláucia%' OR nome LIKE 'GLAUCIA%' OR nome LIKE 'GLÁUCIA%') AND status = 'ativo' ORDER BY id LIMIT 1");
+      if ($gl) { require_once __DIR__ . '/_crm.php';
+        crm_parceiro_no_mapa($gl, -18.660271, -48.203347, 'sistema', ['logradouro' => 'Avenida Batalhão Mauá', 'numero' => '1772', 'bairro' => 'Industrial', 'cep' => '38440227']);
+        conf_set('mapa_glaucia', '1'); }
+    }
     /* 27/11/2026: a mensagem de agendamento do Erick no perfil dele, uma vez só */
     if (conf('msg_erick') !== '1') {
       $er = one("SELECT id FROM admins WHERE nome LIKE 'Erick%' ORDER BY id LIMIT 1");
