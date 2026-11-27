@@ -703,7 +703,14 @@ document.addEventListener('click', e => {
    <label class="f">Etapa<select id="j-st">${ETAPAS.map(s => `<option${s === i.status ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
    <p class="sub" style="margin:14px 0 8px">Plano de interesse</p><div class="opcs" id="j-pl">${PLANOS.map(p => `<button type="button" aria-pressed="${p === plano}" data-p="${p}">${p}</button>`).join('')}</div>
    <label class="f" style="margin-top:14px">CPF do cliente<input id="j-cpf" inputmode="numeric" value="${h(i.cpf)}" placeholder="000.000.000-00"></label>
-   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="j-ok">Salvar</button></div>`);
+   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="j-ok">Salvar</button></div>
+   ${MASTER && !DEMO ? `<p style="margin:18px 0 0;text-align:right"><button class="lk" type="button" id="j-del">Excluir indicação (teste ou engano)</button></p>` : ''}`);
+  const del = j.querySelector('#j-del'); if (del) del.addEventListener('click', async () => {
+   fechaJan();
+   if (!(await confirma('Excluir indicação', `${i.nome} (${i.parceiro.codigo}) sai do sistema de vez, do funil e do app do parceiro. Se tiver saque pedido, o valor dela sai do saque. Não tem volta.`, 'Excluir', true))) return;
+   const r = await api('excluir_ind', { id:i.id }); if (r.erro) return toast(r.erro, true);
+   toast(r.msg); const rr = await api('indicacoes'); cache.inds = rr.itens; indDraw(); atualizaResumo();
+  });
   j.querySelector('#j-pl').addEventListener('click', ev => { const b = ev.target.closest('[data-p]'); if (!b) return; plano = plano === b.dataset.p ? '' : b.dataset.p; j.querySelectorAll('#j-pl button').forEach(x => x.setAttribute('aria-pressed', x.dataset.p === plano)); });
   j.querySelector('#j-ok').addEventListener('click', () => {
    const st = j.querySelector('#j-st').value;

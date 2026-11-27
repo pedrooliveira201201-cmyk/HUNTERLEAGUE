@@ -245,6 +245,29 @@ case 'liberar': {
   json_out(['ok' => true, 'msg' => $desfaz ? 'Liberação desfeita.' : primeiro_nome($i['cliente_nome']) . ': bônus de R$ ' . number_format((float)$i['comissao'], 2, ',', '.') . ' liberado. O parceiro já pode pedir o saque.']);
 }
 
+case 'excluir_ind': {
+  /* apaga uma indicação de teste ou lançada por engano. Saque pedido (não pago) é ajustado; saque pago não deixa apagar. */
+  if (!$master) json_out(['erro' => 'Só o master exclui indicação.'], 403);
+  if (!$post) json_out(['erro' => 'Use POST.'], 405);
+  $i = one('SELECT i.*, p.codigo FROM indicacoes i JOIN parceiros p ON p.id = i.parceiro_id WHERE i.id = ?', [(int)($e['id'] ?? 0)]);
+  if (!$i) json_out(['erro' => 'Indicação não encontrada.'], 404);
+  db()->beginTransaction();
+  try {
+    if ($i['saque_id']) {
+      $sq = one('SELECT * FROM saques WHERE id = ?', [$i['saque_id']]);
+      if ($sq && $sq['pago_em']) { db()->rollBack(); json_out(['erro' => 'O saque com esta indicação já foi pago. Não dá para excluir.'], 409); }
+      if ($sq) { $resto = (int)(one('SELECT COUNT(*) AS n FROM indicacoes WHERE saque_id = ? AND id <> ?', [$sq['id'], $i['id']])['n'] ?? 0);
+        if ($resto === 0) q('DELETE FROM saques WHERE id = ?', [$sq['id']]);
+        else q('UPDATE saques SET valor = (SELECT COALESCE(SUM(comissao), 0) FROM indicacoes WHERE saque_id = ? AND id <> ?), n = ? WHERE id = ?', [$sq['id'], $i['id'], $resto, $sq['id']]); }
+    }
+    q('DELETE FROM indicacoes WHERE id = ?', [$i['id']]);
+    db()->commit();
+  } catch (Throwable $x) { if (db()->inTransaction()) db()->rollBack(); json_out(['erro' => 'Não excluiu: ' . mb_substr($x->getMessage(), 0, 150)], 500); }
+  ranking_cache_limpa();
+  auditar($quem, 'excluiu indicação', $i['codigo'] . ' #' . $i['id'], $i['cliente_nome'] . ' · ' . $i['status'] . ($i['saque_id'] ? ' · saque ajustado' : ''));
+  json_out(['ok' => true, 'msg' => primeiro_nome($i['cliente_nome']) . ' excluída.' . ($i['saque_id'] ? ' O saque pedido foi ajustado.' : '')]);
+}
+
 case 'parceiro_ficha': {
   /* tudo do parceiro numa tela: loja no mapa, QR e leituras, indicados, kit, bônus e a conversa do WhatsApp */
   if (!$master) json_out(['erro' => 'Só o master vê a ficha completa.'], 403);
