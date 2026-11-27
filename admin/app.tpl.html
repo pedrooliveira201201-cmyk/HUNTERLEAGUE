@@ -369,6 +369,13 @@ body.ehdemo main{padding-top:24px}
  .alerta{padding:10px 12px;font-size:13px}
  .btn{height:40px;font-size:13.5px}
 }
+
+.ult{margin-top:22px}
+.ult summary{display:inline-flex;align-items:center;gap:8px;margin:0;padding:9px 14px;border:1px solid var(--ln2);background:var(--p1);cursor:pointer;list-style:none;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.ult summary::-webkit-details-marker{display:none}
+.ult summary::after{content:"▾";font-size:12px;transition:transform .2s}.ult[open] summary::after{transform:rotate(180deg)}
+.ult summary span{padding:1px 7px;background:#15222A;color:var(--sil);font-size:11px}
+.ult .tl{margin-top:12px}
 </style>
 </head>
 <body>
@@ -491,7 +498,7 @@ const TELAS = {};
 const painelDia = r => {
  const c = r.campo || {}, f = r.funil || [], v = r.ao_vivo || [], g = r.goto;
  const mx = Math.max(1, ...f.map(x => x[1]));
- return `${g && g.alerta ? `<div class="alerta ch"><b>WhatsApp do GoTo sem mensagens ${g.horas == null ? 'desde a conexão' : `há ${g.horas} h`}</b><span>Se o WhatsApp da CallNet recebeu mensagens nesse tempo, a integração pode ter caído. Confira em Mais → GoTo.</span><button class="btn sm" type="button" data-ir="mais" data-mais="goto">Conferir</button></div>` : ''}
+ return `
  <div class="dia">
   <section class="pn ch" style="--a:#FFB547"><header><small>Na rua hoje</small><b class="bs">${c.visitas || 0} ${c.visitas === 1 ? 'visita' : 'visitas'}</b><span>${c.manha || 0} de manhã · ${c.tarde || 0} à tarde</span></header>
    ${(c.lista || []).length ? `<ul>${c.lista.map(x => `<li><i>${h(x.turno)}</i>${h(x.nome)}<small>${h(x.bairro)}</small></li>`).join('')}</ul>` : '<p class="vz">Nenhuma visita marcada para hoje.</p>'}
@@ -523,12 +530,12 @@ TELAS.hoje = async () => {
  const s = r.stats;
  $('#main').innerHTML = `<div class="ola"><h1 class="bs">${sauda}, <span>${h(r.me.nome)}</span></h1><p>${h(dt)}</p><button type="button" data-instalar style="all:unset;box-sizing:border-box;display:none;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;color:#8A959C;font:700 13px Montserrat,system-ui,sans-serif;cursor:pointer;border-bottom:1px dashed #33434A"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M12 7v7m-3-3 3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Instalar app no celular</button></div>
   ${cards.length ? `<div class="tarefas">${cards.map(c => `<div class="tf ch" style="--a:${c[0]}"><span class="n bs">${h(c[1])}</span><b>${h(c[2])}</b><small>${h(c[3])}</small><button class="btn sm" type="button" ${c[5][0] === '#' ? `data-rolar="${c[5].slice(1)}"` : `data-ir="${c[5]}"`}>${h(c[4])} ▸</button></div>`).join('')}</div>`
-   : `<div class="emdia ch"><span class="ok2">${I.ok}</span><div><b class="bs">Tudo em dia</b><p>Nenhuma tarefa pendente agora. Quando chegar indicação ou cadastro, aparece aqui.</p></div></div>`}
+   : ''}
   ${par.length ? `<p class="sec" id="parados">Parceiros parados (${r.dias_alerta}+ dias sem indicar)</p><div class="parados">${par.map(p => `<div class="pd"><div><b>${h(p.nome)} <span class="cod">${h(p.codigo)}</span></b><small>${p.nunca ? `Ainda não indicou ninguém · aprovado há ${p.dias} dias` : `Última indicação há ${p.dias} dias`}</small></div><a class="btn sm" href="https://wa.me/55${h(p.wa_d)}?text=${encodeURIComponent(`Oi, ${p.resp}! Tudo bem? Aqui é da CallNet. Faz uns dias que não chega indicação pelo seu QR. Lembra de mostrar a plaquinha para os clientes e de mandar o seu link para quem precisa de internet. Qualquer dúvida, é só chamar!`)}" target="_blank" rel="noopener">${I.wa}Chamar</a></div>`).join('')}</div>` : ''}
   ${painelDia(r)}
   <p class="sec">Números</p>
   <div class="stats"><div class="st ch"><b class="bs">${s.ind_hoje}</b><span>indicações hoje</span></div><div class="st ch"><b class="bs">${s.ind_mes}</b><span>indicações no mês</span></div><div class="st ch"><b class="bs" style="color:var(--ok)">${s.inst_mes}</b><span>instalações no mês</span></div><div class="st ch"><b class="bs">${s.leit_hoje}</b><span>leituras de QR hoje</span></div><div class="st ch"><b class="bs">${s.ativos}</b><span>parceiros ativos</span></div></div>
-  ${r.atividade.length ? `<p class="sec">Últimas ações</p><ul class="tl">${r.atividade.map(a => `<li>${h(a.acao)} <b>${h(a.alvo)}</b><small>${h(a.em)} · ${h(a.quem)}</small></li>`).join('')}</ul>` : ''}`; if (window.HLinstalar) HLinstalar();
+  ${r.atividade.length ? `<details class="ult"><summary class="sec">Últimas ações <span>${r.atividade.length}</span></summary><ul class="tl">${r.atividade.map(a => `<li>${h(a.acao)} <b>${h(a.alvo)}</b><small>${h(a.em)} · ${h(a.quem)}</small></li>`).join('')}</ul></details>` : ''}`; if (window.HLinstalar) HLinstalar();
 };
 
 /* ---------- tela: indicações ---------- */
