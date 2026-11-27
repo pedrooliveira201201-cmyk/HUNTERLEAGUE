@@ -2,6 +2,7 @@
 /* API do painel do admin. Responde JSON. Toda escrita exige o token da sessão (cabeçalho X-CSRF). */
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
+require __DIR__ . '/../api/_casadosdados.php';
 header('X-Robots-Tag: noindex');
 $a = admin_logado();
 if (!$a) json_out(['erro' => 'Sua sessão expirou. Entre de novo.', 'sair' => true], 401);
@@ -111,6 +112,7 @@ case 'bonus': {
 case 'config': {
   $c = []; foreach (all('SELECT chave, valor FROM config') as $r) $c[$r['chave']] = $r['valor'];
   $c['smtp_tem_senha'] = ($c['smtp_senha'] ?? '') !== ''; unset($c['smtp_senha']);
+  $ck = cdd_chave(); $c['cdd_fim'] = $ck !== '' ? mb_substr($ck, -4) : ''; $c['cdd_no_arquivo'] = (string)(cfg()['casadosdados_key'] ?? '') !== ''; unset($c['casadosdados_key']);
   if (!$master) $c = [];
   json_out(['config' => $c, 'master' => $master,
     'equipe' => $master ? array_map(fn($u) => ['id' => (int)$u['id'], 'nome' => $u['nome'], 'usuario' => $u['usuario'], 'papel' => $u['papel'], 'ativo' => (bool)$u['ativo'], 'eu' => (int)$u['id'] === (int)$a['id']], all('SELECT * FROM admins ORDER BY nome')) : [],
@@ -290,6 +292,19 @@ case 'salvar_config': {
   json_out(['ok' => true, 'msg' => 'Configurações salvas.']);
 }
 
+case 'integracoes': {
+  /* token da Casa dos Dados: só entra, nunca sai (a tela mostra os 4 últimos caracteres) */
+  $o = $s('o');
+  if ($o === 'testar') { $r = cdd_testar(); auditar($quem, 'testou Casa dos Dados', $r['ok'] ? 'ok' : 'erro'); json_out(['ok' => $r['ok'], 'msg' => $r['msg']]); }
+  if ($o === 'apagar') { q("DELETE FROM config WHERE chave = 'casadosdados_key'"); auditar($quem, 'apagou o token da Casa dos Dados'); json_out(['ok' => true, 'msg' => 'Token apagado.']); }
+  $k = preg_replace('/\s+/', '', (string)($e['casadosdados_key'] ?? ''));
+  if ($k === '') json_out(['erro' => 'Cole o token.'], 422);
+  if (strlen($k) < 16 || strlen($k) > 400) json_out(['erro' => 'Esse token não parece completo. Copie de novo no portal da Casa dos Dados.'], 422);
+  if (one("SELECT chave FROM config WHERE chave = 'casadosdados_key'")) q("UPDATE config SET valor = ? WHERE chave = 'casadosdados_key'", [$k]); else q("INSERT INTO config (chave, valor) VALUES ('casadosdados_key', ?)", [$k]);
+  auditar($quem, 'salvou o token da Casa dos Dados', '…' . mb_substr($k, -4));
+  $r = cdd_testar();
+  json_out(['ok' => true, 'msg' => 'Token salvo. ' . $r['msg']]);
+}
 case 'email': {
   if ($s('o') === 'teste') {
     if (!email_configurado()) json_out(['erro' => 'Salve o usuário e a senha do e-mail antes de testar.'], 422);

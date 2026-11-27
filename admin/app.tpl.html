@@ -740,7 +740,7 @@ document.addEventListener('click', async e => {
 let maisAba = 'config';
 TELAS.mais = async () => {
  const r = cache.cfg = await api('config'); const c = r.config;
- const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
+ const abas = r.master ? [['config', 'Configurações'], ['email', 'E-mail'], ['integra', 'Integrações'], ['equipe', 'Equipe'], ['hist', 'Histórico'], ['senha', 'Minha senha']] : [['senha', 'Minha senha']];
  if (!abas.find(x => x[0] === maisAba)) maisAba = abas[0][0];
  $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Mais</h1><p>${r.master ? 'Ajustes do programa e da equipe.' : 'Sua conta na Central.'}</p></div><button class="btn g" type="button" data-sair>Sair</button></div>
   <div class="tabs">${abas.map(([k, t]) => `<button type="button" data-ma="${k}" aria-selected="${maisAba === k}">${t}</button>`).join('')}</div><div id="mais-c"></div>`;
@@ -777,6 +777,16 @@ TELAS.mais = async () => {
    <p class="sub" style="margin:0">${c.smtp_tem_senha && c.smtp_usuario ? '✓ Recuperação por e-mail ativa.' : 'Enquanto não estiver configurado, o "Esqueci a senha" manda o parceiro para o WhatsApp.'}</p></form>`;
   $('#f-mail').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('email', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
   $('#m-teste').addEventListener('click', async () => { toast('Enviando…'); const rr = await api('email', { o:'teste' }); rr.erro ? toast(rr.erro, true) : toast(rr.msg); });
+ }
+ if (maisAba === 'integra') {
+  box.innerHTML = `<form class="form ch" id="f-cdd" style="max-width:560px">
+   <p class="sub" style="margin:0">Casa dos Dados: puxa as empresas para o mapa de conquista. O token fica só no servidor e não aparece de novo depois de salvo.</p>
+   <label class="f">Token da API (Casa dos Dados)<input name="casadosdados_key" type="password" autocomplete="off" spellcheck="false" placeholder="${c.cdd_fim ? '•••• ' + h(c.cdd_fim) + ' salvo (cole outro para trocar)' : 'cole o token aqui'}"></label>
+   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="submit">Salvar</button><button class="btn g" type="button" id="cdd-t">Testar conexão</button>${c.cdd_fim && !c.cdd_no_arquivo ? '<button class="btn g" type="button" id="cdd-x">Apagar token</button>' : ''}</div>
+   <p class="sub" style="margin:0">${c.cdd_fim ? '✓ Token configurado' + (c.cdd_no_arquivo ? ' no arquivo do servidor.' : '.') : 'Pegue o token em portal.casadosdados.com.br → Plataforma → API → Chave.'}</p></form>`;
+  $('#f-cdd').addEventListener('submit', async e => { e.preventDefault(); const rr = await api('integracoes', Object.fromEntries(new FormData(e.target))); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
+  $('#cdd-t').addEventListener('click', async () => { toast('Testando…'); const rr = await api('integracoes', { o:'testar' }); rr.ok ? toast(rr.msg) : toast(rr.msg || rr.erro, true); });
+  const x = $('#cdd-x'); if (x) x.addEventListener('click', async () => { const rr = await api('integracoes', { o:'apagar' }); rr.erro ? toast(rr.erro, true) : (toast(rr.msg), TELAS.mais()); });
  }
  if (maisAba === 'hist') box.innerHTML = `<ul class="hist">${r.historico.map(x => `<li class="ch"><span>${h(x.em)}</span><span>${h(x.quem)}</span><div><b>${h(x.acao)}</b> ${h(x.alvo)}${x.detalhe ? ` <span>· ${h(x.detalhe)}</span>` : ''}</div></li>`).join('')}</ul>`;
  if (maisAba === 'senha') {
