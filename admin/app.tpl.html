@@ -495,6 +495,19 @@ const confirma = (titulo, texto, botao, ruim) => new Promise(ok => {
  const j = jan(`<h2 class="bs">${h(titulo)}</h2><p class="sub">${h(texto)}</p><div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn ${ruim ? 'bad' : ''}" type="button" data-sim>${h(botao)}</button></div>`);
  j.querySelector('[data-sim]').addEventListener('click', () => { fechaJan(); ok(true); });
 });
+/* abre o WhatsApp instalado (ou o Business) direto na conversa do número, com o texto pronto.
+   Android: intent (o sistema escolhe WhatsApp ou Business); iPhone: whatsapp:// e, se não abrir, wa.me; computador: wa.me */
+const abreZap = (tel, txt) => {
+ let d = String(tel || '').replace(/\D/g, ''); if (!d) return false; if (!d.startsWith('55')) d = '55' + d;
+ const q = 'phone=' + d + (txt ? '&text=' + encodeURIComponent(txt) : ''), web = 'https://wa.me/' + d + (txt ? '?text=' + encodeURIComponent(txt) : ''), ua = navigator.userAgent || '';
+ if (/Android/i.test(ua)) location.href = 'intent://send/?' + q + '#Intent;scheme=whatsapp;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+ else if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) { const t = Date.now(); location.href = 'whatsapp://send?' + q; setTimeout(() => { if (!document.hidden && Date.now() - t < 2500) location.href = web; }, 1600); }
+ else window.open(web, '_blank', 'noopener');
+ return true;
+};
+/* links wa.me da tela também abrem direto no app */
+document.addEventListener('click', ev => { const a = ev.target.closest && ev.target.closest('a[href^="https://wa.me/"]'); if (!a) return;
+ const u = new URL(a.href); ev.preventDefault(); abreZap(u.pathname.slice(1), u.searchParams.get('text') || ''); });
 const copiar = (t, msg) => { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast(msg || 'Copiado')).catch(() => { prompt('Copie:', t); }); };
 
 /* ---------- navegação ---------- */
