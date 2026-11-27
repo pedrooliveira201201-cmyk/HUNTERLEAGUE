@@ -24,7 +24,7 @@ RewriteRule ^(conheca|apresentacao)/?$ demo/tour.html [L]
 
 # arquivos internos nunca abrem pelo navegador
 RewriteRule ^arquivos(/|$) - [F,L]
-RewriteRule ^(config\.php|app\.tpl\.html|ativar\.tpl\.html|api/_.*\.php|admin/_.*\.php|admin/app\.tpl\.html)$ - [F,L]
+RewriteRule ^(config\.php|app\.tpl\.html|ativar\.tpl\.html|api/_.*\.php|admin/_.*\.php|admin/app\.tpl\.html|admin/crm\.tpl\.html)$ - [F,L]
 <FilesMatch "(\.(sqlite|db|sql|log|md|py)|^\.ftp-deploy-sync-state\.json)$">
   Require all denied
 </FilesMatch>
