@@ -99,6 +99,8 @@ function hl_dados(array $p): array {
                  'codigo' => $p['codigo'], 'doc' => mascara_doc($p['doc']), 'whatsapp' => mascara_tel($p['whatsapp']), 'pix' => mascara_pix((string)$p['pix'], $p['doc']), 'pix_tipo' => tipo_pix((string)$p['pix'], $p['doc']),
                  'desde' => date('d/m/Y', strtotime($p['aprovado_em'] ?: $p['criado_em']))],
     'ranking' => ranking_liga($id),
+    /* o ranking da liga abre numa data (config ranking_abre, padrão 19/12/2026); antes disso o app mostra o cadeado */
+    'ranking_abre' => date('d/m', strtotime((string)conf('ranking_abre', '2026-12-19'))), 'ranking_travado' => date('Y-m-d') < (string)conf('ranking_abre', '2026-12-19'),
     'prog' => ['feitas' => $niv['feitas'], 'meta' => $niv['meta']],
     'metas' => $metas,
     'kit' => ['ativo' => kit_ativo(), 'nome' => kit_nome(), 'itens' => kit_itens(), 'regra' => kit_regra(), 'prog' => kit_progresso($id),
