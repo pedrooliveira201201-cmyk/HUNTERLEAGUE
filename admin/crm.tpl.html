@@ -156,7 +156,8 @@ const E = r => ({ id:r[0], nome:r[1], seg:r[2], bairro:r[3], lat:r[4], lng:r[5],
 /* ---------- mapa ---------- */
 const map = L.map('map', { preferCanvas:true, zoomControl:false }).setView([-18.6475, -48.1875], 14);
 L.control.zoom({ position:'topright' }).addTo(map);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'&copy; OpenStreetMap' }).addTo(map);
+/* o OpenStreetMap exige saber de qual site vem o pedido (Referer); a Central não manda isso para outros sites, então liberamos só nos blocos do mapa */
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, referrerPolicy:'strict-origin-when-cross-origin', attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
 const G = { cabo:L.layerGroup().addTo(map), hex:L.layerGroup().addTo(map), reg:L.layerGroup().addTo(map), emp:L.layerGroup().addTo(map), ind:L.layerGroup().addTo(map), des:L.layerGroup().addTo(map) };
 const rend = L.canvas({ padding:.3 });
 /* empresas mapeadas só pelo bairro ficam espalhadas em volta do centro do bairro (até refinar pela rua) */
