@@ -75,7 +75,7 @@ function lancar_lista(array $p, string $txt, bool $gravar, string $quem): array 
   if ($gravar) {
     foreach ($ok as $i) q('INSERT INTO indicacoes (parceiro_id, cliente_nome, cliente_tel, status, origem, criado_em, criado_por, atualizado_em) VALUES (?,?,?,?,?,?,?,?)',
       [$p['id'], $i['nome'], $i['tel'], 'Nova', 'lista', agora(), $quem, agora()]);
-    auditar('admin:' . $quem, 'lançou a lista de contatos', (string)($p['codigo'] ?: $p['doc']), count($ok) . ' contatos');
+    auditar(str_contains($quem, ':') ? $quem : 'admin:' . $quem, 'lançou a lista de contatos', (string)($p['codigo'] ?: $p['doc']), count($ok) . ' contatos');
   }
   return ['itens' => $itens, 'ok' => count($ok), 'total' => count($itens)];
 }

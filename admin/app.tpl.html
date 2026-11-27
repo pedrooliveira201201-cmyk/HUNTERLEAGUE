@@ -703,7 +703,14 @@ document.addEventListener('click', e => {
    <label class="f">Etapa<select id="j-st">${ETAPAS.map(s => `<option${s === i.status ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
    <p class="sub" style="margin:14px 0 8px">Plano de interesse</p><div class="opcs" id="j-pl">${PLANOS.map(p => `<button type="button" aria-pressed="${p === plano}" data-p="${p}">${p}</button>`).join('')}</div>
    <label class="f" style="margin-top:14px">CPF do cliente<input id="j-cpf" inputmode="numeric" value="${h(i.cpf)}" placeholder="000.000.000-00"></label>
-   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="j-ok">Salvar</button></div>`);
+   <div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="j-ok">Salvar</button></div>
+   ${MASTER && !DEMO ? `<p style="margin:18px 0 0;text-align:right"><button class="lk" type="button" id="j-del">Excluir indicação (teste ou engano)</button></p>` : ''}`);
+  const del = j.querySelector('#j-del'); if (del) del.addEventListener('click', async () => {
+   fechaJan();
+   if (!(await confirma('Excluir indicação', `${i.nome} (${i.parceiro.codigo}) sai do sistema de vez, do funil e do app do parceiro. Se tiver saque pedido, o valor dela sai do saque. Não tem volta.`, 'Excluir', true))) return;
+   const r = await api('excluir_ind', { id:i.id }); if (r.erro) return toast(r.erro, true);
+   toast(r.msg); const rr = await api('indicacoes'); cache.inds = rr.itens; indDraw(); atualizaResumo();
+  });
   j.querySelector('#j-pl').addEventListener('click', ev => { const b = ev.target.closest('[data-p]'); if (!b) return; plano = plano === b.dataset.p ? '' : b.dataset.p; j.querySelectorAll('#j-pl button').forEach(x => x.setAttribute('aria-pressed', x.dataset.p === plano)); });
   j.querySelector('#j-ok').addEventListener('click', () => {
    const st = j.querySelector('#j-st').value;
@@ -819,7 +826,8 @@ document.addEventListener('click', async e => {
    ${DEMO ? '' : '<div id="pf-mais" class="pf"><span class="vz">Carregando o resto da ficha…</span></div>'}
    <div class="rod" style="justify-content:flex-start">
     ${st === 'pendente' || st === 'recusado' ? `<button class="btn ok" type="button" data-o="aprovar">✓ Aprovar</button>` : ''}
-    ${(st === 'ativo' || st === 'pendente') && !DEMO ? `<button class="btn" type="button" data-o="lista">Lançar lista dos 20</button>` : ''}
+    ${p.link_contatos && !DEMO ? `<button class="btn" type="button" data-o="cl">Copiar link de contatos</button><a class="btn ok" href="https://wa.me/55${h(p.wa_d)}?text=${encodeURIComponent(`Oi, ${(p.nome || '').split(' ')[0]}! Aqui é da CallNet. Por este link você escolhe os seus contatos e manda pra gente de uma vez, e depois avisa cada um pelo seu WhatsApp com um toque: ${p.link_contatos}`)}" target="_blank" rel="noopener">Mandar link no WhatsApp</a>` : ''}
+    ${(st === 'ativo' || st === 'pendente') && !DEMO ? `<button class="btn g" type="button" data-o="lista">Lançar lista à mão</button>` : ''}
     ${st === 'ativo' ? `<button class="btn g" type="button" data-o="senha">Senha nova</button><button class="btn g" type="button" data-o="editar">Editar WhatsApp/PIX</button>${p.codigo && !DEMO ? `<a class="btn g" href="qr.php?id=${p.id}" target="_blank">Baixar QR</a>` : ''}<button class="btn bad" type="button" data-o="bloquear">Bloquear</button><button class="btn bad" type="button" data-o="desfiliar">Desfiliar</button>` : ''}
     ${st === 'bloqueado' || st === 'desfiliado' ? `<button class="btn" type="button" data-o="reativar">Reativar</button>` : ''}
    </div>`);
@@ -829,6 +837,7 @@ document.addEventListener('click', async e => {
    const b = ev.target.closest('[data-o]'); if (!b) return;
    const o = b.dataset.o;
    if (o === 'lista') return listaJan(p.id, p.loja || p.nome);
+   if (o === 'cl') return copiar(p.link_contatos, 'Link de contatos copiado');
    if (o === 'editar') {
     const jj = jan(`<h2 class="bs">Editar</h2><p class="sub">${h(p.loja || p.nome)}</p><label class="f">WhatsApp<input id="e-wa" value="${h(p.wa)}"></label><label class="f" style="margin-top:12px">Chave PIX<input id="e-pix" value="${h(p.pix)}"></label><label class="f" style="margin-top:12px">Observações internas<textarea id="e-obs">${h(p.obs)}</textarea></label><div class="rod"><button class="btn g" type="button" data-fecha>Voltar</button><button class="btn" type="button" id="e-ok">Salvar</button></div>`);
     jj.querySelector('#e-ok').addEventListener('click', () => acaoParceiro(p.id, 'editar', { wa:jj.querySelector('#e-wa').value, pix:jj.querySelector('#e-pix').value, obs:jj.querySelector('#e-obs').value }));

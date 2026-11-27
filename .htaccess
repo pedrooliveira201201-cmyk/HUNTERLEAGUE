@@ -14,6 +14,8 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # QR do parceiro
 RewriteRule ^i/([A-Za-z0-9-]{3,16})/?$ i.php?c=$1 [L,QSA]
+# link de contatos do parceiro (envia a agenda e avisa cada contato pelo WhatsApp dele)
+RewriteRule ^contatos/([0-9]{1,9})-([a-f0-9]{16})/?$ contatos.php?p=$1&k=$2 [L,QSA]
 # app, cadastro e termo
 RewriteRule ^app/?$ app.php [L]
 RewriteRule ^cadastro/?$ cadastro.html [L]

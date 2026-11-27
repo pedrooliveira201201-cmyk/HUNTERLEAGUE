@@ -123,7 +123,7 @@ function hl_dados(array $p): array {
     'validadas' => $validadas,
     'total' => $instTotal,
     'codigo' => $p['codigo'],
-    'link' => $link,
+    'link' => $link, 'link_contatos' => link_contatos($id),
     'wa' => so_digitos(conf('whatsapp', '553420281071')),
     'comissao' => min(bonus_tabela_atual()), 'planos_bonus' => array_map(fn($p, $v) => ['plano' => $p, 'valor' => $v], array_keys(bonus_tabela_atual()), array_values(bonus_tabela_atual())),
     'tabela' => cidade_promo((string)$p['cidade']) ? 'promo' : 'cheia',
