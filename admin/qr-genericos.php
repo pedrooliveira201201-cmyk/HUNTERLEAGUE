@@ -51,7 +51,7 @@ th{background:#EEF3F0;font-size:13px;text-transform:uppercase;letter-spacing:.05
 </style></head>
 <body><main>
 <div class="topo">
-  <div><h1>QR genéricos do adesivo A3</h1>
+  <div><h1>QR genéricos: adesivo A3, placa A4 e testes</h1>
   <p class="sub"><?= count($livres) ?> livres de <?= count($cods) ?>. Na visita, o parceiro lê o QR do cartaz, toca em “Ative o QR com o seu cadastro” e preenche os dados. O código passa a ser dele e já funciona enquanto vocês aprovam.</p></div>
   <div><a class="btn g" href="./">Voltar para a Central</a> <button class="btn" type="button" onclick="print()">Imprimir os livres</button></div>
 </div>
@@ -60,7 +60,7 @@ th{background:#EEF3F0;font-size:13px;text-transform:uppercase;letter-spacing:.05
 <?php if ($livres): ?>
 <div class="grade">
 <?php foreach ($livres as $c): ?>
-  <div class="qr"><?= str_replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ', HLQR::svg(link_parceiro($c))) ?><b><?= h($c) ?></b><small><?= h($site) ?>/i/<?= h($c) ?></small><a href="qr.php?c=<?= rawurlencode($c) ?>" download="qr-<?= h($c) ?>.svg">Baixar SVG</a></div>
+  <div class="qr"><?= str_replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ', HLQR::svg(link_parceiro($c))) ?><b><?= h($c) ?></b><small style="font-weight:700"><?= h(qr_generico_tipo($c)) ?></small><small><?= h($site) ?>/i/<?= h($c) ?></small><a href="qr.php?c=<?= rawurlencode($c) ?>" download="qr-<?= h($c) ?>.svg">Baixar SVG</a></div>
 <?php endforeach; ?>
 </div>
 <?php else: ?>
@@ -70,9 +70,9 @@ th{background:#EEF3F0;font-size:13px;text-transform:uppercase;letter-spacing:.05
 <div class="ocupados">
 <h2>Ocupados</h2>
 <?php if ($ocup): ?>
-<table><thead><tr><th>Código</th><th>Parceiro</th><th>Situação</th><th>Cadastro em</th></tr></thead><tbody>
+<table><thead><tr><th>Código</th><th>Peça</th><th>Parceiro</th><th>Situação</th><th>Cadastro em</th></tr></thead><tbody>
 <?php foreach ($cods as $c): if (!isset($ocup[$c])) continue; $r = $ocup[$c]; ?>
-  <tr><td><b><?= h($c) ?></b></td><td><?= h($r['nome']) ?></td><td><?= h($rot[$r['status']] ?? $r['status']) ?></td><td><?= h(data_br($r['criado_em'])) ?></td></tr>
+  <tr><td><b><?= h($c) ?></b></td><td><?= h(qr_generico_tipo($c)) ?></td><td><?= h($r['nome']) ?></td><td><?= h($rot[$r['status']] ?? $r['status']) ?></td><td><?= h(data_br($r['criado_em'])) ?></td></tr>
 <?php endforeach; ?>
 </tbody></table>
 <?php else: ?>

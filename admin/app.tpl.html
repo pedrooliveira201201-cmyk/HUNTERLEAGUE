@@ -578,7 +578,7 @@ const atualizaResumo = async () => { cache.resumo = await api('resumo'); navDraw
 let parFiltro = 'todos', parBusca = '';
 TELAS.parceiros = async () => {
  cache.pars = (await api('parceiros')).itens;
- $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Parceiros</h1><p>Lojas e vendedores da liga.${DEMO ? '' : ' <a href="qr-genericos.php" target="_blank" rel="noopener" style="color:var(--cyan);font-weight:700">QR genéricos do adesivo A3</a>'}</p></div><div class="busca">${I.busca}<input id="par-q" type="search" placeholder="Buscar nome, loja, código ou CPF" value="${h(parBusca)}" autocomplete="off"></div></div><div id="par-corpo"></div>`;
+ $('#main').innerHTML = `<div class="hd"><div><h1 class="bs">Parceiros</h1><p>Lojas e vendedores da liga.${DEMO ? '' : ' <a href="qr-genericos.php" target="_blank" rel="noopener" style="color:var(--cyan);font-weight:700">QR genéricos (A3, A4 e testes)</a>'}</p></div><div class="busca">${I.busca}<input id="par-q" type="search" placeholder="Buscar nome, loja, código ou CPF" value="${h(parBusca)}" autocomplete="off"></div></div><div id="par-corpo"></div>`;
  $('#par-q').addEventListener('input', e => { parBusca = e.target.value; parDraw(); });
  parDraw();
 };

@@ -167,12 +167,19 @@ function link_parceiro(string $codigo): string { return rtrim(conf('site_url', '
 
 /* QR genéricos: códigos impressos no adesivo A3 de porta antes de o parceiro existir.
    Na visita, o parceiro lê o QR do cartaz, toca em "Ative o QR" e faz o cadastro (cadastro?r=CODIGO): o código passa a ser dele.
-   A lista fica na Central (config 'qr_genericos', separada por vírgula). Padrão: HL-ARG-9001 a HL-ARG-9020. */
+   A lista fica na Central (config 'qr_genericos', separada por vírgula). Padrão:
+   HL-ARG-9001 a HL-ARG-9050 (adesivo A3 dos estabelecimentos), HL-UBR-ARG-0001 a HL-UBR-ARG-0020 (placa A4 dos motoristas)
+   e HL-TESTE-01 a HL-TESTE-04 (testes da equipe). */
 function qr_genericos(): array {
   $cfg = trim((string)conf('qr_genericos', ''));
-  $lista = $cfg !== '' ? explode(',', $cfg) : array_map(fn($n) => sprintf('HL-ARG-%04d', $n), range(9001, 9020));
+  $lista = $cfg !== '' ? explode(',', $cfg) : array_merge(
+    array_map(fn($n) => sprintf('HL-ARG-%04d', $n), range(9001, 9050)),
+    array_map(fn($n) => sprintf('HL-UBR-ARG-%04d', $n), range(1, 20)),
+    array_map(fn($n) => sprintf('HL-TESTE-%02d', $n), range(1, 4)));
   return array_values(array_unique(array_filter(array_map(fn($c) => strtoupper((string)preg_replace('/[^A-Za-z0-9-]/', '', $c)), $lista))));
 }
+/* peça impressa de cada QR genérico */
+function qr_generico_tipo(string $c): string { return str_starts_with($c, 'HL-UBR-') ? 'Placa A4 · motorista' : (str_starts_with($c, 'HL-TESTE-') ? 'Teste da equipe' : 'Adesivo A3 · estabelecimento'); }
 function qr_generico(?string $codigo): bool { return $codigo !== null && $codigo !== '' && in_array(strtoupper($codigo), qr_genericos(), true); }
 
 /* Cliente já indicado? Bloqueia se já foi instalado (por qualquer parceiro) ou se foi indicado
