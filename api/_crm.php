@@ -348,6 +348,14 @@ function crm_sincronizar(): void {
       q('UPDATE empresas SET parceiro_id = ?, atualizado_em = ? WHERE id = ? AND parceiro_id IS NULL', [$p['id'], agora(), $id]); crm_hist($id, 'sistema', 'app', 'Cadastrou no app Hunter League');
     }
   }
+  /* parceiro que não casou com nenhuma loja da base (CPF, motorista, telefone diferente, QR ativado antes do GPS):
+     entra no CRM mesmo assim, para os números do mapa baterem com os do painel; o ponto se ajusta clicando no mapa */
+  foreach (all("SELECT p.id, p.doc, p.nome, p.loja, p.whatsapp, p.cidade FROM parceiros p WHERE p.status IN ('pendente', 'ativo') AND NOT EXISTS (SELECT 1 FROM empresas e WHERE e.parceiro_id = p.id) LIMIT 500") as $p) {
+    q("INSERT INTO empresas (cnpj, fantasia, responsavel, tel1, cidade, uf, etapa, parceiro_id, origem, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,'afiliado',?,'app',?,?)",
+      [strlen((string)$p['doc']) === 14 ? $p['doc'] : null, mb_substr((string)($p['loja'] ?: $p['nome']), 0, 160), mb_substr((string)$p['nome'], 0, 120), $p['whatsapp'] ?: null,
+       preg_replace('/\s*-\s*[A-Z]{2}$/', '', (string)($p['cidade'] ?: 'Araguari')), 'MG', $p['id'], agora(), agora()]);
+    crm_hist((int)db()->lastInsertId(), 'sistema', 'app', 'Cadastrou no app Hunter League (sem lugar no mapa: clique no mapa para marcar)');
+  }
   /* etapa segue o app: cadastrado → afiliado; QR ativo → conquistado; venda (agendada ou instalada) → venda */
   foreach (all("SELECT e.id, e.etapa, p.status, p.codigo, COALESCE(v.n, 0) AS vendas
       FROM empresas e JOIN parceiros p ON p.id = e.parceiro_id
