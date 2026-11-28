@@ -347,6 +347,7 @@ details summary{cursor:pointer;font-weight:800;color:var(--mute);margin-top:16px
   <button type="button" role="tab" data-v="base" aria-selected="false">Base</button>
  </nav>
  <div class="placar" id="placar"></div>
+ <div id="semlugar" style="display:none;margin:6px 0 0"></div>
  <button class="bt so-cel" type="button" id="b-placar" aria-expanded="false" aria-label="Mostrar o placar" style="min-height:28px;width:28px;padding:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
  <button class="bt" type="button" id="b-tour" aria-label="Como usar" style="min-height:38px;width:38px;padding:0;font-size:18px">?</button>
 </header>
@@ -628,6 +629,11 @@ function placar(t) {
  const c = k => S.empresas.filter(e => e.et === k).length, tot = S.empresas.length, conq = S.empresas.filter(e => CONQ.has(e.et)).length;
  $('#placar').innerHTML = [[tot, 'mapeadas', ''], [S.ligadas_hoje || 0, 'ligadas hoje', ''], [c('agendado'), 'agendadas', '#FFB547'], [conq, 'afiliados', '#19F7FF'], [c('conquistado') + c('venda'), 'QR ativo', '#32E000'], [(t ? t.pct : 0) + '%', 'território', '#19F7FF']]
   .map(([v, tx, cor]) => `<div${cor ? ` style="--c:${cor}"` : ''}><b>${v}</b><small>${tx}</small></div>`).join('');
+ /* parceiro sem ponto (ativou o QR sem GPS, fora de Araguari ou antes do GPS existir): lista para marcar no mapa */
+ const sem = S.empresas.filter(e => CONQ.has(e.et) && e.lat == null), sl = $('#semlugar');
+ if (sl) { sl.style.display = sem.length ? '' : 'none';
+  sl.innerHTML = sem.length ? `<details style="background:rgba(255,200,87,.12);border:1px solid #FFC857;border-radius:10px;padding:8px 10px"><summary style="cursor:pointer;font-weight:700;color:#FFC857">${sem.length} ${sem.length === 1 ? 'parceiro sem lugar' : 'parceiros sem lugar'} no mapa: toque para marcar</summary>${sem.map(e => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px"><span>${h(e.nome)} <small style="opacity:.7">${h(ETN[e.et] || '')}</small></span><button class="bt" type="button" data-marcar="${e.id}">Marcar no mapa</button></div>`).join('')}</details>` : '';
+  sl.querySelectorAll('[data-marcar]').forEach(b => b.onclick = () => { if (vis !== 'mapa') troca('mapa'); ajustarPonto(+b.dataset.marcar); }); }
  const tr = $('#placar div:last-child'); if (tr && t) tr.title = `${t.cels} células do cabo com empresa conquistada. A porcentagem conta os domicílios viáveis dessas células.`;
 }
 /* etapas: as fichas coloridas são a legenda e o filtro ao mesmo tempo */
